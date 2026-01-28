@@ -65,25 +65,41 @@ export class MailService {
 
 
   async sendVerificationEmail(metadata: { userEmail: string; link: string }) {
+  const templateName = 'verify-email';
+  
+  // Check if required template variables exist
+  if (!metadata.link) {
+    Logger.error(`Cannot send email: "link" is missing for user ${metadata.userEmail}`);
+    return;
+  }
+
+  const context = {
+    verificationUrl: metadata.link,
+  };
+
+  try {
+    Logger.log(`Sending email to: ${metadata.userEmail}, using template: ${templateName}.hbs`);
+    Logger.log(`Verification link: ${metadata.link}`);
+
     await this.mailerService.sendMail({
       to: metadata.userEmail,
       subject: 'Nexoristech.com Account Creation Notification',
-      template: 'verify-email', // `.ejs` extension is appended automatically
-      context: {
-        verificationUrl: metadata.link,
-      },
-    }).catch((error) => console.log(
-      stringify({
-        message: error.message,
-        stack: error.stack,
-        details: error.response || error,
-      })
-    ));
+      template: templateName, // `.hbs` appended automatically
+      context,
+    });
 
-    Logger.log(
-      `Verification Email sent successfully to: ${metadata.userEmail}`,
-    );
+    Logger.log(`✅ Verification Email sent successfully to: ${metadata.userEmail}`);
+  } catch (error) {
+    // Catch Handlebars template errors or transport errors
+    Logger.error(`Error sending email to: ${metadata.userEmail}`, JSON.stringify({
+      message: error.message,
+      stack: error.stack,
+      details: error.response || error,
+    }, null, 2));
   }
+}
+
+
 
   async sendForgotPasswordEmail(metadata: {
     userEmail: string;

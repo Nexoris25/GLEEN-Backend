@@ -1,13 +1,19 @@
 import { Module } from '@nestjs/common';
 import { MailerModule } from '@nestjs-modules/mailer';
-// import { EjsAdapter } from '@nestjs-modules/mailer/dist/adapters/ejs.adapter';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { join } from 'path';
+import { existsSync } from 'fs';
 import { MailService } from './email.service';
-import * as dotenv from 'dotenv';
 import { JwtModule } from '@nestjs/jwt';
+import * as dotenv from 'dotenv';
 dotenv.config();
+
+// Determine template directory dynamically (works in dev and dist)
+const templatesPath = existsSync(join(__dirname, 'templates'))
+  ? join(__dirname, 'templates')               // dev
+  : join(__dirname, '../../src/email/templates'); // after build in dist
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -19,24 +25,23 @@ dotenv.config();
       useFactory: (config: ConfigService) => ({
         transport: {
           host: process.env.EMAIL_HOST ?? config.get('EMAIL_HOST'),
-          port:  Number(process.env.EMAIL_PORT ?? config.get('EMAIL_PORT')),
+          port: Number(process.env.EMAIL_PORT ?? config.get('EMAIL_PORT')),
           secure: (process.env.EMAIL_SECURE ?? config.get('EMAIL_SECURE')) === 'true',
           auth: {
             user: process.env.EMAIL_USER ?? config.get('EMAIL_USER'),
             pass: process.env.EMAIL_PASSWORD ?? config.get('EMAIL_PASSWORD'),
-          },          
+          },
         },
-
         tls: {
-          rejectUnauthorized: false, // Optional, for self-signed certs if needed
+          rejectUnauthorized: false,
         },
         defaults: {
-        from: '"GLEEN EduTech" <charles.edozie@nexoristech.com>', // Use a verified sender
-      },
-        family: 4,
+          from: '"GLEEN EduTech" <charles.edozie@nexoristech.com>',
+        },
         template: {
-          dir: join(__dirname, 'templates'),
+          dir: templatesPath,
           adapter: new HandlebarsAdapter(),
+          options: { strict: true },
         },
       }),
       inject: [ConfigService],
@@ -45,4 +50,7 @@ dotenv.config();
   providers: [MailService],
   exports: [MailService],
 })
-export class MailModule { }
+export class MailModule {}
+
+
+

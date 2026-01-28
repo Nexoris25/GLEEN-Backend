@@ -46,8 +46,8 @@ export class TutorMessage extends Model {
   sendToAll: boolean;
 
   @ApiProperty({ required: false })
-  @Column(DataType.STRING)
-  state?: string;
+  @Column(DataType.UUID)
+  stateId?: string;
 
   @ApiProperty({ required: false })
   @Column(DataType.UUID)

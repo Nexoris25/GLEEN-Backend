@@ -34,13 +34,14 @@ export class CreateTutorMessageDto {
   sendToAll: boolean;
 
   /* -------------------- STATE -------------------- */
-  @ApiPropertyOptional({
-    example: 'Lagos',
-    description: 'State name (must exist in states table)',
+@ApiPropertyOptional({
+    example: 'a3b1c7d2-9b0f-4e92-8a2c-0f4a2b8c7d11',
+    format: 'uuid',
+    description: 'State ID (references state.id)',
   })
   @IsOptional()
-  @IsString()
-  state?: string;
+  @IsUUID()
+  stateId?: string;
 
   /* -------------------- SUBJECT -------------------- */
   @ApiPropertyOptional({

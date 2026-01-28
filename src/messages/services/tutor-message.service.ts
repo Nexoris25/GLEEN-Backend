@@ -37,7 +37,7 @@ export class TutorMessageService {
     const where: any = { role: 'STUDENT' };
 
     if (!dto.sendToAll) {
-      if (dto.state) where.state = dto.state;
+      if (dto.stateId) where.stateId = dto.stateId;
       if (dto.subjectId) where.subjectId = dto.subjectId;
       if (dto.classIds?.length) {
         where.classId = { [Op.in]: dto.classIds };
