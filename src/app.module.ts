@@ -48,8 +48,6 @@ import { ClassesModule } from './classes/classes.module';
 //import { Classes } from './classes/models/classes.model';
 import { ClassEntity } from './classes/entities/class.entity';
 import { ClassEnrollment } from './classes/models/class-enrollment.model';
-import { RoomsModule } from './rooms/rooms.module';
-import { Room } from './rooms/models/room.model';
 
 // Mock Exams
 import { MockExamModule } from './mock-exam/mock-exam.module';
@@ -98,7 +96,9 @@ import { ComplaintComment } from './support/models/complaint-comment.model';
 // Notifications
 import { NotificationModule } from './notification/notification.module';
 import { NotificationSettings } from './notification/models/notification-settings.model';
-
+import { NotificationTrackingModule } from './notification-tracking/notification-tracking.module';
+//import { NotificationTracking } from './notification-tracking/models/notification-recipient.model';
+import { TutorMessageModule } from './messages/tutor-message.module';
 
 
 // XP
@@ -126,7 +126,7 @@ import { CountriesModule } from './countries/countries.module';
         Lesson, LessonComment, LessonTracking, StudentsQuizAnswers, QuizQuestions,
         Quizzes, QuizComment, LessonTopic, QuizRecord,
         // Classes (new)
-        ClassEntity, ClassEnrollment, Room,
+        ClassEntity, ClassEnrollment, 
         // Mock Exams
         MockTypes, MockExams, MockQuestions, StudentsMockAnswers, MockExamComment, MockExamRecord,
         // States
@@ -151,7 +151,7 @@ import { CountriesModule } from './countries/countries.module';
         idle: 10000,
       },
       autoLoadModels: true, // true for dev and production. false for debug
-      synchronize: false, // temporary set to true for initial run so to create tables
+      synchronize: true, // temporary set to true for initial run so to create tables
   logging: false,   // temporary set to true for debugging
     }),
     // Modules
@@ -162,7 +162,6 @@ import { CountriesModule } from './countries/countries.module';
     SubjectModule,
     GoalModule,
     LessonModule,
-    RoomsModule,
     ClassesModule, 
     LgaModule,
     MockExamModule,
@@ -176,7 +175,9 @@ import { CountriesModule } from './countries/countries.module';
     SupportModule,
     XpModule,
     MetricsModule,
-    CountriesModule
+    CountriesModule,
+    NotificationTrackingModule,
+    TutorMessageModule,
   ],
   controllers: [AppController],
   providers: [AppService, StateExistsConstraint,],

@@ -3,7 +3,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsUUID, IsDateString } from 'class-validator';
 import { IsBefore } from 'src/common/validators/is-before.validator';
 
-import { IsDate, IsNotEmpty } from 'class-validator';
+import { IsISO8601, IsDate, IsNotEmpty } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateClassDto {
@@ -16,10 +16,13 @@ export class CreateClassDto {
   @IsString()
   description?: string;
 
+
+  
  @ApiProperty({
     example: '2026-01-10T10:00:00Z',
     description: 'Class start time (ISO 8601)',
   })
+   @IsNotEmpty()
   @Type(() => Date) // ⬅️ transforms string → Date
   @IsDate({ message: 'startTime must be a valid date' })
   @IsBefore('endTime', {
@@ -31,15 +34,11 @@ export class CreateClassDto {
     example: '2026-01-10T12:00:00Z',
     description: 'Class end time (ISO 8601)',
   })
+  @IsNotEmpty()
   @Type(() => Date) // ⬅️ transforms string → Date
   @IsDate({ message: 'endTime must be a valid date' })
   endTime: Date;
 
-
-
-  @ApiProperty({ example: 'uuid-of-room' })
-  @IsUUID()
-  roomId: string;
 
   @ApiProperty({ example: 'uuid-of-tutor' })
   @IsUUID()

@@ -455,7 +455,7 @@ if (createUserDto.role === 'SUPER_ADMIN') {
 
     // Mark OTP as used
     await otpRecord.update({ verified: true });
-
+    await this.userService.verifyEmailV1(email);
     // Mark user's email as verified
     // await this.userModel.update(
     //   { isEmailVerified: true },

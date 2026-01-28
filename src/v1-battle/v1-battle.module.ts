@@ -12,6 +12,7 @@ import { V1BattleRecordController } from './controllers/v1-battle-record.control
 import { JwtModule } from '@nestjs/jwt';
 import { XpModule } from 'src/xp/xp.module';
 import { LessonModule } from 'src/lesson/lesson.module';
+import { NotificationTrackingModule } from 'src/notification-tracking/notification-tracking.module';
 
 
 @Module({
@@ -23,10 +24,12 @@ import { LessonModule } from 'src/lesson/lesson.module';
     SequelizeModule.forFeature([
       V1Battle,
       V1BattleQuestionAnswers,
-      V1BattleRecord
+      V1BattleRecord,
     ]),
     forwardRef(() => XpModule),
-    forwardRef(() => LessonModule)
+    forwardRef(() => LessonModule),
+    forwardRef(() => NotificationTrackingModule),
+  
   ],
   providers: [
     V1BattleService,

@@ -5,7 +5,6 @@ import { Sequelize } from 'sequelize-typescript';
 import { User } from '../../user/models/user.model';
 import { ClassEntity } from '../../classes/entities/class.entity';
 import { ClassEnrollment } from '../../classes/models/class-enrollment.model';
-import { Room } from '../../rooms/models/room.model';
 import { StudentsQuizAnswers } from '../../lesson/models/students_quiz_answers';
 
 @Injectable()
@@ -15,7 +14,6 @@ export class MetricsService {
     @InjectModel(ClassEntity) private readonly classModel: typeof ClassEntity,
     @InjectModel(ClassEnrollment) private readonly classEnrollmentModel: typeof ClassEnrollment,
     @InjectModel(StudentsQuizAnswers) private readonly studentsQuizModel: typeof StudentsQuizAnswers,
-    @InjectModel(Room) private readonly roomModel: typeof Room,
     private sequelize: Sequelize,
   ) {}
 
@@ -24,7 +22,6 @@ export class MetricsService {
     const totalUsers = await this.userModel.count();
     const totalClasses = await this.classModel.count();
     const totalEnrollments = await this.classEnrollmentModel.count();
-    const totalRooms = await this.roomModel.count();
     const totalQuizAnswers = await this.studentsQuizModel.count();
     const totalAttendedEnrollments = await this.classEnrollmentModel.count({
       where: { attended: true },
@@ -52,7 +49,6 @@ export class MetricsService {
       totalUsers,
       totalClasses,
       totalEnrollments,
-      totalRooms,
       totalQuizAnswers,
       totalAttendedEnrollments,
       topClass: topClass[0] || null,

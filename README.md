@@ -33,6 +33,25 @@ $ npm install
 
 ## Compile and run the project
 
+Recommended setup for GLEEN API (final)
+
+Terminal 1
+
+npm run build:watch
+
+
+Terminal 2
+
+node --max-old-space-size=1024 dist/main.js
+
+npm run build
+npm run start
+
+
+set NODE_OPTIONS=--max-old-space-size=512 && npm run start:dev
+
+
+
 ```bash
 # development
 $ npm run start

@@ -36,9 +36,4 @@ export class CreateV1BattleDto {
   @ApiProperty()
   @IsUUID()
   opponentUserId: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  acceptanceStatus?: "ACCEPTED" | "REJECTED" | "PENDING" = "PENDING";
 }

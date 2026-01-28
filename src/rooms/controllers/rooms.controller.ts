@@ -41,6 +41,15 @@ export class RoomsController {
     return this.roomsService.findByName(name);
   }
 
+   // ================= list all rooms =================
+  @Get('/all')
+  @ApiOperation({ summary: 'Get all rooms' })
+  async findAllDailyRooms() {
+    const rooms = await this.roomsService.listAllDailyRooms();
+console.log(`Total rooms: ${rooms.length}`);
+return rooms;
+  }
+
   // ================= DELETE ROOM BY NAME =================
   @Delete(':name')
   @Roles('ADMIN', 'SUPER_ADMIN')

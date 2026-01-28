@@ -66,6 +66,17 @@ await this.userModel.update(
 
 
 
+async verifyEmailV1(email: string): Promise<void> {
+const user = await this.findOneByEmail(email);
+if (!user) {
+throw new NotFoundException('User not found');
+}
+await this.userModel.update(
+{ isEmailVerified: true },
+{ where: { email: email } },
+);
+}
+
 
 
 

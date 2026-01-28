@@ -10,7 +10,7 @@ import {
     HttpStatus,
     UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { V1BattleService } from '../services/v1-battle.service';
 import { CreateV1BattleDto } from '../dto/create-v1-battle.dto';
 import { UpdateV1BattleDto } from '../dto/update-v1-battle.dto';
@@ -18,13 +18,22 @@ import { SearchV1BattleDto } from '../dto/search-v1-battle.dto';
 import stringify from 'safe-stable-stringify';
 import { JwtAuthGuard } from 'src/auth/GuardsDecorMiddleware/jwt-auth.guard';
 import { UserId } from 'src/auth/GuardsDecorMiddleware/userIdDecorator.guard';
+import { RolesGuard } from 'src/auth/GuardsDecorMiddleware/roles.guard';
+import { Roles } from 'src/auth/decorators/roles.decorator';
 import { ResponseDto, V1BattleResponseCountDto, V1BattleResponseDto } from 'src/shared-types/response.dto';
+import { NotificationEntityType } from 'src/shared-types/FileTypeEnum';
+
+import { NotificationReadService } from 'src/notification-tracking/services/notification-read.service';
+
 
 @ApiTags('V1 Battle')
+@ApiBearerAuth()
 @Controller('v1-battle')
 @UseGuards(JwtAuthGuard)
 export class V1BattleController {
-    constructor(private readonly v1BattleService: V1BattleService) { }
+    constructor(private readonly v1BattleService: V1BattleService,    
+    private readonly notificationReadService: NotificationReadService)
+     { }
 
     @Post()
     @ApiOperation({ summary: 'Create a new battle' })
@@ -32,9 +41,39 @@ export class V1BattleController {
     @ApiResponse({ status: 201, description: 'Battle created successfully', type: V1BattleResponseDto })
     @ApiResponse({ status: 500, description: 'Error creating battle', type: ResponseDto })
     async create(@Body() createDto: CreateV1BattleDto, @UserId() userId: string): Promise<V1BattleResponseDto> {
+        
         try {
             // You may want to get userId from request context
             const battle = await this.v1BattleService.create(createDto, userId);
+
+
+            // 2️⃣ Create a notification for the opponent
+   if (battle.opponentUserId) {
+  /*     await this.notificationReadService.markAsRead(
+        battle.opponentUserId,
+        NotificationEntityType.V1_BATTLE_INVITE,
+        battle.id,
+      );
+*/
+      // OR if you just want to create the notification as unread:
+   await this.notificationReadService.createNotification(
+     battle.opponentUserId,
+     NotificationEntityType.V1_BATTLE_INVITE,
+      battle.id
+      );
+    }
+/*
+      // 3️⃣ Optional: Check if opponent has read it already (likely false)
+      const hasRead = await this.notificationReadService.hasRead(
+        battle.opponentUserId,
+        NotificationEntityType.V1_BATTLE_INVITE,
+        battle.id,
+      );
+*/
+ 
+
+
+
             return {
                 status: HttpStatus.CREATED,
                 message: 'Battle created successfully',

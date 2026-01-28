@@ -5,9 +5,7 @@ import {
   Model,
   DataType,
   ForeignKey,
-  BelongsTo,
 } from 'sequelize-typescript';
-import { Room } from '../../rooms/models/room.model';
 import { User } from '../../user/models/user.model';
 
 
@@ -22,6 +20,16 @@ export class ClassEntity extends Model<ClassEntity> {
   @Column({ allowNull: true })
   description?: string;
 
+  @Column({ allowNull: true })
+  roomName?: string;
+
+
+  @Column({ allowNull: true })
+  roomURL?: string;
+
+    @Column({ allowNull: true })
+  ownerToken?: string;
+
    @Column({
     type: DataType.DATE, // ⬅️ IMPORTANT
     allowNull: false,
@@ -35,15 +43,8 @@ export class ClassEntity extends Model<ClassEntity> {
   endTime: Date;
 
 
-  // FK to Room.id
-  @ForeignKey(() => Room)
-  @Column({ type: DataType.UUID, allowNull: false })
-  roomId: string;
 
-   @BelongsTo(() => Room)
-  room: Room;
-
-  // FK to User.id
+   // FK to User.id
   @ForeignKey(() => User)
   @Column({ type: DataType.UUID, allowNull: false })
   tutorId: string;

@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { QuizCommentResponseCountDto, QuizCommentResponseDto, QuizzesResponseCountDto, QuizzesResponseDto, ResponseDto } from 'src/shared-types/response.dto';
-import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/GuardsDecorMiddleware/jwt-auth.guard';
 import { UserId } from 'src/auth/GuardsDecorMiddleware/userIdDecorator.guard';
 import stringify from "safe-stable-stringify";
@@ -13,6 +13,7 @@ import { UpdateQuizCommentDto } from '../dto/update-quiz-comment.dto';
 
 
 @ApiTags('Quizzes')
+@ApiBearerAuth()
 @Controller('quizzes')
 @UseGuards(JwtAuthGuard)
 export class QuizController {

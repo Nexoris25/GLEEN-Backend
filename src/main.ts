@@ -80,5 +80,6 @@ useContainer(app.select(AppModule), { fallbackOnErrors: true });
   }
 
   await app.listen(process.env.PORT || 3000);
+  console.log('APP LISTENING');
 }
 bootstrap();

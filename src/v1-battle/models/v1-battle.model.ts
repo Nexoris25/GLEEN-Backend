@@ -66,6 +66,8 @@ export class V1Battle extends Model {
   })
   participationXP?: number;
 
+
+
   @ApiProperty()
   @Default('PENDING')
   @Column({

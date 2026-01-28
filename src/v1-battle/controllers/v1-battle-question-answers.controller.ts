@@ -10,7 +10,7 @@ import {
   HttpStatus,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { V1BattleQuestionAnswersService } from '../services/v1-battle-question-answers.service';
 import { CreateV1BattleQuestionAnswersDto } from '../dto/create-v1-battle-question-answers.dto';
 import { UpdateV1BattleQuestionAnswersDto } from '../dto/update-v1-battle-question-answers.dto';
@@ -22,6 +22,7 @@ import { UserId } from 'src/auth/GuardsDecorMiddleware/userIdDecorator.guard';
 import { QuizQuestionsService } from 'src/lesson/services/quiz-question.service';
 
 @ApiTags('V1 Battle Question Answers')
+@ApiBearerAuth()
 @Controller('v1-battle-question-answers')
 @UseGuards(JwtAuthGuard)
 export class V1BattleQuestionAnswersController {

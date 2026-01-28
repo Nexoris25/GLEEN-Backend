@@ -8,22 +8,40 @@ import { InjectModel } from '@nestjs/sequelize';
 import { ClassEntity } from '../entities/class.entity';
 import { CreateClassDto } from '../dto/create-class.dto';
 import { UpdateClassDto } from '../dto/update-class.dto';
-import { RoomsService } from '../../rooms/services/rooms.service';
 import { UserService } from '../../user/services/user.service'; 
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { Op, fn, col } from 'sequelize';
+import { randomUUID } from 'crypto';
+import axios from 'axios';
+
+
 
 @Injectable()
 export class ClassesService {
   constructor(
     @InjectModel(ClassEntity)
     private readonly classModel: typeof ClassEntity,
-    private readonly roomsService: RoomsService,
     private readonly usersService: UserService,
   ) {}
 
+
+    private readonly MAX_LIMIT = 500;
+  private readonly DAILY_API_KEY = process.env.DAILY_API_KEY;
+  private readonly DAILY_API_URL = 'https://api.daily.co/v1/rooms';
+
+
   // CREATE CLASS
   async create(dto: CreateClassDto) {
+    let ownerToken: string;
+    let dailyRoom: any;
+    // Generate fresh room name (or remove 'name' key for random)
+const safeTitle = dto.title
+.toLowerCase()
+.replace(/[^a-z0-9 -]/g, '') // only allowed chars
+.replace(/\s+/g, '-')
+.slice(0, 40);
+    let roomName = `liveclass-${safeTitle}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+
     try {
       // Check unique title
       const existing = await this.classModel.findOne({ where: { title: dto.title } });
@@ -32,18 +50,159 @@ export class ClassesService {
         return { success: false, message: `Class title "${dto.title}" already exists` };
       }
 
-      // Validate room
-      let room;
-      try {
-        room = await this.roomsService.findById(dto.roomId);
-        if (!room) {
-          console.warn(`Room with ID "${dto.roomId}" does not exist`);
-          return { success: false, message: `Room with ID "${dto.roomId}" does not exist` };
-        }
-      } catch (err) {
-        console.error('Error fetching room:', err.message);
-        return { success: false, message: 'Error validating room' };
-      }
+      const nowMs = Date.now();
+    if (dto.startTime.getTime() <= nowMs + 10 * 60 * 1000) { // at least 10 min buffer
+      throw new BadRequestException('startTime must be at least 10 minutes in the future');
+    }
+
+
+    if (isNaN(dto.startTime.getTime()) || isNaN(dto.endTime.getTime())) {
+      throw new BadRequestException('Invalid startTime or endTime');
+    }
+
+
+
+
+
+
+// Validate room
+try {
+const expireAt = new Date(dto.startTime.getTime() + (2 * 60 * 60 * 1000));
+const expireAtMs = dto.startTime.getTime() + 2 * 60 * 60 * 1000; // start + 2h
+const expUnix = Math.floor(expireAtMs / 1000);
+
+const currentUnix = Math.floor(nowMs / 1000);
+if (expUnix <= currentUnix) {
+throw new BadRequestException(
+`Calculated exp (${expUnix}) is in the past or now (${currentUnix}) – adjust startTime`
+);
+}
+
+
+    // 1. Prepare Daily.co room creation payload (permanent – no exp)
+  const payload = {
+    name: roomName,
+    privacy: 'private',
+    properties: {
+      enable_chat: true,
+    exp: expUnix,
+      enable_hand_raising: true,
+      owner_only_broadcast: true,           // Teacher controls broadcast
+      enable_screenshare: true,
+      enable_emoji_reactions: true,
+      enable_shared_chat_history: true,
+      enable_people_ui: true,
+      //enable_breakout_rooms: true,  // only use for production
+      start_video_off: true,
+      start_audio_off: true,
+      meeting_join_hook: 'https://dev.nexoristech.com/daily-join-hook', // Optional: your join hook URL
+      // Add more properties as needed (no exp → room never expires automatically)
+    },
+  };
+
+
+    // 2. Create the room on Daily.co
+let dailyResponse;
+try {
+dailyResponse = await axios.post(
+this.DAILY_API_URL,
+payload,
+{
+headers: {
+Authorization: `Bearer ${this.DAILY_API_KEY}`,
+'Content-Type': 'application/json',
+},
+},
+);
+dailyRoom = dailyResponse.data;
+
+// Log success for debug
+console.log('Daily room created successfully:', {
+name: dailyRoom.name,
+url: dailyRoom.url,
+config: dailyRoom.config,
+});
+} catch (error: any) {
+const dailyData = error.response?.data || {};
+console.error('Daily.co API error details:', {
+status: error.response?.status,
+error: dailyData.error,
+info: dailyData.info,          // ← this is the gold! e.g. "exp was ... in the past"
+details: dailyData.details,
+payloadSent: payload,          // what you sent
+});
+
+throw new BadRequestException(
+`Failed to create room on Daily.co: ${error.response?.data?.error || error.message}`,
+);
+}
+
+
+
+
+// 4. Generate owner / teacher token (full control)
+
+const res = await axios.get(
+  'https://api.daily.co/v1/rooms',
+  {
+    headers: {
+      Authorization: `Bearer ${process.env.DAILY_API_KEY}`,
+    },
+  },
+);
+
+console.log('current rooms', res.data);
+
+const startUnix = Math.floor(new Date(dto.startTime).getTime() / 1000);
+const endUnix = Math.floor(new Date(dto.endTime).getTime() / 1000);
+
+const ownerPayload = {
+  room_name: roomName,
+  is_owner: true,
+/*
+  nbf: startUnix, // cannot join before start time
+  exp: endUnix,   // auto-kick after end time
+  eject_at_token_exp:true,
+  // Optional but useful
+  user_name: 'Tutor',          // shows in Daily UI
+  user_id: dto.tutorId,         // Daily-recognized field
+*/
+  // ✅ CUSTOM DATA — forwarded to webhooks
+ // context: { userId: dto.tutorId, role: 'TUTOR', roomName: roomName, },
+};
+
+try {
+const ownerRes = await axios.post(
+  'https://api.daily.co/v1/meeting-tokens',
+  ownerPayload,
+  {
+    headers: {
+      Authorization: `Bearer ${this.DAILY_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+  },
+);
+
+ownerToken = ownerRes.data.token;
+console.log('Tutor meeting token generated successfully', ownerToken);
+}
+
+catch (error: any) {
+const dailyOwnerData = error.response?.data || {};
+console.error('Daily.co API error details:', {
+status: dailyOwnerData.response?.status,
+error: dailyOwnerData.error,
+info: dailyOwnerData.info,          // ← this is the gold! e.g. "exp was ... in the past"
+details: dailyOwnerData.details,
+payloadSent: ownerPayload,          // what you sent
+});
+}
+
+} catch (error: any) {
+throw new BadRequestException(
+`Failed to create room on Daily.co: ${error.response?.data?.error || error.message}`,
+);
+}
 
       // Validate tutor
       let tutor = await this.usersService.findOneById(dto.tutorId);
@@ -61,8 +220,12 @@ export class ClassesService {
         }
       }
 
+      console.log('Creating class with DTO:', dto, 'Daily room:', dailyRoom);
       const createdClass = await this.classModel.create({
         ...dto,
+        roomName: roomName,
+        roomURL: dailyRoom.url,
+        ownerToken: ownerToken,
         enrolledStudents: [],
         attendance: [],
       });
@@ -153,19 +316,7 @@ async findLive() {
         }
       }
 
-      // Validate room
-      if (dto.roomId) {
-        try {
-          const room = await this.roomsService.findById(dto.roomId);
-          if (!room) {
-            console.warn(`Room with ID "${dto.roomId}" does not exist`);
-            return { success: false, message: `Room with ID "${dto.roomId}" does not exist` };
-          }
-        } catch (err) {
-          console.error('Error validating room:', err.message);
-          return { success: false, message: 'Error validating room' };
-        }
-      }
+     
 
       const updated = await cls.update(dto);
       console.log('Class updated successfully:', updated.id);
@@ -185,16 +336,7 @@ async findLive() {
         console.warn(`Class with ID ${id} not found`);
         return { success: false, message: 'Class not found' };
       }
-
-      let room = null;
-      try {
-        room = await this.roomsService.findByDailyRoomName(cls.roomId);
-      } catch (err) {
-        console.warn(`Room not found for class ${id}`);
-      }
-
-      return { success: true, data: { ...cls.toJSON(), roomUrl: room?.roomUrl, provider: room?.provider } };
-    } catch (err) {
+  } catch (err) {
       console.error('FindOne class error:', err.message);
       return { success: false, message: 'Failed to fetch class' };
     }
@@ -203,7 +345,6 @@ async findLive() {
  // FIND ALL CLASSES WITH PAGINATION
 async findAll(
   search?: string,
-  roomId?: string,
   tutorId?: string,
   pagination?: PaginationDto, // <-- add pagination DTO
 ) {
@@ -217,9 +358,7 @@ async findAll(
       ];
     }
 
-    if (roomId?.trim()) where.roomId = roomId.trim();
-    if (tutorId?.trim()) where.tutorId = tutorId.trim();
-
+     if (tutorId?.trim()) where.tutorId = tutorId.trim();
     const limit = pagination?.limit ?? 10; // default limit
     const offset = pagination?.offset ?? 0;
 
@@ -234,14 +373,7 @@ async findAll(
 
     const results = await Promise.all(
       rows.map(async (cls) => {
-        let room = null;
-        try {
-          room = await this.roomsService.findByDailyRoomName(cls.roomId);
-        } catch {
-          console.warn(`Room not found for class ${cls.id}`);
-        }
-
-        return { ...cls.toJSON(), roomUrl: room?.roomUrl, provider: room?.provider };
+         return { ...cls.toJSON(), };
       }),
     );
 
@@ -316,4 +448,48 @@ async enroll(userId: string, classId: string) {
   } catch (err) {
     return { success: false, message: 'Failed to mark attendance' };
   }}
+
+
+
+
+  
+  
+  
+  
+
+
+
+
+
+  async deleteDailyRoom(roomName: string): Promise<void> {
+  if (!roomName) {
+    throw new BadRequestException('Room name is required');
+  }
+
+  try {
+    await axios.delete(`${this.DAILY_API_URL}/${roomName}`, {
+      headers: {
+        Authorization: `Bearer ${this.DAILY_API_KEY}`,
+      },
+    });
+
+    console.log(`Deleted Daily room: ${roomName}`);
+  } catch (err: any) {
+    // Room not found
+    if (err.response?.status === 404) {
+      throw new NotFoundException(`Daily room "${roomName}" not found`);
+    }
+
+    // Any other error
+    throw new BadRequestException(
+      `Failed to delete Daily room "${roomName}": ${
+        err.response?.data?.error || err.message
+      }`,
+    );
+  }
+}
+  
+
+  
+
 }

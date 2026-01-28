@@ -42,7 +42,7 @@ export class ClassesController {
   @ApiBody({ type: CreateClassDto })
   @ApiResponse({ status: 201, type: ClassResponseDto })
   @Post()
-  @Roles('TUTOR', 'ADMIN')
+  @Roles('TUTOR', 'ADMIN', 'SUPER_ADMIN')
   async create(@Body() dto: CreateClassDto) {
     return this.classesService.create(dto);
   }
@@ -79,16 +79,14 @@ getLiveClasses() {
   @ApiOperation({ summary: 'Get all classes (searchable by title, roomId, tutorId)' })
   @ApiResponse({ status: 200, type: [ClassResponseDto] })
   @ApiQuery({ name: 'search', required: false, description: 'Search by title or description' })
-  @ApiQuery({ name: 'roomId', required: false, description: 'Filter by roomId' })
   @ApiQuery({ name: 'tutorId', required: false, description: 'Filter by tutorId' })
   @UseGuards(JwtAuthGuard)
   @Get()
   findAll(
     @Query('search') search?: string,
-    @Query('roomId') roomId?: string,
     @Query('tutorId') tutorId?: string,
   ) {
-    return this.classesService.findAll(search, roomId, tutorId);
+    return this.classesService.findAll(search, tutorId);
   }
 
   // GET ONE

@@ -10,7 +10,7 @@ import {
   HttpStatus,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { V1BattleRecordService } from '../services/v1-battle-record.service';
 import { CreateV1BattleRecordDto } from '../dto/create-v1-battle-record.dto';
 import { UpdateV1BattleRecordDto } from '../dto/update-v1-battle-record.dto';
@@ -21,6 +21,7 @@ import { V1BattleRecordResponseCountDto, V1BattleRecordResponseDto } from 'src/s
 import { UserId } from 'src/auth/GuardsDecorMiddleware/userIdDecorator.guard';
 
 @ApiTags('V1 Battle Record')
+@ApiBearerAuth()
 @Controller('v1-battle-record')
 @UseGuards(JwtAuthGuard)
 export class V1BattleRecordController {

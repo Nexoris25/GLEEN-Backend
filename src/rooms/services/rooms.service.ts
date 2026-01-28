@@ -356,10 +356,10 @@ async removeByName(name: string) {
  // }
 
   // 2️⃣ Delete all classes associated with this room
-    const deletedClasses = await this.classModel.destroy({
-      where: { roomId: room.id }, // assuming ClassEntity has roomId FK
-    });
-    console.log(`Deleted ${deletedClasses} classes associated with room "${name}"`);
+  //  const deletedClasses = await this.classModel.destroy({
+    //  where: { roomId: room.id }, // assuming ClassEntity has roomId FK
+   // });
+   // console.log(`Deleted ${deletedClasses} classes associated with room "${name}"`);
     
   // 2️⃣ Delete room from DB
   await room.destroy();
@@ -385,6 +385,39 @@ private async deleteDailyRoom(roomName: string) {
     // Don't throw – just log
   }
 }
+
+
+
+
+
+async listAllDailyRooms(): Promise<any[]> {
+  const rooms: any[] = [];
+  let cursor: string | undefined;
+
+  try {
+    do {
+      const response = await axios.get(this.DAILY_API_URL, {
+        headers: {
+          Authorization: `Bearer ${this.DAILY_API_KEY}`,
+        },
+        params: {
+          limit: 100,
+          cursor,
+        },
+      });
+
+      rooms.push(...response.data.data);
+      cursor = response.data.next_cursor;
+    } while (cursor);
+
+    return rooms;
+  } catch (err: any) {
+    throw new BadRequestException(
+      `Failed to list Daily rooms: ${err.response?.data?.error || err.message}`,
+    );
+  }
+}
+
 
 
 }
