@@ -104,15 +104,6 @@ details: error.response || error,
   summary:
     'Get all lessons with subject, tutor info, topic count and duration. Use ?id=lessonId (UUID) to fetch a single lesson, title, subtile for searching',
 })
-/*
-@ApiQuery({
-  name: 'id',
-  required: false,
-  type: String,
-  format: 'uuid',
-  description: 'Optional lesson UUID',
-})
-*/
 @ApiResponse({
   status: 200,
   description: 'List of lessons or a single lesson',

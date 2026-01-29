@@ -24,11 +24,13 @@ import { ClassesService } from '../services/classes.service';
 import { CreateClassDto } from '../dto/create-class.dto';
 import { UpdateClassDto } from '../dto/update-class.dto';
 import { EnrollDto } from '../dto/enroll.dto';
+import { ClassEntity } from '../entities/class.entity';
 import { AttendanceDto } from '../dto/attendance.dto';
 import { ClassResponseDto } from '../dto/class-response.dto';
 import { JwtAuthGuard } from 'src/auth/GuardsDecorMiddleware/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/GuardsDecorMiddleware/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
+import { LessonQueryDto } from 'src/lesson/dto/query.dto';
 
 @ApiTags('Classes')
 @ApiBearerAuth()
@@ -47,6 +49,12 @@ export class ClassesController {
     return this.classesService.create(dto);
   }
 
+     // list all rooms
+  @ApiOperation({ summary: 'Get all daily.co rooms' })
+  @Get('rooms')
+  listAllDailyRooms() {
+    return this.classesService.listAllDailyRooms();
+  }
 
 // ================= PREVIOUS CLASSES =================
 @ApiOperation({ summary: 'Get previous classes' })
@@ -74,19 +82,52 @@ getUpcomingClasses() {
 getLiveClasses() {
   return this.classesService.findLive();
 }
-
+   /*
   // GET ALL with optional search
-  @ApiOperation({ summary: 'Get all classes (searchable by title, roomId, tutorId)' })
+  @ApiOperation({ summary: 'Get all classes (searchable by title, classId, tutorId)' })
   @ApiResponse({ status: 200, type: [ClassResponseDto] })
   @ApiQuery({ name: 'search', required: false, description: 'Search by title or description' })
   @ApiQuery({ name: 'tutorId', required: false, description: 'Filter by tutorId' })
+  @ApiQuery({ name: 'classId', required: false, description: 'Filter by classId' })
   @UseGuards(JwtAuthGuard)
   @Get()
   findAll(
     @Query('search') search?: string,
     @Query('tutorId') tutorId?: string,
+    @Query('id') classId?: UUID,
   ) {
     return this.classesService.findAll(search, tutorId);
+  }
+
+    // GET ALL with optional search
+ 
+  @ApiOperation({ summary: 'Get all classes (searchable by title, classId, tutorId)' })
+  @ApiResponse({ status: 200, type: [ClassResponseDto] })
+  @ApiQuery({ name: 'search', required: false, description: 'Search by title or description' })
+  @ApiQuery({ name: 'tutorId', required: false, description: 'Filter by tutorId' })
+  @ApiQuery({ name: 'classId', required: false, description: 'Filter by classId' })
+  @UseGuards(JwtAuthGuard)
+  @Get('allclass')
+  findAll(
+    @Query('search') search?: string,
+    @Query('tutorId') tutorId?: string,
+    @Query('id') classId?: UUID,
+  ) {
+    return this.classesService.findAll(search, tutorId);
+  }
+*/
+  @Get('allclass')
+  @ApiOperation({
+    summary:
+      'Get all classes. Use ?id=classId (UUID) to fetch a single class, title for searching',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of classes or a single class',
+    type: ClassEntity,
+  })
+  async getAllLessons(@Query() query: LessonQueryDto) {
+    return this.classesService.findAllWithDetails(query);
   }
 
   // GET ONE
@@ -96,6 +137,7 @@ getLiveClasses() {
   findOne(@Param('id') id: string) {
     return this.classesService.findOne(id);
   }
+
 
   // UPDATE CLASS
   @ApiOperation({ summary: 'Update a class by ID (Teacher / Admin)' })

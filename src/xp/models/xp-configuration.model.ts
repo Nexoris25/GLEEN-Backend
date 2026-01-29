@@ -28,6 +28,18 @@ export class XpConfiguration extends Model {
 
   @ApiProperty()
   @Column(DataType.DOUBLE)
+  xpValueForMockTheory: number;
+ 
+  @ApiProperty()
+  @Column(DataType.DOUBLE)
+  xpValueForMockObjective: number;
+  
+  @ApiProperty()
+  @Column(DataType.DOUBLE)
+  xpValueForJamb: number;
+
+  @ApiProperty()
+  @Column(DataType.DOUBLE)
   dailyMaxXpLimitForQuizzes: number;
 
   @ApiProperty()

@@ -32,7 +32,7 @@ import { LeaderboardQueryDto } from '../dto/xp-log.dto';
 export class XpRecordsController {
 
     constructor(private readonly xpRecordsService: XpRecordsService) { }
-
+/*
     @Post()
     @ApiOperation({
         summary: 'Create XP record',
@@ -96,7 +96,7 @@ export class XpRecordsController {
             };
         }
     }
-
+*/
     @Get()
     @ApiOperation({
         summary: 'Get all XP records',
@@ -153,6 +153,7 @@ export class XpRecordsController {
         }
     }
 
+    /*
     @Get(':id')
     @ApiOperation({
         summary: 'Get XP record by ID',
@@ -181,7 +182,7 @@ export class XpRecordsController {
             };
         }
     }
-
+*/
     @Get('user/:userId')
     @ApiOperation({
         summary: 'Get XP record by user ID',
@@ -241,6 +242,7 @@ export class XpRecordsController {
         }
     }
 
+    /*
     @Patch('user/:userId')
     @ApiOperation({
         summary: 'Update XP record by user ID',
@@ -334,4 +336,5 @@ export class XpRecordsController {
             };
         }
     }
+        */
 }

@@ -9,17 +9,21 @@ import { JwtModule } from '@nestjs/jwt';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-// Determine template directory dynamically (works in dev and dist)
-const templatesPath = existsSync(join(__dirname, 'templates'))
-  ? join(__dirname, 'templates')               // dev
-  : join(__dirname, '../../src/email/templates'); // after build in dist
+const devPath = join(__dirname, '../../src/email/templates');
+const distPath = join(__dirname, 'templates');
+
+const templatesPath = existsSync(distPath) ? distPath : devPath;
+
+if (!existsSync(templatesPath)) {
+  throw new Error(`Email templates folder not found!`);
+}
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     JwtModule.register({
       secret: process.env.JWT_SECRET_KEY,
-      signOptions: { expiresIn: process.env.JWT_EXPIRATION_TIME || '30d' },
+      signOptions: { expiresIn: process.env.JWT_EXPIRATION_TIME ?? '30d' },
     }),
     MailerModule.forRootAsync({
       useFactory: (config: ConfigService) => ({
@@ -32,12 +36,8 @@ const templatesPath = existsSync(join(__dirname, 'templates'))
             pass: process.env.EMAIL_PASSWORD ?? config.get('EMAIL_PASSWORD'),
           },
         },
-        tls: {
-          rejectUnauthorized: false,
-        },
-        defaults: {
-          from: '"GLEEN EduTech" <charles.edozie@nexoristech.com>',
-        },
+        tls: { rejectUnauthorized: false },
+        defaults: { from: '"GLEEN EduTech" <charles.edozie@nexoristech.com>' },
         template: {
           dir: templatesPath,
           adapter: new HandlebarsAdapter(),
@@ -51,6 +51,3 @@ const templatesPath = existsSync(join(__dirname, 'templates'))
   exports: [MailService],
 })
 export class MailModule {}
-
-
-

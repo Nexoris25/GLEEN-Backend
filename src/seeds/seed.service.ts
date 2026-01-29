@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import * as bcrypt from 'bcrypt';
+import { v4 as uuidv4 } from 'uuid';
 
 import { User } from '../user/models/user.model';
 import { State } from '../states/models/state.model';
@@ -13,6 +14,8 @@ import { LGAS_BY_STATE } from './lgas.seed';
 
 import { Subscription } from '../subscription/models/Subscription.model';
 import { SUBSCRIPTIONS } from './subscriptions.seed';
+
+import { XpConfiguration } from '../xp/models/xp-configuration.model';
 
 
 @Injectable()
@@ -33,6 +36,7 @@ export class SeedService implements OnModuleInit {
     await this.seedStates(adminUser.id);
     await this.seedLgas();
   await this.seedSubscriptions();
+   await this.seedXpConfig();
   }
 
   // --------------------
@@ -164,4 +168,52 @@ private async seedSubscriptions() {
 
     this.logger.log('✅ LGAs seeded');
   }
+
+ // --------------------
+  // XP Defaults
+  // --------------------
+async seedXpConfig() {
+    try {
+      const exists = await XpConfiguration.count();
+      if (exists === 0) {
+        await XpConfiguration.create({
+          id: uuidv4(),
+          dailyMaxXpLimitForLessons: 0,
+          xpValueForMockTheory: 0,
+          xpValueForMockObjective: 0,
+          xpValueForJamb: 0,
+          dailyMaxXpLimitForQuizzes: 0,
+          dailyMaxXpLimitForMockExams: 0,
+          dailyMaxXpLimitForV1Battles: 0,
+          xpValueForLessThanOrEqualTo1HourLesson: 0,
+          xpValueForGreaterThan1HourLessThanOrEqualTo4HoursLesson: 0,
+          xpValueForGreaterThan4HourLessThanOrEqualTo10HoursLesson: 0,
+          xpValueForGreaterThan10HourLessThanOrEqualTo24HoursLesson: 0,
+          xpValueForLessThanOrEqualTo10QuizQuestion: 0,
+          xpValueForGreaterThan10LessThanOrEqualTo20QuizQuestion: 0,
+          xpValueForGreaterThan20LessThanOrEqualTo30QuizQuestion: 0,
+          xpValueForGreaterThan30QuizQuestion: 0,
+          xpValueForLessThanOrEqualTo10MockQuestion: 0,
+          xpValueForGreaterThan10LessThanOrEqualTo20MockQuestion: 0,
+          xpValueForGreaterThan20LessThanOrEqualTo30MockQuestion: 0,
+          xpValueForGreaterThan30MockQuestion: 0,
+          xpValueForLessThanOrEqualTo10V1BattleQuestion: 0,
+          xpValueForGreaterThan10LessThanOrEqualTo20V1BattleQuestion: 0,
+          xpValueForGreaterThan20LessThanOrEqualTo30V1BattleQuestion: 0,
+          xpValueForGreaterThan30V1BattleQuestion: 0,
+          v1BattleXpWinBonus: 0,
+          v1BattleXpLoseBonus: 0,
+          v1BattleXpDrawBonus: 0,
+          xpValuePerReferral: 0,
+          xpValuePerDayLogin: 0,
+        });
+        console.log('✅ XpConfiguration seeded successfully with 0 values');
+      } else {
+        console.log('ℹ️ XpConfiguration already exists, skipping seed');
+      }
+    } catch (error) {
+      console.error('❌ Error seeding XpConfiguration:', error);
+    }
+  }
+
 }

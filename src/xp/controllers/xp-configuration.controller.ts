@@ -7,7 +7,7 @@ import {
     Delete,
     HttpCode,
     HttpStatus,
-    Param,
+    Param, UseGuards,
 } from '@nestjs/common';
 import {
     ApiTags,
@@ -15,7 +15,8 @@ import {
     ApiBody,
     ApiOkResponse,
     ApiNoContentResponse,
-    ApiResponse,
+    ApiResponse, ApiBearerAuth,
+    
 } from '@nestjs/swagger';
 import { XpConfigurationService } from '../services/xp-configuration.service';
 import { CreateXpConfigurationDto } from '../dto/create-xp-configuration.dto';
@@ -23,13 +24,19 @@ import { XpConfiguration } from '../models/xp-configuration.model';
 import { UpdateXpConfigurationDto } from '../dto/update-xp-configuration.dto';
 import { ResponseDto } from 'src/shared-types/response.dto';
 import stringify from 'safe-stable-stringify';
+import { JwtAuthGuard } from 'src/auth/GuardsDecorMiddleware/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/GuardsDecorMiddleware/roles.guard';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+
 
 @ApiTags('XP Configuration')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('xp-configuration')
 export class XpConfigurationController {
 
     constructor(private readonly xpConfigurationService: XpConfigurationService) { }
-
+/*
     @Post()
     @ApiOperation({
         summary: 'Create XP configuration',
@@ -82,8 +89,10 @@ export class XpConfigurationController {
             };
         }
     }
-
+*/
     @Get()
+
+      @Roles('ADMIN', 'SUPER_ADMIN', 'TUTOR', 'USER')
     @ApiOperation({
         summary: 'Get XP configuration',
         description: 'Retrieve the single XP configuration for the system.',
@@ -108,8 +117,9 @@ export class XpConfigurationController {
     }
 
     @Patch()
+  @Roles('ADMIN', 'SUPER_ADMIN')
     @ApiOperation({
-        summary: 'Update XP configuration',
+        summary: 'Update XP configuration. Admin, Super Admin',
         description: 'Update the single XP configuration for the system.',
     })
     @ApiBody({
@@ -137,6 +147,8 @@ export class XpConfigurationController {
         }
     }
 
+    /*
+
     @Delete(':id')
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({
@@ -160,4 +172,5 @@ export class XpConfigurationController {
             };
         }
     }
+    */
 }

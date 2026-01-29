@@ -24,24 +24,27 @@ export class MailService {
   
   constructor(private mailerService: MailerService) { }
   async sendEmailVerificationOtp(arg0: { userEmail: string; otp: string; }) {
-    //implement this method to send the OTP via email
-    // console.log('Sending email verification OTP to:', arg0.userEmail, 'OTP:', arg0.otp);
-    await this.mailerService.sendMail({
+    console.log('Sending email verification OTP to:', arg0.userEmail, 'OTP:', arg0.otp);
+    
+  try {
+     await this.mailerService.sendMail({
       to: arg0.userEmail,
       subject: 'Email Verification OTP',
       template: 'email-verification-otp',
       context: {
         otp: arg0.otp,
       },
-    }).catch((error) => console.log(
-      stringify({
-        message: error.message,
-        stack: error.stack,
-        details: error.response || error,
-      })
-    ));
+    })
 
-    Logger.log(`Email Verification OTP sent successfully to: ${arg0.userEmail}`);
+    Logger.log(`✅OTP Email sent successfully to: ${arg0.userEmail}`);
+  } catch (error) {
+    // Catch Handlebars template errors or transport errors
+    Logger.error(`Error sending email to: ${arg0.userEmail}`, JSON.stringify({
+      message: error.message,
+      stack: error.stack,
+      details: error.response || error,
+    }, null, 2));
+  }
   }
   async sendPasswordResetOtp(arg0: { userEmail: string; otp: string; }) {
     console.log('Sending password reset OTP to:', arg0.userEmail, 'OTP:', arg0.otp);

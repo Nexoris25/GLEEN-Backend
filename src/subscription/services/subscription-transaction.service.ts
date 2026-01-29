@@ -6,6 +6,7 @@ import stringify from 'safe-stable-stringify';
 import { User } from 'src/user/models/user.model';
 import { Op } from 'sequelize';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { Subscription } from 'src/subscription/models/Subscription.model';
 
 @Injectable()
 export class SubscriptionTransactionService {
@@ -224,6 +225,9 @@ async findAllByUser(userId: string) {
 
 
 
+// -----------------------
+// Active
+// -----------------------
 async findLatestByUser(userId: string) {
   return this.txnModel.findOne({
     where: {
@@ -233,6 +237,12 @@ async findLatestByUser(userId: string) {
         [Op.gt]: new Date(), // expiryDate > current date
       },
     },
+    include: [
+      {
+        model: Subscription,
+        attributes: ['id', 'name'],
+      },
+    ],
     order: [
     //  ['expiryDate', 'DESC'],   // prefer the subscription that expires last
       ['createdAt', 'DESC'],    // fallback safety

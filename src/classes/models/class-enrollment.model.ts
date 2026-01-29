@@ -1,7 +1,18 @@
 import { Table, Column, Model, DataType, ForeignKey, Default, BelongsTo } from 'sequelize-typescript';
 import { ClassEntity } from '../entities/class.entity';
+import {  DataTypes } from 'sequelize';
 
-@Table({ tableName: 'class_enrollments', timestamps: true })
+// only stores the student token
+
+@Table({ tableName: 'class_enrollments', timestamps: true, 
+   indexes: [
+    {
+      unique: true,
+      fields: ['userId', 'classId'],
+      name: 'unique_user_class_enrollment',
+    },
+  ],
+ })
 export class ClassEnrollment extends Model<ClassEnrollment> {
   @Column({ type: DataType.UUID, primaryKey: true, defaultValue: DataType.UUIDV4 })
   id: string;
@@ -10,11 +21,20 @@ export class ClassEnrollment extends Model<ClassEnrollment> {
   @Column({ type: DataType.UUID, allowNull: false })
   classId: string;
 
-  @Column({ type: DataType.UUID, allowNull: false })
-  studentId: string;
+  @Column({
+  type: DataTypes.TEXT,     
+  allowNull: false,
+  })
+  dailyRoomName?: string;
 
-  @Column({ type: DataType.BOOLEAN, defaultValue: false })
-  attended: boolean;
+  @Column({
+  type: DataTypes.TEXT,     
+  allowNull: false,
+  })
+  dailyToken?: string;
+
+  @Column({ type: DataType.UUID, allowNull: false })
+  userId: string;
 
   @BelongsTo(() => ClassEntity)
   class: ClassEntity; // Sequelize can now populate the related class

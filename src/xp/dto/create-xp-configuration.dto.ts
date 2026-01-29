@@ -66,6 +66,20 @@ export class CreateXpConfigurationDto {
   @IsNumber()
   xpValueForGreaterThan30MockQuestion: number;
 
+@ApiProperty({ description: 'XP value for mock theory' })
+@IsNumber()
+xpValueForMockTheory: number;
+
+
+@ApiProperty({ description: 'XP value for mock objective' })
+@IsNumber()
+xpValueForMockObjective: number;
+
+
+@ApiProperty({ description: 'XP value for jamb' })
+@IsNumber()
+xpValueForJamb: number;
+
   // @ApiProperty({ description: 'XP value for ≤ 10 mock JAMB questions' })
   // @IsNumber()
   // xpValueForLessThanOrEqualTo10MockJambQuestion: number;

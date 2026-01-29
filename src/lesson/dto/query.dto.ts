@@ -18,17 +18,17 @@ export class LessonQueryDto {
   @Min(1)
   limit?: number;
 
-  @ApiPropertyOptional({ format: 'uuid', description: 'Optional lesson UUID' })
+  @ApiPropertyOptional({ format: 'uuid', description: 'Optional UUID' })
   @IsOptional()
   @IsUUID('4')
   id?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by lesson title' })
+  @ApiPropertyOptional({ description: 'Filter by  title' })
   @IsOptional()
   @IsString()
   title?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by lesson subtitle' })
+  @ApiPropertyOptional({ description: 'Filter by subtitle' })
   @IsOptional()
   @IsString()
   subtitle?: string;

@@ -8,7 +8,35 @@ import {
   IsUUID,
   IsArray,
   ArrayNotEmpty,
+  ValidateIf,
+  Validate,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+import { ValidatorConstraint, ValidatorConstraintInterface, ValidationArguments } from 'class-validator';
+
+// ----------------------------
+// Custom Validator: Ensure at least one recipient field exists
+// ----------------------------
+@ValidatorConstraint({ name: 'HasRecipient', async: false })
+export class HasRecipientConstraint implements ValidatorConstraintInterface {
+  validate(_: any, args: ValidationArguments) {
+    const obj = args.object as CreateTutorMessageDto;
+    return !!(
+      obj.sendToAll ||
+      obj.studentId ||
+      obj.stateId ||
+      obj.subjectId ||
+      (obj.classIds && obj.classIds.length > 0)
+    );
+  }
+
+  defaultMessage(args: ValidationArguments) {
+    return 'You must provide at least one recipient: studentId, sendToAll, stateId, subjectId, or classIds';
+  }
+}
+
+
+
 
 export class CreateTutorMessageDto {
   @ApiProperty({
@@ -31,6 +59,7 @@ export class CreateTutorMessageDto {
     description: 'If true, message is sent to all students',
   })
   @IsBoolean()
+  @IsOptional()
   sendToAll: boolean;
 
   /* -------------------- STATE -------------------- */
@@ -77,4 +106,10 @@ export class CreateTutorMessageDto {
   @ArrayNotEmpty()
   @IsUUID('4', { each: true })
   classIds?: string[];
+
+    // ----------------------------
+  // Apply custom validator
+  // ----------------------------
+  @Validate(HasRecipientConstraint)
+  dummyField?: any; 
 }
