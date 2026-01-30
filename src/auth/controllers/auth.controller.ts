@@ -424,14 +424,18 @@ details: error.response || error,
 }
 }
 
+
+
+
+
 @Post('password/reset/validate-otp')
 @ApiOperation({ summary: 'Validate OTP for password reset' })
-@ApiBody({ schema: { example: { email: 'user@example.com', otp: '123456', newPassword: 'newPassword123' } } })
+@ApiBody({ schema: { example: { email: 'user@example.com', otp: '123456', } } })
 @ApiResponse({ status: 200, description: 'OTP validated successfully', type: ResponseDto })
 @ApiResponse({ status: 404, description: 'User not found', type: ResponseDto })
-async validatePasswordResetOtp(@Body('email') email: string, @Body('otp') otp: string, @Body('newPassword') newPassword: string) {
+async validatePasswordResetOtp(@Body('email') email: string, @Body('otp') otp: string) {
 try {
-await this.authService.resetPasswordWithOtp(email, otp, newPassword);
+await this.authService.resetPasswordWithOtpVerify(email, otp);
 return {
 status: HttpStatus.OK,
 message: 'OTP validated successfully',
@@ -448,4 +452,34 @@ details: error.response || error,
 };
 }
 }
+
+
+
+@Post('password/reset/update-password')
+@ApiOperation({ summary: 'Change password with verified otp' })
+@ApiBody({ schema: { example: { email: 'user@example.com', otp: '123456', newPassword: 'newPassword123' } } })
+@ApiResponse({ status: 200, description: 'Password changed successfully', type: ResponseDto })
+@ApiResponse({ status: 404, description: 'User not found', type: ResponseDto })
+async updatePasswordResetOtp(@Body('email') email: string, @Body('otp') otp: string, @Body('newPassword') newPassword: string) {
+try {
+  console.log(`${email}, ${otp}, ${newPassword}`)
+await this.authService.resetPasswordWithOtp(email, otp, newPassword);
+return {
+status: HttpStatus.OK,
+message: 'Password changed successfully',
+};
+} catch (error) {
+return {
+status: HttpStatus.NOT_FOUND,
+message: 'User not found',
+error: stringify({
+message: error.message,
+stack: error.stack,
+details: error.response || error,
+}),
+};
+}
+}
+
+
 }

@@ -496,6 +496,7 @@ async changePassword(
    * Verifies the OTP for password reset.
    * Marks the OTP as used and allows password reset if successful.
    */
+  
   async verifyPasswordResetOtp(email: string, otp: string): Promise<boolean> {
     // Find OTP record
     const otpRecord = await this.passwordResetOtpModel.findOne({
@@ -512,7 +513,28 @@ async changePassword(
     }
 
     // Mark OTP as used
-    await otpRecord.update({ used: true });
+   // await otpRecord.update({ used: true });
+
+    return true;
+  }
+
+    async verifyPasswordResetOtpV1(email: string, otp: string): Promise<boolean> {
+    // Find OTP record
+    const otpRecord = await this.passwordResetOtpModel.findOne({
+      where: {
+        email,
+        otp,
+        used: false,
+        expiresAt: { [Op.gt]: new Date() },
+      },
+    });
+
+    if (!otpRecord) {
+      throw new BadRequestException('Invalid or expired OTP');
+    }
+
+    // Mark OTP as used
+   await otpRecord.update({ used: true });
 
     return true;
   }
@@ -520,7 +542,22 @@ async changePassword(
   /**
    * Resets the user's password using a valid OTP.
    */
-  async resetPasswordWithOtp(email: string, otp: string, newPassword: string): Promise<void> {
+  async resetPasswordWithOtpVerify(
+  email: string,
+  otp: string,
+): Promise<{ success: boolean; message: string }> {
+  // Verify OTP
+  await this.verifyPasswordResetOtp(email, otp);
+
+  return {
+    success: true,
+    message: 'OTP verified successfully. You may now reset your password.',
+  };
+}
+
+
+
+    async resetPasswordWithOtp(email: string, otp: string, newPassword: string): Promise<void> {
     // Verify OTP
     await this.verifyPasswordResetOtp(email, otp);
     const user = await this.userService.findOneByEmail(email);
@@ -531,6 +568,5 @@ async changePassword(
     // Update user's password
     await this.userService.updatePassword(user.id, newPassword);
   }
-
 
 }
