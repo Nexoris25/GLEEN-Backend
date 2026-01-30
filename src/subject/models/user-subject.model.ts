@@ -3,7 +3,7 @@ import { Table, Column, Model, ForeignKey, DataType, Unique, BelongsToMany, Belo
 import { Subject } from './subject.model';
 import { User } from 'src/user/models/user.model';
 
-@Table({ tableName: 'users_subjects', timestamps: false })
+@Table({ tableName: 'users_subjects', timestamps: true })
 export class UserSubject extends Model<UserSubject> {
   @ForeignKey(() => User)
   @Unique('user_subject_unique')

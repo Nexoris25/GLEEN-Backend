@@ -167,7 +167,7 @@ getLiveClasses() {
   enroll(@Req() req, @Body() dto: EnrollDto) {
     return this.classesService.enroll(req.user.id, dto.classId);
   }
-
+/*
 
   // MARK ATTENDANCE
   @ApiOperation({ summary: 'Mark attendance for a class (Student only)' })
@@ -178,5 +178,5 @@ getLiveClasses() {
   markAttendance(@Req() req, @Body() dto: AttendanceDto) {
     return this.classesService.markAttendance(dto.classId, req.user.id);
   }
-
+*/
 }

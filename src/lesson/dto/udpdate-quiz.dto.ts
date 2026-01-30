@@ -1,16 +1,20 @@
 //write quiz questions dto
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsUUID, IsInt, Min } from 'class-validator';
+import { Type } from 'class-transformer';
 export class UpdateQuizDto {
     @ApiPropertyOptional()
     @IsOptional()
     @IsString()
     title: string;
 
-    @ApiPropertyOptional()
-    @IsOptional()
-    @IsString()
-    duration: string;
+
+      @ApiProperty({ type: 'integer', example: 30 })
+        @IsNotEmpty()
+        @IsInt()
+        @Min(1)
+        @Type(() => Number) 
+        duration: number;
 
     @ApiPropertyOptional()
     @IsOptional()
@@ -24,11 +28,11 @@ export class UpdateQuizDto {
     @IsOptional()
     @IsString()
     status: string = 'PENDING';
-
+    
     @ApiPropertyOptional()
     @IsOptional()
     @IsString()
-    instuctions?: string;
+    instructions?: string;
 
     @ApiPropertyOptional()
     @IsOptional()

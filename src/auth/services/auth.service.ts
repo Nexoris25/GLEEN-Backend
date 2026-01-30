@@ -259,23 +259,23 @@ if (createUserDto.role === 'SUPER_ADMIN') {
       throw new BadRequestException('Invalid or expired reset password token');
     }
   }
-
-  async changePassword(
-    userId: string,
-    oldPassword: string,
-    newPassword: string,
-  ): Promise<void> {
-    try {
-      const userRetrieve = await this.userService.findOneById(userId);
-      const user = await this.validateUser(userRetrieve.email, oldPassword);
-      if (!user) {
-        throw new NotFoundException('User credential compromised');
-      }
-      await this.userService.updatePassword(userId, newPassword);
-    } catch (error) {
-      throw new BadRequestException('Invalid or incorrect old password');
-    }
+async changePassword(
+  userId: string,
+  oldPassword: string,
+  newPassword: string,
+): Promise<void> {
+  const userRetrieve = await this.userService.findOneById(userId);
+  if (!userRetrieve) {
+    throw new NotFoundException('User not found');
   }
+
+  const isValid = await this.validateUser(userRetrieve.email, oldPassword);
+  if (!isValid) {
+    throw new BadRequestException('Invalid or incorrect old password');
+  }
+
+  await this.userService.updatePassword(userId, newPassword);
+}
 
   private async generateJwtToken(user: User): Promise<string> {
     const payload = { username: user.username, sub: user.id };

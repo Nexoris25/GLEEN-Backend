@@ -482,6 +482,21 @@ console.warn(`Class with ID ${id} not found`);
 return { success: false, message: 'Class not found' };
 }
 
+try {
+await axios.delete(`${this.DAILY_API_URL}/${cls.roomName}`, {
+headers: {
+Authorization: `Bearer ${this.DAILY_API_KEY}`,
+},
+});
+} catch (err) {
+// Daily returns 404 if room already deleted — allow DB cleanup
+if (err.response?.status !== 404) {
+throw new BadRequestException(
+'Failed to delete room on Daily.co',
+);
+}
+}
+
 await cls.destroy();
 console.log('Class deleted:', id);
 return { success: true, message: 'Class deleted successfully' };

@@ -20,11 +20,13 @@ import { CreateSubjectDto } from '../dto/create-subject.dto';
 import { UpdateSubjectDto } from '../dto/update-subject.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { Express } from 'express';
+import { LessonQueryDto } from 'src/lesson/dto/query.dto';
 import { RolesGuard } from 'src/auth/GuardsDecorMiddleware/roles.guard';
 import { JwtAuthGuard } from 'src/auth/GuardsDecorMiddleware/jwt-auth.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { GetUser } from 'src/shared-types/user.decorator';
 import { User } from 'src/user/models/user.model';
+import { Subject } from '../models/subject.model';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ResponseDto, SubjectArrayResponseDto, SubjectResponseDto, UserSubjectArrayResponseDto, UserSubjectResponseDto } from 'src/shared-types/response.dto';
 import stringify from "safe-stable-stringify";
@@ -82,14 +84,17 @@ return this.subjectService.create(dto, user.id, avatar);
 
 @Get()
 @ApiOperation({
-summary: 'Get all subjects (optional search by subjectId, title, description)',
+  summary:
+    'Get all subjects. Use ?id=classId (UUID) to fetch a single lesson, title, description for searching',
 })
-@ApiQuery({ name: 'search', required: false })
-async findAll(@Query() query: PaginationDto & { search?: string }) {
-return this.subjectService.search(query);
+@ApiResponse({
+  status: 200,
+  description: 'List of subjects or a single subject',
+  type: Subject,
+})
+async getAllClasses(@Query() query: LessonQueryDto) {
+  return this.subjectService.findAllWithDetails(query);
 }
-
-
 
 /*
 @Get(':id')

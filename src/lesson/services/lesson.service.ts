@@ -8,7 +8,7 @@ import { LessonSearchDto } from '../dto/lesson-search.dto';
 import { LessonComment } from '../models/lesson_comment.model';
 import { LessonTracking } from '../models/lesson_tracking.model';
 import { CreateLessonCommentDto } from '../dto/create-lesson-comment.dto';
-import { CreateLessonTrackingDto } from '../dto/create-lesson-tracking.dto';
+//import { CreateLessonTrackingDto } from '../dto/create-lesson-tracking.dto';
 import { UpdateLessonTrackingDto } from '../dto/update-lesson-tracking.dto';
 import { UpdateLessonCommentDto } from '../dto/update-lesson-comment.dto';
 import { LessonQueryDto } from '../dto/query.dto';
@@ -18,9 +18,6 @@ import { Subject } from 'src/subject/models/subject.model';
 import { User } from 'src/user/models/user.model';
 import { LessonTopic } from '../models/lesson_topic.model';
 import { BunnyService } from 'src/common/services/bunny-all.service';
-
-
-
 
 
 @Injectable()
@@ -40,7 +37,7 @@ export class LessonService {
   
 async create(createLessonDto: CreateLessonDto, userId: string, avatarOrCover?: Express.Multer.File,): Promise<Lesson> {
 try {
- const { subjectId, title } = createLessonDto;
+const { subjectId, title } = createLessonDto;
 const subjectExists = await Subject.findOne({ where: { id: subjectId } });
 const userExists = await User.findOne({ where: { id: userId } });
 
@@ -74,7 +71,6 @@ imageUrl = await this.bunnyService.upload({
         directory: 'lesson-topics',
       });
 
-  console.log('Uploading image...', imageUrl);
 }
 const lesson = await this.lessonModel.create({ ...createLessonDto, userId, avatarOrCover: imageUrl, }, { isNewRecord: true, userId });
 

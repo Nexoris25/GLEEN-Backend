@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiHideProperty } from '@nestjs/swagger';
 import {
   BeforeCreate,
   BelongsToMany,
@@ -10,7 +10,7 @@ import {
   IsUUID,
   Model,
   PrimaryKey,
-  Table,
+  Table, Unique,
 } from 'sequelize-typescript';
 import { v4 as uuidv4 } from 'uuid';
 import { Subject } from 'src/subject/models/subject.model';
@@ -30,19 +30,21 @@ export class Quizzes extends Model {
   id: string;
 
   @ApiProperty()
-  @Column({
-    type: DataType.STRING,
-    allowNull: false,
-  })
-  title!: string;
+  @Unique 
+  @Column({ type: DataType.STRING, allowNull: false })
+  title: string;
 
-
-  @ApiProperty()
-  @Column({
-    type: DataType.STRING,
-    allowNull: false,
-  })
-  duration: string;
+@ApiProperty({
+description: 'Duration in seconds',
+example: 120,
+minimum: 0,
+})
+@Column({
+type: DataType.INTEGER,
+allowNull: false,           // ← makes it required in database
+defaultValue: 0,            // optional but often useful
+})
+duration: number;
 
   @ApiProperty()
   @Column({

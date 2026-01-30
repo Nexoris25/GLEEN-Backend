@@ -32,4 +32,9 @@ export class LessonQueryDto {
   @IsOptional()
   @IsString()
   subtitle?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by description' })
+  @IsOptional()
+  @IsString()
+  description?: string;
 }

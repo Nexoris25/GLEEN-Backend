@@ -10,6 +10,7 @@ import { BunnyService } from 'src/common/services/bunny-all.service';
 import stringify from "safe-stable-stringify";
 import { UserSubject } from '../models/user-subject.model';
 import { validate as isUUID } from 'uuid';
+import { LessonQueryDto } from 'src/lesson/dto/query.dto';
 
 @Injectable()
 export class SubjectService {
@@ -23,6 +24,7 @@ private readonly userModel: typeof User,
 private readonly userSubjectModel: typeof UserSubject,
 ) {}
 
+private readonly MAX_LIMIT = 500;
 
   async create(
   dto: CreateSubjectDto,
@@ -229,6 +231,103 @@ async search(options: {
 
 
 
+async findAllWithDetails(query?: LessonQueryDto) {
+  const limit = Math.min(query?.limit ?? 10, this.MAX_LIMIT);
+  const offset = query?.offset ?? 0;
+
+  // 🔹 Dynamic WHERE
+  const where: any = {};
+  if (query?.id) where.id = query.id;
+
+  if (query?.title || query?.description) {
+    where[Op.or] = [
+      query?.title && { title: { [Op.iLike]: `%${query.title}%` } },
+      query?.description && {
+        description: { [Op.iLike]: `%${query.description}%` },
+      },
+    ].filter(Boolean);
+  }
+
+  const result = await this.subjectModel.findAndCountAll({
+    where,
+    attributes: {
+      include: [
+        // 🔹 Total students linked to subject
+        [
+          literal(`(
+            SELECT COUNT(DISTINCT us."userId")
+            FROM "users_subjects" us
+            WHERE us."subjectId" = "Subject"."id"
+          )`),
+          'totalStudents',
+        ],
+
+        // 🔹 Last 4 students (lesson-style JSON aggregation)
+        [
+          literal(`(
+            SELECT COALESCE(json_agg(u ORDER BY u.joined_at DESC), '[]'::json)
+            FROM (
+              SELECT
+                usr.id,
+                usr."fullName",
+                usr.avatar,
+                MAX(us."createdAt") AS joined_at
+              FROM "users_subjects" us
+              JOIN "users" usr ON usr.id = us."userId"
+              WHERE us."subjectId" = "Subject"."id"
+              GROUP BY usr.id, usr."fullName", usr.avatar
+              ORDER BY joined_at DESC
+              LIMIT 4
+            ) u
+          )`),
+          'recentStudents',
+        ],
+        [
+      literal(`(
+        SELECT json_build_object(
+          'id', usr.id,
+          'fullName', usr."fullName",
+          'avatar', usr.avatar
+        )
+        FROM "users" usr
+        WHERE usr.id = "Subject"."tutorId"
+        LIMIT 1
+      )`),
+      'tutor',
+    ],
+      ],
+    },
+    order: [['createdAt', 'DESC']],
+    limit: query?.id ? undefined : limit,
+    offset: query?.id ? undefined : offset,
+    subQuery: false,
+  });
+
+  // 🔹 Single subject mode
+  if (query?.id) {
+    if (!result.rows.length) {
+      throw new NotFoundException(`Subject with id ${query.id} not found`);
+    }
+    return result.rows[0];
+  }
+
+  // 🔹 Pagination metadata
+  const total = Array.isArray(result.count)
+    ? result.count.reduce((sum, item) => sum + Number(item.count), 0)
+    : result.count;
+
+  return {
+    data: result.rows,
+    meta: {
+      totalItems: total,
+      limit,
+      offset,
+      currentCount: result.rows.length,
+      hasNext: offset + limit < total,
+      hasPrevious: offset > 0,
+    },
+  };
+}
 
 
 

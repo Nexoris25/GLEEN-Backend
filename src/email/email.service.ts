@@ -81,9 +81,6 @@ export class MailService {
   };
 
   try {
-    Logger.log(`Sending email to: ${metadata.userEmail}, using template: ${templateName}.hbs`);
-    Logger.log(`Verification link: ${metadata.link}`);
-
     await this.mailerService.sendMail({
       to: metadata.userEmail,
       subject: 'Nexoristech.com Account Creation Notification',
@@ -99,10 +96,7 @@ export class MailService {
       stack: error.stack,
       details: error.response || error,
     }, null, 2));
-  }
-}
-
-
+  }}
 
   async sendForgotPasswordEmail(metadata: {
     userEmail: string;
