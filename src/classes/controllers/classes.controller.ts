@@ -34,7 +34,7 @@ import { LessonQueryDto } from 'src/lesson/dto/query.dto';
 
 @ApiTags('Classes')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('classes')
 export class ClassesController {
   constructor(private readonly classesService: ClassesService) {}
@@ -44,7 +44,7 @@ export class ClassesController {
   @ApiBody({ type: CreateClassDto })
   @ApiResponse({ status: 201, type: ClassResponseDto })
   @Post()
-  @Roles('TUTOR', 'ADMIN', 'SUPER_ADMIN')
+ // @Roles('TUTOR', 'ADMIN', 'SUPER_ADMIN')
   async create(@Body() dto: CreateClassDto) {
     return this.classesService.create(dto);
   }
@@ -60,7 +60,7 @@ export class ClassesController {
 @ApiOperation({ summary: 'Get previous classes' })
 @ApiResponse({ status: 200, type: [ClassResponseDto] })
 @Get('previous')
-@Roles('STUDENT', 'TUTOR', 'ADMIN', 'SUPER_ADMIN')
+//@Roles('STUDENT', 'TUTOR', 'ADMIN', 'SUPER_ADMIN')
 getPreviousClasses() {
   return this.classesService.findPrevious();
 }
@@ -69,7 +69,7 @@ getPreviousClasses() {
 @ApiOperation({ summary: 'Get upcoming classes' })
 @ApiResponse({ status: 200, type: [ClassResponseDto] })
 @Get('upcoming')
-@Roles('STUDENT', 'TUTOR', 'ADMIN', 'SUPER_ADMIN')
+//@Roles('STUDENT', 'TUTOR', 'ADMIN', 'SUPER_ADMIN')
 getUpcomingClasses() {
   return this.classesService.findUpcoming();
 }
@@ -78,7 +78,7 @@ getUpcomingClasses() {
 @ApiOperation({ summary: 'Get live classes' })
 @ApiResponse({ status: 200, type: [ClassResponseDto] })
 @Get('live')
-@Roles('STUDENT', 'TUTOR', 'ADMIN', 'SUPER_ADMIN')
+//@Roles('STUDENT', 'TUTOR', 'ADMIN', 'SUPER_ADMIN')
 getLiveClasses() {
   return this.classesService.findLive();
 }
@@ -143,27 +143,43 @@ getLiveClasses() {
   @ApiOperation({ summary: 'Update a class by ID (Teacher / Admin)' })
   @ApiBody({ type: UpdateClassDto })
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('TUTOR', 'ADMIN')
+  //@Roles('TUTOR', 'ADMIN')
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateClassDto) {
     return this.classesService.update(id, dto);
   }
 
-  // DELETE CLASS
-  @ApiOperation({ summary: 'Delete a class by ID (Teacher / Admin)' })
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('TUTOR', 'ADMIN')
-  @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id') id: string) {
-    return this.classesService.remove(id);
-  }
+
+  @Get(':id/test')
+test(@Param('id') id: string) {
+  console.log('HIT!', id);
+  return { ok: true };
+}
+
+// DELETE CLASS
+@ApiOperation({ summary: 'Delete a class by ID (Teacher / Admin)' })
+@ApiResponse({ status: 201, type: ClassResponseDto })
+@Delete(':id')
+//@Roles('TUTOR', 'ADMIN')
+@HttpCode(HttpStatus.NO_CONTENT)
+
+remove(
+@Req() req,
+@Param('id') id: string,
+) {
+  console.log('Full JWT payload decoded in req.user:', JSON.stringify(req.user, null, 2));
+console.log('REQ.USER 👉', req.user);
+console.log('CLASS ID 👉', id);
+
+
+return this.classesService.remove(id);
+}
 
   // ENROLL STUDENT
   @ApiOperation({ summary: 'Enroll student into a class (Student only)' })
   @ApiBody({ type: EnrollDto })
   @Post('enroll')
-  @Roles('USER')
+  //@Roles('USER')
   enroll(@Req() req, @Body() dto: EnrollDto) {
     return this.classesService.enroll(req.user.id, dto.classId);
   }

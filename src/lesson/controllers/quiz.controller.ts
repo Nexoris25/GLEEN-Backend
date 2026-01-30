@@ -12,17 +12,19 @@ import { CreateQuizCommentDto } from '../dto/create-quiz-comment.dto';
 import { UpdateQuizCommentDto } from '../dto/update-quiz-comment.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
+import { Roles } from 'src/auth/decorators/roles.decorator';
 
 
 @ApiTags('Quizzes')
 @ApiBearerAuth()
-@Controller('quizzes')
 @UseGuards(JwtAuthGuard)
+@Controller('quizzes')
 export class QuizController {
 constructor(private readonly quizzesService: QuizzesService) { }
 
 @Post()
 @ApiOperation({ summary: 'Create a new quiz' })
+@Roles('ADMIN', 'TUTOR')
 @ApiConsumes('multipart/form-data')  
 @UseInterceptors(
 FileInterceptor('avatar', {
@@ -354,6 +356,7 @@ details: error.response || error,
 }
 }
 @Delete('comments/:id')
+@Roles('TUTOR', 'ADMIN')
 @ApiOperation({ summary: 'Delete a quiz comment by ID' })
 @ApiParam({ name: 'id', description: 'Comment ID' })
 @ApiResponse({ status: 200, description: 'Quiz comment deleted successfully', schema: { example: { status: 200, message: 'Quiz comment deleted successfully' } } })

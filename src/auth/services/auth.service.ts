@@ -278,7 +278,7 @@ async changePassword(
 }
 
   private async generateJwtToken(user: User): Promise<string> {
-    const payload = { username: user.username, sub: user.id };
+    const payload = { username: user.username, sub: user.id, role: user.role,  };
     const secretKey = process.env.JWT_SECRET_KEY || 'default-secret-key';
     return jwt.sign(payload, secretKey, { expiresIn: '30d' });
   }
