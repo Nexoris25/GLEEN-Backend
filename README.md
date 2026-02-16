@@ -23,71 +23,223 @@
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+GLEEN Backend is a NestJS + Sequelize (PostgreSQL) API. This document explains how to set it up locally for development using Docker for the database and Adminer as a DB UI.
 
-## Project setup
+---
+
+## Prerequisites
+
+- Node.js (recommend >= 18)
+- npm
+- Docker and Docker Compose
+- Git
+
+---
+
+## 1. Clone the repository
 
 ```bash
-$ npm install
+git clone <repo-url>
+cd GLEEN-Backend
 ```
 
-## Compile and run the project
+---
 
-Recommended setup for GLEEN API (final)
+## 2. Environment configuration
 
-Terminal 1
+The application reads configuration from `.env` at the project root.
 
-npm run build:watch
+1. Create `.env` (or update the existing one) with at least the database and JWT settings required for local dev.
 
+   ```env
+   # Database configuration for development
+   DEV_DB_USERNAME='gleen_db'
+   DEV_DB_PASSWORD=CBKt6N3MJi4D6w3f
+   DEV_DB_NAME='gleen_db'
+   DEV_DB_HOSTNAME=127.0.0.1
+   DEV_DB_DIALECT=postgres
+   DEV_DB_PORT=5433
 
-Terminal 2
+   # Example JWT settings (adjust as needed)
+   JWT_SECRET_KEY=your-local-jwt-secret
+   JWT_EXPIRATION_TIME=30d
+   ```
 
-node --max-old-space-size=1024 dist/main.js
+2. Make sure the file name is exactly `.env` and it lives in the project root (`/Users/user/nexoris/GLEEN-Backend`).
 
-npm run build
+The Nest config in `src/config.ts` will load this file automatically via `dotenv`.
+
+---
+
+## 3. Start the local Postgres + Adminer stack
+
+For local development, Postgres and Adminer are provided via `docker-compose.dev.yml`.
+
+From the project root:
+
+```bash
+docker compose -f docker-compose.dev.yml up -d
+```
+
+This will start:
+
+- `gleen-dev-postgres` on `127.0.0.1:5433` (mapped to container port 5432)
+- `gleen-dev-adminer` on `http://localhost:8080`
+
+To check the status:
+
+```bash
+docker compose -f docker-compose.dev.yml ps
+```
+
+You should see ports similar to:
+
+```text
+gleen-dev-postgres ... 0.0.0.0:5433->5432/tcp
+gleen-dev-adminer  ... 0.0.0.0:8080->8080/tcp
+```
+
+### Accessing the database via Adminer
+
+Open `http://localhost:8080` in a browser and use:
+
+- System: PostgreSQL
+- Server: `postgres`
+- Username: `gleen_db`
+- Password: `CBKt6N3MJi4D6w3f`
+- Database: `gleen_db`
+
+This is the same database the Nest application will use in development.
+
+---
+
+## 4. Install Node dependencies
+
+From the project root:
+
+```bash
+npm install
+```
+
+This will install all runtime and dev dependencies defined in `package.json`.
+
+---
+
+## 5. Run database migrations and seeds (optional but recommended)
+
+The project uses `sequelize-cli` for migrations and seeds. Make sure the DB stack is running before executing these.
+
+Run migrations:
+
+```bash
+npm run migrate:up
+```
+
+Run seeds (if you want initial data):
+
+```bash
+npm run db:seed:all
+```
+
+You can undo the last migration or seed via:
+
+```bash
+npm run migrate:undo
+npm run db:seed:undo
+```
+
+---
+
+## 6. Start the application locally
+
+### Development mode (recommended for daily work)
+
+```bash
+npm run start:dev
+```
+
+This runs Nest in watch mode: it recompiles and restarts on file changes.
+
+### Plain start (no watch)
+
+```bash
 npm run start
-
-
-set NODE_OPTIONS=--max-old-space-size=512 && npm run start:dev
-
-
-
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
 ```
 
-## Run tests
+### Production-like run
+
+Build the project:
+
+```bash
+npm run build
+```
+
+Then run the built JS:
+
+```bash
+npm run start:prod
+```
+
+---
+
+## 7. Running tests
 
 ```bash
 # unit tests
-$ npm run test
+npm run test
 
 # e2e tests
-$ npm run test:e2e
+npm run test:e2e
 
-# test coverage
-$ npm run test:cov
+# coverage
+npm run test:cov
 ```
 
-## Deployment
+---
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## 8. Useful commands
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+- Rebuild continuously during development:
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+  ```bash
+  npm run build:watch
+  ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+- Run migrations only:
+
+  ```bash
+  npm run migrate:up
+  ```
+
+- Seed database:
+
+  ```bash
+  npm run db:seed:all
+  ```
+
+- Stop and remove the dev DB stack:
+
+  ```bash
+  docker compose -f docker-compose.dev.yml down -v
+  ```
+
+---
+
+## 9. Local setup checklist
+
+If something is not working, verify:
+
+- `.env` exists in the project root and has the `DEV_DB_*` variables.
+- `docker compose -f docker-compose.dev.yml ps` shows Postgres on `0.0.0.0:5433->5432/tcp`.
+- You can connect with:
+
+  ```bash
+  psql "postgresql://gleen_db:CBKt6N3MJi4D6w3f@127.0.0.1:5433/gleen_db"
+  ```
+
+- `npm run start:dev` shows Nest starting without `SequelizeConnectionError`.
+
+Once all of the above are true, you should have a fully working local GLEEN backend environment.
 
 ## Resources
 

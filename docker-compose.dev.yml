@@ -1,0 +1,32 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: gleen-dev-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DEV_DB_USERNAME}
+      POSTGRES_PASSWORD: ${DEV_DB_PASSWORD}
+      POSTGRES_DB: ${DEV_DB_NAME}
+    ports:
+      - "${DEV_DB_PORT:-5433}:5432"
+    volumes:
+      - gleen_dev_db_data:/var/lib/postgresql/data
+
+  adminer:
+    image: adminer
+    container_name: gleen-dev-adminer
+    restart: unless-stopped
+    environment:
+      ADMINER_DEFAULT_DB_DRIVER: pgsql
+      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DEFAULT_USER: ${DEV_DB_USERNAME}
+      ADMINER_DEFAULT_PASSWORD: ${DEV_DB_PASSWORD}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+volumes:
+  gleen_dev_db_data:

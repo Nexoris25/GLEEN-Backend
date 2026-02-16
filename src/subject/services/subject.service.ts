@@ -1,86 +1,87 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException,
-  InternalServerErrorException, } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Op, UniqueConstraintError,  literal, } from 'sequelize';
+import { Op, UniqueConstraintError, literal } from 'sequelize';
 import { Subject } from '../models/subject.model';
 import { CreateSubjectDto } from '../dto/create-subject.dto';
 import { UpdateSubjectDto } from '../dto/update-subject.dto';
 import { User } from 'src/user/models/user.model';
 import { BunnyService } from 'src/common/services/bunny-all.service';
-import stringify from "safe-stable-stringify";
+import stringify from 'safe-stable-stringify';
 import { UserSubject } from '../models/user-subject.model';
 import { validate as isUUID } from 'uuid';
 import { LessonQueryDto } from 'src/lesson/dto/query.dto';
 
 @Injectable()
 export class SubjectService {
-constructor(
-@InjectModel(Subject)
-private readonly subjectModel: typeof Subject,
-private readonly bunnyService: BunnyService, 
-@InjectModel(User)
-private readonly userModel: typeof User,
-@InjectModel(UserSubject)
-private readonly userSubjectModel: typeof UserSubject,
-) {}
+  constructor(
+    @InjectModel(Subject)
+    private readonly subjectModel: typeof Subject,
+    private readonly bunnyService: BunnyService,
+    @InjectModel(User)
+    private readonly userModel: typeof User,
+    @InjectModel(UserSubject)
+    private readonly userSubjectModel: typeof UserSubject,
+  ) {}
 
-private readonly MAX_LIMIT = 500;
+  private readonly MAX_LIMIT = 500;
 
   async create(
-  dto: CreateSubjectDto,
-  authUserId: string,
-  avatar?: Express.Multer.File,
-): Promise<Subject> {
-
-  // Validate tutor
-  if (dto.tutorId) {
-    const tutor = await this.userModel.findOne({
-      where: { id: dto.tutorId, role: 'TUTOR' },
-    });
-
-    if (!tutor) {
-      throw new BadRequestException(
-        `Tutor with id ${dto.tutorId} does not exist or is not a tutor`,
-      );
-    }
-  }
-
-  const subjectData: Partial<Subject> = {
-    ...dto,
-    userId: authUserId,
-  };
-
-  // Upload avatar
-  if (avatar) {
-    try {
-      const avatarUrl = await this.bunnyService.upload({
-        buffer: avatar.buffer,
-        mimeType: avatar.mimetype,
-        originalName: avatar.originalname,
-        directory: 'subjects',
+    dto: CreateSubjectDto,
+    authUserId: string,
+    avatar?: Express.Multer.File,
+  ): Promise<Subject> {
+    // Validate tutor
+    if (dto.tutorId) {
+      const tutor = await this.userModel.findOne({
+        where: { id: dto.tutorId, role: 'TUTOR' },
       });
-      
-      subjectData.avatar = avatarUrl;
-    } catch (err) {
-      throw new BadRequestException('Failed to upload subject avatar');
+
+      if (!tutor) {
+        throw new BadRequestException(
+          `Tutor with id ${dto.tutorId} does not exist or is not a tutor`,
+        );
+      }
+    }
+
+    const subjectData: Partial<Subject> = {
+      ...dto,
+      userId: authUserId,
+    };
+
+    // Upload avatar
+    if (avatar) {
+      try {
+        const avatarUrl = await this.bunnyService.upload({
+          buffer: avatar.buffer,
+          mimeType: avatar.mimetype,
+          originalName: avatar.originalname,
+          directory: 'subjects',
+        });
+
+        subjectData.avatar = avatarUrl;
+      } catch (err) {
+        throw new BadRequestException('Failed to upload subject avatar');
+      }
+    }
+
+    try {
+      return await this.subjectModel.create(subjectData);
+    } catch (error) {
+      if (error instanceof UniqueConstraintError) {
+        const field = error.errors[0]?.path || 'Unknown field';
+        throw new ConflictException(
+          `A subject with this ${field} already exists`,
+        );
+      }
+      throw error;
     }
   }
-
-  try {
-    return await this.subjectModel.create(subjectData);
-  } catch (error) {
-    if (error instanceof UniqueConstraintError) {
-      const field = error.errors[0]?.path || 'Unknown field';
-      throw new ConflictException(
-        `A subject with this ${field} already exists`,
-      );
-    }
-    throw error;
-  }
-}
-
-
-
 
   async findById(id: string) {
     const subject = await this.subjectModel.findByPk(id);
@@ -88,125 +89,123 @@ private readonly MAX_LIMIT = 500;
     return subject;
   }
 
-  async update(id: string, dto: UpdateSubjectDto, avatar?: Express.Multer.File,) {
+  async update(
+    id: string,
+    dto: UpdateSubjectDto,
+    avatar?: Express.Multer.File,
+  ) {
     const subject = await this.findById(id);
 
     if (dto.tutorId) {
       const tutor = await this.userModel.findByPk(dto.tutorId);
-      if (!tutor) throw new BadRequestException(`Tutor with ID '${dto.tutorId}' not found`);
+      if (!tutor)
+        throw new BadRequestException(
+          `Tutor with ID '${dto.tutorId}' not found`,
+        );
 
-
-  
-    const tutor1 = await this.userModel.findOne({
-      where: { id: dto.tutorId, role: 'TUTOR' },
-    });
-    if (!tutor1) {
-      throw new BadRequestException(
-        `Tutor with id ${dto.tutorId} does not exist or is not a tutor`,
-      );
-    }
+      const tutor1 = await this.userModel.findOne({
+        where: { id: dto.tutorId, role: 'TUTOR' },
+      });
+      if (!tutor1) {
+        throw new BadRequestException(
+          `Tutor with id ${dto.tutorId} does not exist or is not a tutor`,
+        );
+      }
     }
 
     let avatarUrl: string | null = null;
-const updatedData: any = { ...dto };
-if (avatar) {
-avatarUrl = await this.bunnyService.upload({
-    buffer: avatar.buffer,
-    mimeType: avatar.mimetype,
-    originalName: avatar.originalname,
-    directory: 'subjects',
-  });
+    const updatedData: any = { ...dto };
+    if (avatar) {
+      avatarUrl = await this.bunnyService.upload({
+        buffer: avatar.buffer,
+        mimeType: avatar.mimetype,
+        originalName: avatar.originalname,
+        directory: 'subjects',
+      });
 
-  updatedData.avatar = avatarUrl;
-}
+      updatedData.avatar = avatarUrl;
+    }
 
     try {
       return await subject.update(updatedData);
     } catch (error) {
       if (error instanceof UniqueConstraintError) {
         const field = error.errors[0]?.path || 'Unknown field';
-        throw new ConflictException(`A subject with this ${field} already exists`);
+        throw new ConflictException(
+          `A subject with this ${field} already exists`,
+        );
       }
       throw error;
     }
   }
 
-
   async remove(id: string): Promise<void> {
-  if (!isUUID(id)) {
-    throw new BadRequestException('Invalid subject ID');
-  }
-
-  try {
-    const subject = await this.subjectModel.findByPk(id);
-
-    if (!subject) {
-      throw new NotFoundException('Subject not found');
+    if (!isUUID(id)) {
+      throw new BadRequestException('Invalid subject ID');
     }
 
-    await subject.destroy(); // soft delete (paranoid: true)
-  } catch (error) {
-    if (
-      error instanceof BadRequestException ||
-      error instanceof NotFoundException
-    ) {
-      throw error;
+    try {
+      const subject = await this.subjectModel.findByPk(id);
+
+      if (!subject) {
+        throw new NotFoundException('Subject not found');
+      }
+
+      await subject.destroy(); // soft delete (paranoid: true)
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException('Failed to delete subject');
     }
-
-    throw new InternalServerErrorException(
-      'Failed to delete subject',
-    );
   }
-}
-
-
 
   async restore(id: string) {
-    const subject = await this.subjectModel.findOne({ where: { id }, paranoid: false });
+    const subject = await this.subjectModel.findOne({
+      where: { id },
+      paranoid: false,
+    });
     if (!subject) throw new NotFoundException('Subject not found');
     await subject.restore();
     return subject;
   }
 
+  async search(options: { search?: string; limit?: number; offset?: number }) {
+    const { search, limit, offset } = options;
 
-async search(options: {
-  search?: string;
-  limit?: number;
-  offset?: number;
-}) {
-  const { search, limit, offset } = options;
+    const isUUID =
+      search &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        search,
+      );
 
-  const isUUID =
-    search &&
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-      search,
-    );
+    const where = search
+      ? {
+          [Op.or]: [
+            ...(isUUID ? [{ id: search }] : []), // ✅ exact UUID match
+            { title: { [Op.iLike]: `%${search}%` } },
+            { description: { [Op.iLike]: `%${search}%` } },
+          ],
+        }
+      : {};
 
-  const where = search
-    ? {
-        [Op.or]: [
-          ...(isUUID ? [{ id: search }] : []), // ✅ exact UUID match
-          { title: { [Op.iLike]: `%${search}%` } },
-          { description: { [Op.iLike]: `%${search}%` } },
-        ],
-      }
-    : {};
-
-  return this.subjectModel.findAll({
-    where,
-    limit,
-    offset,
-    include: [
-      {
-        model: User,
-        as: 'tutor',
-        attributes: ['id', 'fullName', 'avatar'],
-      },
-    ],
-  });
-}
-
-
+    return this.subjectModel.findAll({
+      where,
+      limit,
+      offset,
+      include: [
+        {
+          model: User,
+          as: 'tutor',
+          attributes: ['id', 'fullName', 'avatar'],
+        },
+      ],
+    });
+  }
 
   /*
   async search(query: string) {
@@ -223,48 +222,40 @@ async search(options: {
   }
   */
 
+  async findAllWithDetails(query?: LessonQueryDto) {
+    const limit = Math.min(query?.limit ?? 10, this.MAX_LIMIT);
+    const offset = query?.offset ?? 0;
 
+    // 🔹 Dynamic WHERE
+    const where: any = {};
+    if (query?.id) where.id = query.id;
 
+    if (query?.title || query?.description) {
+      where[Op.or] = [
+        query?.title && { title: { [Op.iLike]: `%${query.title}%` } },
+        query?.description && {
+          description: { [Op.iLike]: `%${query.description}%` },
+        },
+      ].filter(Boolean);
+    }
 
-
-
-
-
-
-async findAllWithDetails(query?: LessonQueryDto) {
-  const limit = Math.min(query?.limit ?? 10, this.MAX_LIMIT);
-  const offset = query?.offset ?? 0;
-
-  // 🔹 Dynamic WHERE
-  const where: any = {};
-  if (query?.id) where.id = query.id;
-
-  if (query?.title || query?.description) {
-    where[Op.or] = [
-      query?.title && { title: { [Op.iLike]: `%${query.title}%` } },
-      query?.description && {
-        description: { [Op.iLike]: `%${query.description}%` },
-      },
-    ].filter(Boolean);
-  }
-
-  const result = await this.subjectModel.findAndCountAll({
-    where,
-    attributes: {
-      include: [
-        // 🔹 Total students linked to subject
-        [
-          literal(`(
+    const result = await this.subjectModel.findAndCountAll({
+      where,
+      attributes: {
+        include: [
+          // 🔹 Total students linked to subject
+          [
+            literal(`(
             SELECT COUNT(DISTINCT us."userId")
             FROM "users_subjects" us
             WHERE us."subjectId" = "Subject"."id"
           )`),
-          'totalStudents',
-        ],
+            'totalStudents',
+          ],
 
-        // 🔹 Last 4 students (lesson-style JSON aggregation)
-        [
-          literal(`(
+          // 🔹 Last 4 students (lesson-style JSON aggregation)
+          [
+            literal(`(
             SELECT COALESCE(json_agg(u ORDER BY u.joined_at DESC), '[]'::json)
             FROM (
               SELECT
@@ -280,10 +271,10 @@ async findAllWithDetails(query?: LessonQueryDto) {
               LIMIT 4
             ) u
           )`),
-          'recentStudents',
-        ],
-        [
-      literal(`(
+            'recentStudents',
+          ],
+          [
+            literal(`(
         SELECT json_build_object(
           'id', usr.id,
           'fullName', usr."fullName",
@@ -293,58 +284,41 @@ async findAllWithDetails(query?: LessonQueryDto) {
         WHERE usr.id = "Subject"."tutorId"
         LIMIT 1
       )`),
-      'tutor',
-    ],
-      ],
-    },
-    order: [['createdAt', 'DESC']],
-    limit: query?.id ? undefined : limit,
-    offset: query?.id ? undefined : offset,
-    subQuery: false,
-  });
+            'tutor',
+          ],
+        ],
+      },
+      order: [['createdAt', 'DESC']],
+      limit: query?.id ? undefined : limit,
+      offset: query?.id ? undefined : offset,
+      subQuery: false,
+    });
 
-  // 🔹 Single subject mode
-  if (query?.id) {
-    if (!result.rows.length) {
-      throw new NotFoundException(`Subject with id ${query.id} not found`);
+    // 🔹 Single subject mode
+    if (query?.id) {
+      if (!result.rows.length) {
+        throw new NotFoundException(`Subject with id ${query.id} not found`);
+      }
+      return result.rows[0];
     }
-    return result.rows[0];
+
+    // 🔹 Pagination metadata
+    const total = Array.isArray(result.count)
+      ? result.count.reduce((sum, item) => sum + Number(item.count), 0)
+      : result.count;
+
+    return {
+      data: result.rows,
+      meta: {
+        totalItems: total,
+        limit,
+        offset,
+        currentCount: result.rows.length,
+        hasNext: offset + limit < total,
+        hasPrevious: offset > 0,
+      },
+    };
   }
-
-  // 🔹 Pagination metadata
-  const total = Array.isArray(result.count)
-    ? result.count.reduce((sum, item) => sum + Number(item.count), 0)
-    : result.count;
-
-  return {
-    data: result.rows,
-    meta: {
-      totalItems: total,
-      limit,
-      offset,
-      currentCount: result.rows.length,
-      hasNext: offset + limit < total,
-      hasPrevious: offset > 0,
-    },
-  };
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
 
   async findAll(search?: string): Promise<Subject[]> {
     try {
@@ -388,7 +362,6 @@ async findAllWithDetails(query?: LessonQueryDto) {
     }
   }
 
-
   /*
   async update(id: string, updateSubjectDto: UpdateSubjectDto): Promise<Subject> {
     try {
@@ -406,7 +379,6 @@ async findAllWithDetails(query?: LessonQueryDto) {
     }
   }
 */
-
 
   async linkOne(userId: string, subjectId: string) {
     try {
@@ -426,7 +398,9 @@ async findAllWithDetails(query?: LessonQueryDto) {
   async linkMany(userId: string, subjectIds: string[]) {
     try {
       const records = subjectIds.map((subjectId) => ({ userId, subjectId }));
-      return await this.userSubjectModel.bulkCreate(records, { ignoreDuplicates: true });
+      return await this.userSubjectModel.bulkCreate(records, {
+        ignoreDuplicates: true,
+      });
     } catch (error) {
       throw new BadRequestException({
         message: 'Error linking multiple subjects to user',
@@ -441,7 +415,9 @@ async findAllWithDetails(query?: LessonQueryDto) {
 
   async unlinkOne(userId: string, subjectId: string) {
     try {
-      return await this.userSubjectModel.destroy({ where: { userId, subjectId } });
+      return await this.userSubjectModel.destroy({
+        where: { userId, subjectId },
+      });
     } catch (error) {
       throw new BadRequestException({
         message: 'Error unlinking subject from user',
@@ -456,7 +432,9 @@ async findAllWithDetails(query?: LessonQueryDto) {
 
   async unlinkMany(userId: string, subjectIds: string[]) {
     try {
-      return await this.userSubjectModel.destroy({ where: { userId, subjectId: subjectIds } });
+      return await this.userSubjectModel.destroy({
+        where: { userId, subjectId: subjectIds },
+      });
     } catch (error) {
       throw new BadRequestException({
         message: 'Error unlinking multiple subjects from user',
@@ -469,99 +447,91 @@ async findAllWithDetails(query?: LessonQueryDto) {
     }
   }
 
- 
+  async getUserSubjects(
+    userId: string,
+    options?: {
+      search?: string;
+      limit?: number;
+      offset?: number;
+    },
+  ) {
+    const { search, limit, offset } = options || {};
 
+    const where = search
+      ? {
+          [Op.or]: [
+            { title: { [Op.iLike]: `%${search}%` } },
+            { description: { [Op.iLike]: `%${search}%` } },
+          ],
+        }
+      : {};
 
-async getUserSubjects(
-  userId: string,
-  options?: {
-    search?: string;
-    limit?: number;
-    offset?: number;
-  },
-) {
-  const { search, limit, offset } = options || {};
+    // 1️⃣ Fetch subjects
+    const subjects = await this.subjectModel.findAll({
+      where,
+      limit,
+      offset,
 
-  const where = search
-    ? {
-        [Op.or]: [
-          { title: { [Op.iLike]: `%${search}%` } },
-          { description: { [Op.iLike]: `%${search}%` } },
-        ],
-      }
-    : {};
-
-  // 1️⃣ Fetch subjects
-  const subjects = await this.subjectModel.findAll({
-    where,
-    limit,
-    offset,
-
-    attributes: {
-      include: [
-        // ✅ total students count
-        [
-          literal(`(
+      attributes: {
+        include: [
+          // ✅ total students count
+          [
+            literal(`(
             SELECT COUNT(*)
             FROM "users_subjects" us
             WHERE us."subjectId" = "Subject"."id"
           )`),
-          'studentsCount',
+            'studentsCount',
+          ],
         ],
-      ],
-    },
-
-    include: [
-      // 🔐 only subjects assigned to this user
-      {
-        model: User,
-        as: 'users',
-        attributes: [],
-        through: { attributes: [] },
-        where: { id: userId },
-        required: true,
       },
 
-      // 👨‍🏫 tutor
-      {
-        model: User,
-        as: 'tutor',
-        attributes: ['id', 'fullName', 'avatar'],
-      },
-    ],
-  });
-
-  // 2️⃣ Fetch first 4 students with avatar PER subject
-  const subjectsWithStudents = await Promise.all(
-    subjects.map(async (subject) => {
-      const students = await this.userModel.findAll({
-        attributes: ['id', 'fullName', 'avatar'],
-        include: [
-          {
-            model: Subject,
-            attributes: [],
-            through: { attributes: [] },
-            where: { id: subject.id },
-          },
-        ],
-        where: {
-          avatar: { [Op.ne]: null },
+      include: [
+        // 🔐 only subjects assigned to this user
+        {
+          model: User,
+          as: 'users',
+          attributes: [],
+          through: { attributes: [] },
+          where: { id: userId },
+          required: true,
         },
-        limit: 4,
-      });
 
-      return {
-        ...subject.toJSON(),
-        studentsPreview: students,
-      };
-    }),
-  );
+        // 👨‍🏫 tutor
+        {
+          model: User,
+          as: 'tutor',
+          attributes: ['id', 'fullName', 'avatar'],
+        },
+      ],
+    });
 
-  return subjectsWithStudents;
-}
+    // 2️⃣ Fetch first 4 students with avatar PER subject
+    const subjectsWithStudents = await Promise.all(
+      subjects.map(async (subject) => {
+        const students = await this.userModel.findAll({
+          attributes: ['id', 'fullName', 'avatar'],
+          include: [
+            {
+              model: Subject,
+              attributes: [],
+              through: { attributes: [] },
+              where: { id: subject.id },
+            },
+          ],
+          where: {
+            avatar: { [Op.ne]: null },
+          },
+          limit: 4,
+        });
 
+        return {
+          ...subject.toJSON(),
+          studentsPreview: students,
+        };
+      }),
+    );
 
-
-
-
+    return subjectsWithStudents;
+  }
 }
