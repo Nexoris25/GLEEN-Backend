@@ -7,28 +7,21 @@ import {
   Patch,
   Delete,
   Query,
-  UseInterceptors,
-  UploadedFiles,
   HttpCode,
   HttpStatus,
   UseGuards,
-  UploadedFile,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
-  ApiConsumes,
   ApiBody,
-  ApiQuery,
   ApiParam,
 } from '@nestjs/swagger';
 import { SubjectService } from '../services/subject.service';
 import { CreateSubjectDto } from '../dto/create-subject.dto';
 import { UpdateSubjectDto } from '../dto/update-subject.dto';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { Express } from 'express';
 import { LessonQueryDto } from 'src/lesson/dto/query.dto';
 import { RolesGuard } from 'src/auth/GuardsDecorMiddleware/roles.guard';
 import { JwtAuthGuard } from 'src/auth/GuardsDecorMiddleware/jwt-auth.guard';
@@ -36,7 +29,6 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { GetUser } from 'src/shared-types/user.decorator';
 import { User } from 'src/user/models/user.model';
 import { Subject } from '../models/subject.model';
-import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ResponseDto,
   SubjectArrayResponseDto,
@@ -55,35 +47,8 @@ export class SubjectController {
 
   @Post()
   @Roles('TUTOR', 'SUPER_ADMIN')
-  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Create a new subject, Tutor / Super Admin' })
-  @UseInterceptors(
-    FileInterceptor('avatar', {
-      limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
-    }),
-  )
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        avatar: {
-          type: 'string',
-          format: 'binary',
-        },
-        title: {
-          type: 'string',
-        },
-        description: {
-          type: 'string',
-        },
-        tutorId: {
-          type: 'string',
-          format: 'uuid',
-        },
-      },
-      required: ['title', 'tutorId'],
-    },
-  })
+  @ApiBody({ type: CreateSubjectDto })
   @ApiResponse({ status: 201, description: 'Subject created successfully' })
   @ApiResponse({
     status: 409,
@@ -91,10 +56,9 @@ export class SubjectController {
   })
   async create(
     @Body() dto: CreateSubjectDto,
-    @UploadedFile() avatar: Express.Multer.File,
     @GetUser() user: User,
   ) {
-    return this.subjectService.create(dto, user.id, avatar);
+    return this.subjectService.create(dto, user.id);
   }
 
   @Get()
@@ -121,45 +85,14 @@ return this.subjectService.findById(id);
   @Patch(':id')
   @ApiOperation({ summary: 'Update a subject by ID' })
   @Roles('TUTOR', 'SUPER_ADMIN')
-  @ApiConsumes('multipart/form-data')
-  @UseInterceptors(
-    FileInterceptor('avatar', {
-      limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
-    }),
-  )
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        avatar: {
-          type: 'string',
-          format: 'binary',
-        },
-        title: {
-          type: 'string',
-        },
-        description: {
-          type: 'string',
-        },
-        tutorId: {
-          type: 'string',
-          format: 'uuid',
-        },
-      },
-      required: ['title', 'tutorId'],
-    },
-  })
+  @ApiBody({ type: UpdateSubjectDto })
   @ApiResponse({ status: 201, description: 'Subject updated successfully' })
   @ApiResponse({
     status: 409,
     description: 'Conflict - unique title already exists',
   })
-  async update(
-    @Param('id') id: string,
-    @Body() dto: UpdateSubjectDto,
-    @UploadedFile() avatar: Express.Multer.File,
-  ) {
-    return this.subjectService.update(id, dto, avatar);
+  async update(@Param('id') id: string, @Body() dto: UpdateSubjectDto) {
+    return this.subjectService.update(id, dto);
   }
 
   @Delete(':id')

@@ -107,6 +107,7 @@ import { XpConfiguration } from './xp/models/xp-configuration.model';
 import { XpLog } from './xp/models/xp-log.model';
 import { XpRecords } from './xp/models/xp-record.model';
 import { MetricsModule } from './metrics/metrics.module';
+import { UploadModule } from './upload/upload.module';
 import { CountriesModule } from './countries/countries.module';
 
 @Module({
@@ -178,6 +179,7 @@ import { CountriesModule } from './countries/countries.module';
     CountriesModule,
     NotificationTrackingModule,
     TutorMessageModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService, StateExistsConstraint,],

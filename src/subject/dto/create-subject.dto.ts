@@ -12,15 +12,14 @@ export class CreateSubjectDto {
   @IsString()
   description?: string;
 
-@ApiPropertyOptional({
-type: 'string',
-format: 'binary', // ⚡ tells Swagger this is a file
-description: 'Avatar image file (optional)',
-})
-@IsOptional()
-avatar?: any; // ⚡ must be any for multer file
+  @ApiPropertyOptional({
+    description: 'Avatar image URL (already uploaded to Bunny or elsewhere)',
+  })
+  @IsOptional()
+  @IsString()
+  avatar?: string;
 
- @ApiPropertyOptional()
+  @ApiPropertyOptional()
   @IsOptional()
   tutorId?: string;
 }

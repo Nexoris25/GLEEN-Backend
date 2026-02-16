@@ -99,7 +99,7 @@ details: error.response || error,
 
 
 // start new
-@Get('alllessons')
+@Get('all-lessons')
 @ApiOperation({
   summary:
     'Get all lessons with subject, tutor info, topic count and duration. Use ?id=lessonId (UUID) to fetch a single lesson, title, subtile for searching',

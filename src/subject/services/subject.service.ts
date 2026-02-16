@@ -31,11 +31,14 @@ export class SubjectService {
 
   private readonly MAX_LIMIT = 500;
 
-  async create(
-    dto: CreateSubjectDto,
-    authUserId: string,
-    avatar?: Express.Multer.File,
-  ): Promise<Subject> {
+  generateAvatarUploadTarget(mimeType?: string) {
+    return this.bunnyService.generateUploadTarget({
+      directory: 'subjects',
+      mimeType,
+    });
+  }
+
+  async create(dto: CreateSubjectDto, authUserId: string): Promise<Subject> {
     // Validate tutor
     if (dto.tutorId) {
       const tutor = await this.userModel.findOne({
@@ -53,22 +56,6 @@ export class SubjectService {
       ...dto,
       userId: authUserId,
     };
-
-    // Upload avatar
-    if (avatar) {
-      try {
-        const avatarUrl = await this.bunnyService.upload({
-          buffer: avatar.buffer,
-          mimeType: avatar.mimetype,
-          originalName: avatar.originalname,
-          directory: 'subjects',
-        });
-
-        subjectData.avatar = avatarUrl;
-      } catch (err) {
-        throw new BadRequestException('Failed to upload subject avatar');
-      }
-    }
 
     try {
       return await this.subjectModel.create(subjectData);
@@ -89,11 +76,7 @@ export class SubjectService {
     return subject;
   }
 
-  async update(
-    id: string,
-    dto: UpdateSubjectDto,
-    avatar?: Express.Multer.File,
-  ) {
+  async update(id: string, dto: UpdateSubjectDto) {
     const subject = await this.findById(id);
 
     if (dto.tutorId) {
@@ -113,19 +96,13 @@ export class SubjectService {
       }
     }
 
-    let avatarUrl: string | null = null;
     const updatedData: any = { ...dto };
-    if (avatar) {
-      avatarUrl = await this.bunnyService.upload({
-        buffer: avatar.buffer,
-        mimeType: avatar.mimetype,
-        originalName: avatar.originalname,
-        directory: 'subjects',
-      });
 
-      updatedData.avatar = avatarUrl;
+    if (dto.avatar !== undefined && dto.avatar !== subject.avatar) {
+      if (subject.avatar) {
+        await this.bunnyService.deleteByUrl(subject.avatar);
+      }
     }
-
     try {
       return await subject.update(updatedData);
     } catch (error) {
@@ -149,6 +126,10 @@ export class SubjectService {
 
       if (!subject) {
         throw new NotFoundException('Subject not found');
+      }
+
+      if (subject.avatar) {
+        await this.bunnyService.deleteByUrl(subject.avatar);
       }
 
       await subject.destroy(); // soft delete (paranoid: true)

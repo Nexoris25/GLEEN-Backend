@@ -44,8 +44,8 @@ export class BunnyService {
   async upload(params: {
     buffer: Buffer;
     mimeType: string;
-    directory: string;          // e.g. "avatars"
-    originalName?: string;      // from Multer
+    directory: string;
+    originalName?: string;
   }): Promise<string> {
     const { buffer, mimeType, directory, originalName } = params;
 
@@ -99,6 +99,44 @@ export class BunnyService {
         `File upload failed: ${err.response?.status || 'unknown'} - ${err.message}`,
       );
     }
+  }
+
+  generateUploadTarget(params: {
+    directory: string;
+    mimeType?: string;
+    originalName?: string;
+  }): {
+    storagePath: string;
+    uploadUrl: string;
+    publicUrl: string;
+  } {
+    const { directory, mimeType, originalName } = params;
+
+    let extension = '';
+
+    if (originalName) {
+      extension = path.extname(originalName);
+    }
+
+    if (!extension && mimeType?.includes('/')) {
+      extension = `.${mimeType.split('/')[1]}`;
+    }
+
+    if (!extension) {
+      extension = '.bin';
+    }
+
+    const safeDir = directory.replace(/^\/|\/$/g, '');
+    const fileName = `${safeDir}/${uuid()}${extension}`;
+
+    const uploadUrl = this.getUploadUrl(fileName);
+    const publicUrl = `${process.env.BUNNY_PULL_ZONE_URL}/${fileName}`;
+
+    return {
+      storagePath: fileName,
+      uploadUrl,
+      publicUrl,
+    };
   }
 
   async deleteByUrl(url: string): Promise<void> {

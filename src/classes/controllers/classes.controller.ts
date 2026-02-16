@@ -116,7 +116,7 @@ getLiveClasses() {
     return this.classesService.findAll(search, tutorId);
   }
 */
-  @Get('allclass')
+  @Get('all-class')
   @ApiOperation({
     summary:
       'Get all classes. Use ?id=classId (UUID) to fetch a single class, title for searching',
