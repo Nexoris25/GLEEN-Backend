@@ -1,4 +1,4 @@
-import { IsStateExists } from 'src/common/validators/IsStateExists'; 
+import { IsStateExists } from 'src/common/validators/IsStateExists';
 import { IsLgaExists } from 'src/common/validators/is-lga-exists.validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -51,7 +51,7 @@ export class CreateUserDto {
   @IsString()
   country: string;
 
-    @ApiPropertyOptional()
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   systemAvatar?: string;
@@ -62,19 +62,18 @@ export class CreateUserDto {
   @IsUUID()
   cityId: string;
 */
- @ApiPropertyOptional({
-  example: 'P@ssw0rd',
-  description: 'Password of the user',
-  minLength: 6,
-})
-@IsOptional()
-@IsString()
-@MinLength(6)
-@Transform(({ value }) =>
-  value === null || value === '' ? undefined : value,
-)
-password?: string;
-
+  @ApiPropertyOptional({
+    example: 'P@ssw0rd',
+    description: 'Password of the user',
+    minLength: 6,
+  })
+  @IsOptional()
+  @IsString()
+  @MinLength(6)
+  @Transform(({ value }) =>
+    value === null || value === '' ? undefined : value,
+  )
+  password?: string;
 
   @ApiProperty({
     example: 'john.doe@example.com',
@@ -82,7 +81,6 @@ password?: string;
   })
   @IsEmail()
   email: string;
-
 
   /*
 @ApiPropertyOptional()
@@ -95,7 +93,7 @@ password?: string;
 })
 isEmailVerified?: boolean;
 */
-  
+
   @ApiPropertyOptional({
     example: RoleEnum.USER,
     enum: RoleEnum,
@@ -105,7 +103,7 @@ isEmailVerified?: boolean;
   @IsString()
   role?: RoleEnum = RoleEnum.USER;
 
-   @ApiPropertyOptional({
+  @ApiPropertyOptional({
     type: 'string',
     format: 'binary', // ⚡ tells Swagger this is a file
     description: 'Avatar image file (optional)',
@@ -113,18 +111,18 @@ isEmailVerified?: boolean;
   @IsOptional()
   avatar?: any; // ⚡ must be any for multer file
 
-
-  
   @ApiPropertyOptional({
     description: 'State ID (optional, must exist in states if provided)',
     example: 'b1a8f4aa-8f91-4c41-8b07-9cb23d61caaa',
   })
   @IsUUID()
   @IsOptional()
-  @IsStateExists({ message: 'The provided stateId does not exist in the states table' })
+  @IsStateExists({
+    message: 'The provided stateId does not exist in the states table',
+  })
   stateId?: string;
 
- @ApiPropertyOptional({
+  @ApiPropertyOptional({
     description: 'LGA ID (optional, must exist in lga if provided)',
     example: 'c2d1f93e-3a61-4e6f-8d6b-89b4f18a1d77',
   })
@@ -132,5 +130,4 @@ isEmailVerified?: boolean;
   @IsOptional()
   @IsLgaExists({ message: 'The provided LGA does not exist' })
   lga?: string;
-  
 }
