@@ -18,13 +18,20 @@ import {
   QuizQuestionsResponseDto,
   ResponseDto,
 } from 'src/shared-types/response.dto';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/GuardsDecorMiddleware/jwt-auth.guard';
 import { SearchQuizQuestionDto } from '../dto/search-quiz-question.dto';
 import { UserId } from 'src/auth/GuardsDecorMiddleware/userIdDecorator.guard';
 import stringify from 'safe-stable-stringify';
 
 @ApiTags('Quiz Questions')
+@ApiBearerAuth()
 @Controller('quiz-questions')
 @UseGuards(JwtAuthGuard)
 export class QuizQuestionController {

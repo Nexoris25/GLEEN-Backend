@@ -22,7 +22,7 @@ export class QuizQuestionsService {
       return await this.quizQuestionsModel.create({
         ...createDto,
         userId,
-      } as any);
+      });
     } catch (error) {
       throw new BadRequestException({
         message: 'Error creating quiz question:',

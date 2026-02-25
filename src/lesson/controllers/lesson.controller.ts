@@ -156,9 +156,48 @@ export class LessonController {
 
   // end new
 
+  @Get(':id')
+  @ApiOperation({ summary: 'Get a lesson by ID' })
+  @ApiParam({ name: 'id', description: 'Lesson ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Lesson retrieved successfully',
+    type: LessonResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Lesson not found',
+    type: LessonResponseDto,
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Error retrieving lesson',
+    type: LessonResponseDto,
+  })
+  async findOne(@Param('id') id: string): Promise<LessonResponseDto> {
+    try {
+      const lesson = await this.lessonService.findOne(id);
+      return {
+        status: 200,
+        data: lesson,
+        message: 'Lesson retrieved successfully',
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        message: 'Error retrieving lesson',
+        error: stringify({
+          message: error.message,
+          stack: error.stack,
+          details: error.response || error,
+        }),
+      };
+    }
+  }
+
   /*
 
-@Get()
+  @Get()
 @ApiOperation({ summary: 'Get all lessons with optional search' })
 @ApiResponse({ status: 200, description: 'Lessons retrieved successfully', type: LessonArrayResponseCountDto })
 @ApiResponse({ status: 500, description: 'Error retrieving lessons', type: LessonResponseDto })
