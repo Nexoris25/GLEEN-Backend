@@ -1,6 +1,9 @@
 //write update-quiz-question.dto.ts
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsArray, IsEnum, IsObject, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
+import { QuizQuestionOptionDto } from './create-quiz-question.dto';
+
 export class UpdateQuizQuestionDto {
     @ApiPropertyOptional()
     @IsOptional()
@@ -32,10 +35,12 @@ export class UpdateQuizQuestionDto {
     @IsString()
     status: string = 'PENDING';
 
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({ type: [QuizQuestionOptionDto] })
     @IsOptional()
-    @IsObject({ each: true })
-    options?: any[];
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => QuizQuestionOptionDto)
+    options?: QuizQuestionOptionDto[];
 
     @ApiPropertyOptional()
     @IsOptional()

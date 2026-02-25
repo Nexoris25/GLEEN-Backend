@@ -89,72 +89,72 @@ export class AuthService {
     password: string;
   }): Promise<{ user: User; token: string }> {
     const user = await this.validateUser(email, password);
-    
-     if (!user.isEmailVerified) {
-    throw new BadRequestException('Email address not verified yet.');
-  }
+
+    if (!user.isEmailVerified) {
+      throw new BadRequestException('Email address not verified yet.');
+    }
 
     const token = await this.generateJwtToken(user);
     return { user, token };
   }
 
-    /**
+  /**
    * Register a new user with optional avatar upload
    * @param createUserDto
    * @param avatarFile optional Express.Multer.File
    */
 
-   
-    async register(
-  createUserDto: CreateUserDto,
-  avatarFile?: Express.Multer.File,
-): Promise<User> {
-  try {
-    let avatarUrl: string | undefined;
+  async register(
+    createUserDto: CreateUserDto,
+    avatarFile?: Express.Multer.File,
+  ): Promise<User> {
+    try {
+      let avatarUrl: string | undefined;
 
-    // 1. Handle avatar upload
-    if (avatarFile) {
-      if (!avatarFile.buffer || avatarFile.buffer.length === 0) {
-        throw new BadRequestException('Invalid or empty avatar file');
+      // 1. Handle avatar upload
+      if (avatarFile) {
+        if (!avatarFile.buffer || avatarFile.buffer.length === 0) {
+          throw new BadRequestException('Invalid or empty avatar file');
+        }
+
+        const resizedBuffer = await sharp(avatarFile.buffer)
+          .resize(256, 256)
+          .png()
+          .toBuffer();
+
+        const safeFileName = `avatar_${Date.now()}.png`;
+        avatarUrl = await this.bunnyService.upload(resizedBuffer, safeFileName);
+
+        if (!avatarUrl) {
+          throw new Error('Avatar upload returned empty URL');
+        }
+
+        createUserDto.avatar = avatarUrl;
       }
 
-      const resizedBuffer = await sharp(avatarFile.buffer)
-        .resize(256, 256)
-        .png()
-        .toBuffer();
-
-      const safeFileName = `avatar_${Date.now()}.png`;
-      avatarUrl = await this.bunnyService.upload(resizedBuffer, safeFileName);
-
-      if (!avatarUrl) {
-        throw new Error('Avatar upload returned empty URL');
+      // 2. Optional: explicit pre-check for common conflicts
+      const existing = await this.userService.findByEmail(createUserDto.email);
+      if (existing) {
+        throw new BadRequestException('Email already in use');
       }
 
-      createUserDto.avatar = avatarUrl;
-    }
+      if (createUserDto.username) {
+        const existingUsername = await this.userService.findByUsername(
+          createUserDto.username,
+        );
 
-    // 2. Optional: explicit pre-check for common conflicts
- const existing = await this.userService.findByEmail(createUserDto.email);
-if (existing) {
-  throw new BadRequestException('Email already in use');
-}
+        if (existingUsername) {
+          throw new BadRequestException('Username already taken');
+        }
+      }
 
+      if (createUserDto.role === 'SUPER_ADMIN') {
+        throw new BadRequestException(
+          'Cannot assign SUPER_ADMIN role during registration',
+        );
+      }
 
-if (createUserDto.username) {
-  const existingUsername = await this.userService.findByUsername(
-    createUserDto.username,
-  );
-
-  if (existingUsername) {
-    throw new BadRequestException('Username already taken');
-  }
-}
-
-if (createUserDto.role === 'SUPER_ADMIN') {
-  throw new BadRequestException('Cannot assign SUPER_ADMIN role during registration');
-}
-
-/*
+      /*
     // Username check (if username is required/unique)
     if (createUserDto.username) {
       const existingUsername = await this.userService.findOneByUsername(createUserDto.username);
@@ -163,44 +163,48 @@ if (createUserDto.role === 'SUPER_ADMIN') {
       }
     }
 */
-    
-    // 3. Create user
-    const user = await this.userService.create(createUserDto);
 
-    return user;
-  } catch (err: any) {
-    // ── Rich logging 
-    console.error('[AuthService.register] Registration failed', {
-      email: createUserDto.email,
-      username: createUserDto.username,
-      hasAvatar: !!avatarFile,
-      errorName: err.name,
-      errorMessage: err.message,
-      errorStack: err.stack,
-      originalError: err.original?.message || err.original, // for Sequelize
-    });
+      // 3. Create user
+      const user = await this.userService.create(createUserDto);
 
-    // Better classification
-    if (err.name === 'SequelizeUniqueConstraintError') {
-      throw new BadRequestException('Email or username already exists');
+      return user;
+    } catch (err: any) {
+      // ── Rich logging
+      console.error('[AuthService.register] Registration failed', {
+        email: createUserDto.email,
+        username: createUserDto.username,
+        hasAvatar: !!avatarFile,
+        errorName: err.name,
+        errorMessage: err.message,
+        errorStack: err.stack,
+        originalError: err.original?.message || err.original, // for Sequelize
+      });
+
+      // Better classification
+      if (err.name === 'SequelizeUniqueConstraintError') {
+        throw new BadRequestException('Email or username already exists');
+      }
+
+      if (err.name === 'SequelizeValidationError') {
+        const messages = err.errors?.map((e: any) => e.message) || [
+          err.message,
+        ];
+        throw new BadRequestException(
+          `Validation failed: ${messages.join(', ')}`,
+        );
+      }
+
+      if (err instanceof BadRequestException) {
+        throw err; // re-throw if already proper
+      }
+
+      // Fallback for everything else
+      throw new BadRequestException({
+        message: 'Failed to register user',
+        reason: err.message || 'Unknown error',
+      });
     }
-
-    if (err.name === 'SequelizeValidationError') {
-      const messages = err.errors?.map((e: any) => e.message) || [err.message];
-      throw new BadRequestException(`Validation failed: ${messages.join(', ')}`);
-    }
-
-    if (err instanceof BadRequestException) {
-      throw err; // re-throw if already proper
-    }
-
-    // Fallback for everything else
-    throw new BadRequestException({
-      message: 'Failed to register user',
-      reason: err.message || 'Unknown error',
-    });
   }
-}
 
   async verifyEmail(token: string): Promise<void> {
     try {
@@ -259,26 +263,26 @@ if (createUserDto.role === 'SUPER_ADMIN') {
       throw new BadRequestException('Invalid or expired reset password token');
     }
   }
-async changePassword(
-  userId: string,
-  oldPassword: string,
-  newPassword: string,
-): Promise<void> {
-  const userRetrieve = await this.userService.findOneById(userId);
-  if (!userRetrieve) {
-    throw new NotFoundException('User not found');
-  }
+  async changePassword(
+    userId: string,
+    oldPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    const userRetrieve = await this.userService.findOneById(userId);
+    if (!userRetrieve) {
+      throw new NotFoundException('User not found');
+    }
 
-  const isValid = await this.validateUser(userRetrieve.email, oldPassword);
-  if (!isValid) {
-    throw new BadRequestException('Invalid or incorrect old password');
-  }
+    const isValid = await this.validateUser(userRetrieve.email, oldPassword);
+    if (!isValid) {
+      throw new BadRequestException('Invalid or incorrect old password');
+    }
 
-  await this.userService.updatePassword(userId, newPassword);
-}
+    await this.userService.updatePassword(userId, newPassword);
+  }
 
   private async generateJwtToken(user: User): Promise<string> {
-    const payload = { username: user.username, sub: user.id, role: user.role,  };
+    const payload = { username: user.username, sub: user.id, role: user.role };
     const secretKey = process.env.JWT_SECRET_KEY || 'default-secret-key';
     return jwt.sign(payload, secretKey, { expiresIn: '30d' });
   }
@@ -286,7 +290,9 @@ async changePassword(
   private async generateResetPasswordToken(userId: string): Promise<string> {
     const secretKey =
       process.env.RESET_PASSWORD_SECRET || 'default-reset-password-secret';
-    return jwt.sign({ sub: userId }, secretKey, { expiresIn: process.env.JWT_EXPIRATION_TIME || '1h' });
+    return jwt.sign({ sub: userId }, secretKey, {
+      expiresIn: process.env.JWT_EXPIRATION_TIME || '1h',
+    });
   }
 
   async generateEmailVerificationToken(userId: string): Promise<string> {
@@ -319,7 +325,9 @@ async changePassword(
     });
   }
 
-  async loginWithGoogle(idToken: string): Promise<{ user: User; token: string }> {
+  async loginWithGoogle(
+    idToken: string,
+  ): Promise<{ user: User; token: string }> {
     const ticket = await this.googleClient.verifyIdToken({
       idToken,
       audience: process.env.GOOGLE_CLIENT_ID,
@@ -334,7 +342,7 @@ async changePassword(
     let user = await this.userService.findOneByEmail(email);
 
     const timestamp = Date.now().toString(36);
-    const uniqueId = `autogen-${timestamp}`
+    const uniqueId = `autogen-${timestamp}`;
 
     if (!user) {
       user = await this.userService.create({
@@ -344,8 +352,14 @@ async changePassword(
         providerId: payload.sub, // Google user ID
         avatar: payload.picture,
         password: uniqueId,
-        firstName: payload.given_name || (payload.name ? payload.name.split(' ')[0] : email.split('@')[0]),
-        lastName: payload.family_name || (payload.name ? payload.name.split(' ').slice(1).join(' ') : 'update'),
+        firstName:
+          payload.given_name ||
+          (payload.name ? payload.name.split(' ')[0] : email.split('@')[0]),
+        lastName:
+          payload.family_name ||
+          (payload.name
+            ? payload.name.split(' ').slice(1).join(' ')
+            : 'update'),
         isEmailVerified: true,
       } as any);
     }
@@ -354,8 +368,10 @@ async changePassword(
     return { user, token };
   }
 
-
-  async loginWithApple(idToken: string, userName?: { firstName?: string; lastName?: string }): Promise<{ user: User; token: string }> {
+  async loginWithApple(
+    idToken: string,
+    userName?: { firstName?: string; lastName?: string },
+  ): Promise<{ user: User; token: string }> {
     const client = jwksClient({
       jwksUri: 'https://appleid.apple.com/auth/keys',
     });
@@ -369,11 +385,8 @@ async changePassword(
     }
 
     const decoded: any = await new Promise((resolve, reject) => {
-      jwt.verify(
-        idToken,
-        getKey,
-        { algorithms: ['RS256'] },
-        (err, decoded) => (err ? reject(err) : resolve(decoded)),
+      jwt.verify(idToken, getKey, { algorithms: ['RS256'] }, (err, decoded) =>
+        err ? reject(err) : resolve(decoded),
       );
     });
 
@@ -385,7 +398,7 @@ async changePassword(
     let user = await this.userService.findOneByEmail(email);
 
     const timestamp = Date.now().toString(36);
-    const uniqueId = `autogen-${timestamp}`
+    const uniqueId = `autogen-${timestamp}`;
 
     if (!user) {
       user = await this.userService.create({
@@ -404,8 +417,6 @@ async changePassword(
     const token = await this.generateJwtToken(user);
     return { user, token };
   }
-
-
 
   /**
    * Generates a 6-digit OTP for email verification, saves it to a new table, and returns the OTP.
@@ -496,7 +507,7 @@ async changePassword(
    * Verifies the OTP for password reset.
    * Marks the OTP as used and allows password reset if successful.
    */
-  
+
   async verifyPasswordResetOtp(email: string, otp: string): Promise<boolean> {
     // Find OTP record
     const otpRecord = await this.passwordResetOtpModel.findOne({
@@ -513,12 +524,12 @@ async changePassword(
     }
 
     // Mark OTP as used
-   // await otpRecord.update({ used: true });
+    // await otpRecord.update({ used: true });
 
     return true;
   }
 
-    async verifyPasswordResetOtpV1(email: string, otp: string): Promise<boolean> {
+  async verifyPasswordResetOtpV1(email: string, otp: string): Promise<boolean> {
     // Find OTP record
     const otpRecord = await this.passwordResetOtpModel.findOne({
       where: {
@@ -534,7 +545,7 @@ async changePassword(
     }
 
     // Mark OTP as used
-   await otpRecord.update({ used: true });
+    await otpRecord.update({ used: true });
 
     return true;
   }
@@ -543,21 +554,23 @@ async changePassword(
    * Resets the user's password using a valid OTP.
    */
   async resetPasswordWithOtpVerify(
-  email: string,
-  otp: string,
-): Promise<{ success: boolean; message: string }> {
-  // Verify OTP
-  await this.verifyPasswordResetOtp(email, otp);
+    email: string,
+    otp: string,
+  ): Promise<{ success: boolean; message: string }> {
+    // Verify OTP
+    await this.verifyPasswordResetOtp(email, otp);
 
-  return {
-    success: true,
-    message: 'OTP verified successfully. You may now reset your password.',
-  };
-}
+    return {
+      success: true,
+      message: 'OTP verified successfully. You may now reset your password.',
+    };
+  }
 
-
-
-    async resetPasswordWithOtp(email: string, otp: string, newPassword: string): Promise<void> {
+  async resetPasswordWithOtp(
+    email: string,
+    otp: string,
+    newPassword: string,
+  ): Promise<void> {
     // Verify OTP
     await this.verifyPasswordResetOtp(email, otp);
     const user = await this.userService.findOneByEmail(email);
@@ -568,5 +581,4 @@ async changePassword(
     // Update user's password
     await this.userService.updatePassword(user.id, newPassword);
   }
-
 }

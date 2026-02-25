@@ -10,7 +10,7 @@ import {
   HttpStatus,
   Query,
   Post,
-  BadRequestException,  
+  BadRequestException,
   UploadedFile,
   UseInterceptors,
   Patch,
@@ -38,85 +38,149 @@ import {
 import { UserSearchDto } from '../dto/user-search.dto';
 import { UserId } from 'src/auth/GuardsDecorMiddleware/userIdDecorator.guard';
 import { CreateUserDto } from '../dto/create-user.dto';
-import stringify from "safe-stable-stringify";
+import stringify from 'safe-stable-stringify';
 // import { AdminOnly } from 'src/auth/GuardsDecorMiddleware/AdminOnlyDecorator.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/GuardsDecorMiddleware/roles.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 
-
 @ApiBearerAuth()
 @ApiTags('User')
-@UseGuards(JwtAuthGuard, RolesGuard)  // Any authenticated user
+@UseGuards(JwtAuthGuard, RolesGuard) // Any authenticated user
 @Controller('')
 export class UserController {
-  constructor(
-    private readonly userService: UserService,
-  ) {}
+  constructor(private readonly userService: UserService) {}
 
-  
-@Get('user/all')
-//@Roles('TUTOR', 'SUPER_ADMIN', 'ADMIN') // Class-level roles
-@ApiOperation({ summary: 'Get all users with optional filters' })
-@ApiQuery({ name: 'username', required: false, type: String, description: 'Filter by username' })
-@ApiQuery({ name: 'email', required: false, type: String, description: 'Filter by email' })
-@ApiQuery({ name: 'referral', required: false, type: String, description: 'Filter by referral code' })
-@ApiQuery({ name: 'isEmailVerified', required: false, type: Boolean, description: 'Filter by email verification status' })
-@ApiQuery({ name: 'role', required: false, type: String, description: 'Filter by role' })
-@ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by status' })
-@ApiQuery({ name: 'offset', required: false, type: Number, description: 'Pagination offset' })
-@ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of items per page' })
-@ApiResponse({ status: HttpStatus.OK, description: 'List of users', type: UserArrayResponseDto })
-@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No users found', type: ResponseDto })
-@ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: 'Internal server error', type: ResponseDto })
+  @Get('user/all')
+  //@Roles('TUTOR', 'SUPER_ADMIN', 'ADMIN') // Class-level roles
+  @ApiOperation({ summary: 'Get all users with optional filters' })
+  @ApiQuery({
+    name: 'username',
+    required: false,
+    type: String,
+    description: 'Filter by username',
+  })
+  @ApiQuery({
+    name: 'email',
+    required: false,
+    type: String,
+    description: 'Filter by email',
+  })
+  @ApiQuery({
+    name: 'referral',
+    required: false,
+    type: String,
+    description: 'Filter by referral code',
+  })
+  @ApiQuery({
+    name: 'isEmailVerified',
+    required: false,
+    type: Boolean,
+    description: 'Filter by email verification status',
+  })
+  @ApiQuery({
+    name: 'role',
+    required: false,
+    type: String,
+    description: 'Filter by role',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    type: String,
+    description: 'Filter by status',
+  })
+  @ApiQuery({
+    name: 'offset',
+    required: false,
+    type: Number,
+    description: 'Pagination offset',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Number of items per page',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'List of users',
+    type: UserArrayResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'No users found',
+    type: ResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'Internal server error',
+    type: ResponseDto,
+  })
+  async findAll(@Query() userSearchDto: UserSearchDto): Promise<{
+    status: number;
+    message: string;
+    data?: User[];
+    meta?: {
+      total: number;
+      offset: number;
+      limit: number;
+      currentCount?: number;
+      hasNext?: boolean;
+      hasPrevious?: boolean;
+    };
+    error?: any;
+  }> {
+    try {
+      const { data: users, meta } =
+        await this.userService.findAll(userSearchDto);
 
+      if (!users || users.length === 0) {
+        return {
+          status: HttpStatus.NOT_FOUND,
+          message: 'No users found',
+          data: [],
+          meta: { total: 0, offset: meta.offset, limit: meta.limit },
+        };
+      }
 
-async findAll(
-  @Query() userSearchDto: UserSearchDto,
-): Promise<{
-  status: number;
-  message: string;
-  data?: User[];
-  meta?: { total: number; offset: number; limit: number; currentCount?: number; hasNext?: boolean; hasPrevious?: boolean };
-  error?: any;
-}> {
-  try {
-    const { data: users, meta } = await this.userService.findAll(userSearchDto);
-
-    if (!users || users.length === 0) {
       return {
-        status: HttpStatus.NOT_FOUND,
-        message: 'No users found',
-        data: [],
-        meta: { total: 0, offset: meta.offset, limit: meta.limit },
+        status: HttpStatus.OK,
+        message: 'Users retrieved successfully',
+        data: users,
+        meta,
+      };
+    } catch (error) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Internal server error',
+        error: stringify({
+          message: error.message,
+          stack: error.stack,
+          details: error.response || error,
+        }),
       };
     }
-
-    return {
-      status: HttpStatus.OK,
-      message: 'Users retrieved successfully',
-      data: users,
-      meta,
-    };
-  } catch (error) {
-    return {
-      status: HttpStatus.INTERNAL_SERVER_ERROR,
-      message: 'Internal server error',
-      error: stringify({
-        message: error.message,
-        stack: error.stack,
-        details: error.response || error,
-      }),
-    };
   }
-}
 
   @Get('user/:id')
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiParam({ name: 'id', description: 'User ID' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'User details', type: UserResponseDto })
-  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'User not found', type: ResponseDto })
-  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: 'Internal server error', type: ResponseDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User details',
+    type: UserResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'User not found',
+    type: ResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'Internal server error',
+    type: ResponseDto,
+  })
   @UseGuards(JwtAuthGuard)
   async findOneById(
     @Param('id') id: string,
@@ -147,116 +211,135 @@ async findAll(
     }
   }
 
-  
-@Post('user')
-@ApiOperation({ summary: 'Create a new user' })
-@ApiConsumes('multipart/form-data')
-@UseInterceptors(
-  FileInterceptor('avatar', {
-    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
-    fileFilter: (_, file, cb) => {
-      if (!file.mimetype.startsWith('image/')) {
-        cb(new BadRequestException('Only image files are allowed'), false);
-      }
-      cb(null, true);
-    },
-  }),
-)
-@ApiBody({
-  schema: {
-    type: 'object',
-    properties: {
-      avatar: {
-        type: 'string',
-        format: 'binary',
-        description: 'Optional avatar image',
+  @Post('user')
+  @ApiOperation({ summary: 'Create a new user' })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(
+    FileInterceptor('avatar', {
+      limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+      fileFilter: (_, file, cb) => {
+        if (!file.mimetype.startsWith('image/')) {
+          cb(new BadRequestException('Only image files are allowed'), false);
+        }
+        cb(null, true);
       },
-      email: { type: 'string' },
-      password: { type: 'string' },
-      fullName: { type: 'string' },
-      role: { type: 'string' },
+    }),
+  )
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        avatar: {
+          type: 'string',
+          format: 'binary',
+          description: 'Optional avatar image',
+        },
+        email: { type: 'string' },
+        password: { type: 'string' },
+        fullName: { type: 'string' },
+        role: { type: 'string' },
+      },
     },
-  },
-})
-@ApiResponse({ status: HttpStatus.CREATED, description: 'User added successfully', type: UserResponseDto })
-@ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: 'Internal server error', type: ResponseDto })
-async create(
-  @Body(new ValidationPipe()) createUserDto: CreateUserDto,
-  @UploadedFile() avatar?: Express.Multer.File,
-): Promise<{ status: number; message: string; data?: User; error?: any }> {
-  try {
-    const user = await this.userService.create(createUserDto, avatar);
-    return {
-      status: HttpStatus.CREATED,
-      message: 'User added successfully',
-      data: user,
-    };
-  } catch (error) {
-    return {
-      status: HttpStatus.INTERNAL_SERVER_ERROR,
-      message: 'Internal server error',
-      error: stringify({
-        message: error.message,
-        stack: error.stack,
-        details: error.response || error,
-      }),
-    };
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'User added successfully',
+    type: UserResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'Internal server error',
+    type: ResponseDto,
+  })
+  async create(
+    @Body(new ValidationPipe()) createUserDto: CreateUserDto,
+    @UploadedFile() avatar?: Express.Multer.File,
+  ): Promise<{ status: number; message: string; data?: User; error?: any }> {
+    try {
+      const user = await this.userService.create(createUserDto, avatar);
+      return {
+        status: HttpStatus.CREATED,
+        message: 'User added successfully',
+        data: user,
+      };
+    } catch (error) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Internal server error',
+        error: stringify({
+          message: error.message,
+          stack: error.stack,
+          details: error.response || error,
+        }),
+      };
+    }
   }
-}
 
-
-
-@Put('user/:id')
-@ApiConsumes('multipart/form-data')  
-@UseInterceptors(
-  FileInterceptor('avatar', {
-    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
-    fileFilter: (_, file, cb) => {
-      if (!file.mimetype.startsWith('image/')) {
-        cb(new BadRequestException('Only image files are allowed'), false);
-      }
-      cb(null, true);
-    },
-  }),
-)
+  @Put('user/:id')
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(
+    FileInterceptor('avatar', {
+      limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+      fileFilter: (_, file, cb) => {
+        if (!file.mimetype.startsWith('image/')) {
+          cb(new BadRequestException('Only image files are allowed'), false);
+        }
+        cb(null, true);
+      },
+    }),
+  )
   @ApiOperation({ summary: 'Update user by ID' })
   @ApiParam({ name: 'id', description: 'User ID' })
-@ApiBody({
-  description: 'Update user profile',
-  schema: {
-    type: 'object',
-    properties: {
-      referral: { type: 'string' },
-      guardianEmail: { type: 'string' },
-      fullName: { type: 'string' },
-      gender: { type: 'string', example: 'MALE' },
-      phone: { type: 'string' },
-      country: { type: 'string' },
-      stateId: { type: 'string', format: 'uuid' },
-      lga: { type: 'string', format: 'uuid' },
-      status: {
-        type: 'string',
-        enum: ['ACTIVE', 'INACTIVE', 'SUSPENDED'],
+  @ApiBody({
+    description: 'Update user profile',
+    schema: {
+      type: 'object',
+      properties: {
+        referral: { type: 'string' },
+        guardianEmail: { type: 'string' },
+        fullName: { type: 'string' },
+        gender: { type: 'string', example: 'MALE' },
+        phone: { type: 'string' },
+        country: { type: 'string' },
+        stateId: { type: 'string', format: 'uuid' },
+        lga: { type: 'string', format: 'uuid' },
+        status: {
+          type: 'string',
+          enum: ['ACTIVE', 'INACTIVE', 'SUSPENDED'],
+        },
+        avatar: {
+          type: 'string',
+          format: 'binary',
+        },
+        systemAvatar: {
+          type: 'string',
+          description: 'Optional system avatar URL',
+        },
       },
-      avatar: {
-        type: 'string',
-        format: 'binary',
-      },      
-      systemAvatar: { type: 'string', description: 'Optional system avatar URL' },
     },
-  },
-})
-  @ApiResponse({ status: HttpStatus.OK, description: 'User updated successfully', type: UserResponseDto })
-  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'User not found', type: ResponseDto })
-  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: 'Internal server error', type: ResponseDto })
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User updated successfully',
+    type: UserResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'User not found',
+    type: ResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'Internal server error',
+    type: ResponseDto,
+  })
   @UseGuards(JwtAuthGuard)
   async update(
     @Param('id') id: string,
     @Body(new ValidationPipe()) updatedUserDto: UpdateUserDto,
     @UserId() userId: string,
-     @UploadedFile() avatar?: Express.Multer.File,
+    @UploadedFile() avatar?: Express.Multer.File,
   ): Promise<{ status: number; message: string; data?: User; error?: any }> {
-
     try {
       const updatedUser = await this.userService.update(
         id,
@@ -291,9 +374,21 @@ async create(
   @Delete('user/:id')
   @ApiOperation({ summary: 'Delete user by ID' })
   @ApiParam({ name: 'id', description: 'User ID' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'User deleted successfully', type: UserResponseDto })
-  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'User not found', type: ResponseDto })
-  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: 'Internal server error', type: ResponseDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User deleted successfully',
+    type: UserResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'User not found',
+    type: ResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'Internal server error',
+    type: ResponseDto,
+  })
   @UseGuards(JwtAuthGuard)
   async delete(
     @Param('id') id: string,
