@@ -11,9 +11,13 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { QuizQuestionsService } from '../services/quiz-question.service';
-import { CreateQuizQuestionDto } from '../dto/create-quiz-question.dto';
+import {
+  CreateBulkQuizQuestionDto,
+  CreateQuizQuestionDto,
+} from '../dto/create-quiz-question.dto';
 import { UpdateQuizQuestionDto } from '../dto/update-quiz-question.dto';
 import {
+  QuizQuestionsArrayResponseDto,
   QuizQuestionsResponseCountDto,
   QuizQuestionsResponseDto,
   ResponseDto,
@@ -22,6 +26,7 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiOperation,
+  ApiParam,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -36,6 +41,49 @@ import stringify from 'safe-stable-stringify';
 @UseGuards(JwtAuthGuard)
 export class QuizQuestionController {
   constructor(private readonly quizQuestionsService: QuizQuestionsService) {}
+
+  @Post('bulk/:quizId')
+  @ApiOperation({ summary: 'Create multiple quiz questions' })
+  @ApiParam({ name: 'quizId', description: 'Quiz ID' })
+  @ApiBody({ type: CreateBulkQuizQuestionDto })
+  @ApiResponse({
+    status: 201,
+    description: 'The quiz questions have been successfully created.',
+    type: QuizQuestionsArrayResponseDto,
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Error creating quiz questions',
+    type: ResponseDto<null>,
+  })
+  async createBulk(
+    @Param('quizId') quizId: string,
+    @Body() createBulkDto: CreateBulkQuizQuestionDto,
+    @UserId() userId: string,
+  ): Promise<QuizQuestionsArrayResponseDto> {
+    try {
+      const questions = await this.quizQuestionsService.createBulk(
+        createBulkDto,
+        quizId,
+        userId,
+      );
+      return {
+        status: 201,
+        data: questions,
+        message: 'Quiz questions created successfully',
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        message: 'Error creating quiz questions',
+        error: stringify({
+          message: error.message,
+          stack: error.stack,
+          details: error.response || error,
+        }),
+      };
+    }
+  }
 
   @Post()
   @ApiOperation({ summary: 'Create a new quiz question' })

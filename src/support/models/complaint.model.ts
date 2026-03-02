@@ -52,7 +52,7 @@ export class Complaint extends Model<Complaint> {
     static async setUserId(instance: Complaint, options: { [key: string]: any }) {
 
         // Retrieve the authenticated user ID
-        const authUserId = options.userId;
+        const authUserId = options.userId || instance.userId;
         if (!authUserId) {
             throw new Error('Authenticated user ID is not available');
         }

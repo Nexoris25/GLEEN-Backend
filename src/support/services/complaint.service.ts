@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Complaint } from '../models/complaint.model';
 import { CreateComplaintDto, UpdateComplaintDto } from '../dto/complaint.dto';
@@ -13,13 +17,15 @@ export class ComplaintService {
 
   async create(dto: CreateComplaintDto, userId: string) {
     try {
-      const complaint: any = await this.complaintModel.create(
-        { ...dto },
-        { userId } as any
-      );
+      const complaint: any = await this.complaintModel.create({
+        ...dto,
+        userId,
+      });
       return complaint;
     } catch (error) {
-      throw new InternalServerErrorException(error.message || 'Failed to create complaint');
+      throw new InternalServerErrorException(
+        error.message || 'Failed to create complaint',
+      );
     }
   }
 
@@ -47,7 +53,9 @@ export class ComplaintService {
       });
       return { count, rows };
     } catch (error) {
-      throw new InternalServerErrorException(error.message || 'Failed to fetch complaints');
+      throw new InternalServerErrorException(
+        error.message || 'Failed to fetch complaints',
+      );
     }
   }
 
@@ -59,7 +67,9 @@ export class ComplaintService {
       if (!complaint) throw new NotFoundException('Complaint not found');
       return complaint;
     } catch (error) {
-      throw new InternalServerErrorException(error.message || 'Error fetching complaint');
+      throw new InternalServerErrorException(
+        error.message || 'Error fetching complaint',
+      );
     }
   }
 
@@ -69,7 +79,9 @@ export class ComplaintService {
       await complaint.update(dto);
       return complaint;
     } catch (error) {
-      throw new InternalServerErrorException(error.message || 'Failed to update complaint');
+      throw new InternalServerErrorException(
+        error.message || 'Failed to update complaint',
+      );
     }
   }
 
@@ -79,7 +91,9 @@ export class ComplaintService {
       await complaint.destroy();
       return { message: 'Complaint deleted successfully' };
     } catch (error) {
-      throw new InternalServerErrorException(error.message || 'Failed to delete complaint');
+      throw new InternalServerErrorException(
+        error.message || 'Failed to delete complaint',
+      );
     }
   }
 }

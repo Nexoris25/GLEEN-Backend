@@ -3,9 +3,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsArray,
-  IsEnum,
   IsNotEmpty,
-  IsObject,
   IsOptional,
   IsString,
   IsUUID,
@@ -77,4 +75,57 @@ export class CreateQuizQuestionDto {
   @IsOptional()
   @IsString()
   file: string;
+}
+
+export class CreateQuizQuestionWithoutQuizIdDto {
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  question: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  explanation?: string;
+
+  @ApiProperty({
+    enum: ['MULTIPLE_CHOICE', 'TRUE_FALSE', 'THEORY'],
+    example: 'MULTIPLE_CHOICE',
+  })
+  @IsNotEmpty()
+  @IsString()
+  type: string;
+
+  @ApiPropertyOptional({
+    enum: ['PENDING', 'APPROVED', 'REJECTED'],
+    example: 'PENDING',
+  })
+  @IsOptional()
+  @IsString()
+  status: string = 'PENDING';
+
+  @ApiPropertyOptional({ type: [QuizQuestionOptionDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => QuizQuestionOptionDto)
+  options?: QuizQuestionOptionDto[];
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  correctAnswer: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  file: string;
+}
+
+export class CreateBulkQuizQuestionDto {
+  @ApiProperty({ type: [CreateQuizQuestionWithoutQuizIdDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateQuizQuestionWithoutQuizIdDto)
+  questions: CreateQuizQuestionWithoutQuizIdDto[];
 }

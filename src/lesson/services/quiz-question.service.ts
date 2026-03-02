@@ -1,7 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { QuizQuestions } from '../models/quiz_questions.model';
-import { CreateQuizQuestionDto } from '../dto/create-quiz-question.dto';
+import {
+  CreateBulkQuizQuestionDto,
+  CreateQuizQuestionDto,
+} from '../dto/create-quiz-question.dto';
 import { UpdateQuizQuestionDto } from '../dto/update-quiz-question.dto';
 import { SearchQuizQuestionDto } from '../dto/search-quiz-question.dto';
 import stringify from 'safe-stable-stringify';
@@ -26,6 +29,33 @@ export class QuizQuestionsService {
     } catch (error) {
       throw new BadRequestException({
         message: 'Error creating quiz question:',
+        details: stringify({
+          message: error.message,
+          stack: error.stack,
+          details: error.response || error,
+        }),
+      });
+    }
+  }
+
+  async createBulk(
+    createBulkDto: CreateBulkQuizQuestionDto,
+    quizId: string,
+    userId: string,
+  ): Promise<QuizQuestions[]> {
+    try {
+      const questionsData = createBulkDto.questions.map((question) => ({
+        ...question,
+        quizId,
+        userId,
+      }));
+      return await this.quizQuestionsModel.bulkCreate(questionsData, {
+        validate: true,
+        individualHooks: true,
+      });
+    } catch (error) {
+      throw new BadRequestException({
+        message: 'Error creating quiz questions in bulk:',
         details: stringify({
           message: error.message,
           stack: error.stack,
