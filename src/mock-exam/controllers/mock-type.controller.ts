@@ -37,7 +37,7 @@ export class MockTypeController {
   constructor(private readonly mockTypesService: MockTypesService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new mock type' })
+  @ApiOperation({ summary: 'Create a new mock typesss' })
   @ApiBody({ type: CreateMockTypeDto })
   @ApiResponse({
     status: 201,
