@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy via SSH
+      - name: Deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -18,8 +18,13 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
           script: |
+            export PATH=/www/server/nodejs/v22.18.0/bin:$PATH
+
             cd /home/nexoristech25/nest-blue
+
             git pull origin main
+
             npm ci
             npm run build
-            pm2 reload gleen-backend
+
+            pm2 reload gleen-backend || pm2 start dist/main.js --name gleen-backend
