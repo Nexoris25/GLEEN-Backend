@@ -1,4 +1,4 @@
-name: Deploy to Bare VPS
+name: Deploy to VPS
 
 on:
   push:
@@ -10,20 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Copy deploy script
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USERNAME }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT || 22 }}
-          source: "deploy.sh"
-          target: "/home/nexoristech25/deploy-scripts/"
-
-      - name: Execute deploy script
+      - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -31,5 +18,8 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
           script: |
-            chmod +x /home/nexoristech25/deploy-scripts/deploy.sh
-            bash /home/nexoristech25/deploy-scripts/deploy.sh
+            cd /home/nexoristech25/nest-blue
+            git pull origin main
+            npm ci
+            npm run build
+            pm2 reload gleen-backend
