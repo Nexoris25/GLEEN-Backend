@@ -22,9 +22,10 @@ jobs:
 
             cd /home/nexoristech25/nest-blue
 
-            git pull origin main
+            git fetch origin
+            git reset --hard origin/main
 
             npm ci
             npm run build
 
-            pm2 reload gleen-backend || pm2 start dist/main.js --name gleen-backend
+            pm2 restart gleen-backend || pm2 start dist/main.js --name gleen-backend
