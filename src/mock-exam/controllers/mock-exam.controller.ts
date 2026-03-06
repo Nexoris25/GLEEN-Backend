@@ -43,7 +43,7 @@ export class MockExamController {
   constructor(private readonly mockExamsService: MockExamsService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new mock exam' })
+  @ApiOperation({ summary: 'Create a new mock exams' })
   @ApiBody({ type: CreateMockExamDto })
   @ApiResponse({
     status: 201,
