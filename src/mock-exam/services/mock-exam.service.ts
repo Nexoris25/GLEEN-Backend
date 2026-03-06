@@ -21,7 +21,8 @@ export class MockExamsService {
 
     async create(createDto: CreateMockExamDto, userId: string): Promise<MockExams> {
         try {
-            return await this.mockExamsModel.create(createDto as Omit<MockExams, 'id'>, { isNewRecord: true, userId });
+            const values = { ...createDto, userId };
+            return await this.mockExamsModel.create(values as any, { isNewRecord: true, userId });
         } catch (error) {
             throw new BadRequestException({
                 message: 'Error creating mock exam:',
