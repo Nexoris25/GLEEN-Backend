@@ -11,11 +11,16 @@ import { XpConfigurationService } from './services/xp-configuration.service';
 import { XpRecordsService } from './services/xp-records.service';
 import { XpLogService } from './services/xp-log.service';
 import { StreakConfigurationService } from './services/streak-configuration.service';
+import { LeaderboardRankRewardService } from './services/leaderboard-rank-reward.service';
 import { XpConfigurationController } from './controllers/xp-configuration.controller';
 import { XpRecordsController } from './controllers/xp-record.controller';
 import { XpLogController } from './controllers/xp-log.controller';
-import { StreakConfiguration, StreakMilestoneReward } from './models/streak-configuration.model';
+import {
+  StreakConfiguration,
+  StreakMilestoneReward,
+} from './models/streak-configuration.model';
 import { UserStreak, UserStreakLog } from './models/user-streak.model';
+import { LeaderboardRankReward } from './models/leaderboard-rank-reward.model';
 
 @Module({
   imports: [
@@ -31,6 +36,7 @@ import { UserStreak, UserStreakLog } from './models/user-streak.model';
       StreakMilestoneReward,
       UserStreak,
       UserStreakLog,
+      LeaderboardRankReward,
     ]),
     forwardRef(() => AuthModule),
     forwardRef(() => UserModule),
@@ -41,6 +47,7 @@ import { UserStreak, UserStreakLog } from './models/user-streak.model';
     XpRecordsService,
     XpLogService,
     StreakConfigurationService,
+    LeaderboardRankRewardService,
   ],
   controllers: [
     XpConfigurationController,
@@ -52,6 +59,7 @@ import { UserStreak, UserStreakLog } from './models/user-streak.model';
     XpRecordsService,
     XpLogService,
     StreakConfigurationService,
+    LeaderboardRankRewardService,
   ],
 })
-export class XpModule { }
+export class XpModule {}

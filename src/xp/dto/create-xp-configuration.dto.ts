@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber } from 'class-validator';
+import { IsNumber, IsBoolean } from 'class-validator';
 
 export class CreateXpConfigurationDto {
   @ApiProperty({ description: 'Daily maximum XP limit for lessons' })
@@ -191,4 +191,20 @@ export class CreateXpConfigurationDto {
   @ApiProperty({ description: 'Champion subscription plan (XP Required)' })
   @IsNumber()
   championSubscriptionXpRequired: number;
+
+  @ApiProperty({ description: 'Show real names on the leaderboard' })
+  @IsBoolean()
+  showRealNames: boolean;
+
+  @ApiProperty({ description: 'Anonymize users outside top 10 on the boards' })
+  @IsBoolean()
+  anonymizeOutsideTop10: boolean;
+
+  @ApiProperty({ description: 'Allow users to opt-out of leaderboards' })
+  @IsBoolean()
+  allowOptOut: boolean;
+
+  @ApiProperty({ description: 'Show rank movement per day' })
+  @IsBoolean()
+  showRankMovement: boolean;
 }

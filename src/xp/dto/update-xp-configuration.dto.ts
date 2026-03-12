@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsUUID } from 'class-validator';
+import { IsNumber, IsOptional, IsBoolean } from 'class-validator';
 
 export class UpdateXpConfigurationDto {
   @ApiPropertyOptional({ description: 'Daily maximum XP limit for lessons' })
@@ -22,22 +22,30 @@ export class UpdateXpConfigurationDto {
   @IsOptional()
   dailyMaxXpLimitForV1Battles?: number;
 
-  @ApiPropertyOptional({ description: 'XP value for lesson interaction ≤ 1 hour' })
+  @ApiPropertyOptional({
+    description: 'XP value for lesson interaction ≤ 1 hour',
+  })
   @IsNumber()
   @IsOptional()
   xpValueForLessThanOrEqualTo1HourLessonInteraction?: number;
 
-  @ApiPropertyOptional({ description: 'XP value for lesson interaction > 1 hour and ≤ 4 hours' })
+  @ApiPropertyOptional({
+    description: 'XP value for lesson interaction > 1 hour and ≤ 4 hours',
+  })
   @IsNumber()
   @IsOptional()
   xpValueForGreaterThan1HourLessThanOrEqualTo4HoursLessonInteraction?: number;
 
-  @ApiPropertyOptional({ description: 'XP value for lesson interaction > 4 hours and ≤ 10 hours' })
+  @ApiPropertyOptional({
+    description: 'XP value for lesson interaction > 4 hours and ≤ 10 hours',
+  })
   @IsNumber()
   @IsOptional()
   xpValueForGreaterThan4HourLessThanOrEqualTo10HoursLessonInteraction?: number;
 
-  @ApiPropertyOptional({ description: 'XP value for lesson interaction > 10 hours and ≤ 24 hours' })
+  @ApiPropertyOptional({
+    description: 'XP value for lesson interaction > 10 hours and ≤ 24 hours',
+  })
   @IsNumber()
   @IsOptional()
   xpValueForGreaterThan10HourLessThanOrEqualTo24HoursLessonInteraction?: number;
@@ -47,12 +55,16 @@ export class UpdateXpConfigurationDto {
   @IsOptional()
   xpValueForLessThanOrEqualTo10QuizQuestion?: number;
 
-  @ApiPropertyOptional({ description: 'XP value for > 10 and ≤ 20 quiz questions' })
+  @ApiPropertyOptional({
+    description: 'XP value for > 10 and ≤ 20 quiz questions',
+  })
   @IsNumber()
   @IsOptional()
   xpValueForGreaterThan10LessThanOrEqualTo20QuizQuestion?: number;
 
-  @ApiPropertyOptional({ description: 'XP value for > 20 and ≤ 30 quiz questions' })
+  @ApiPropertyOptional({
+    description: 'XP value for > 20 and ≤ 30 quiz questions',
+  })
   @IsNumber()
   @IsOptional()
   xpValueForGreaterThan20LessThanOrEqualTo30QuizQuestion?: number;
@@ -67,12 +79,16 @@ export class UpdateXpConfigurationDto {
   @IsOptional()
   xpValueForLessThanOrEqualTo10MockQuestion?: number;
 
-  @ApiPropertyOptional({ description: 'XP value for > 10 and ≤ 20 mock questions' })
+  @ApiPropertyOptional({
+    description: 'XP value for > 10 and ≤ 20 mock questions',
+  })
   @IsNumber()
   @IsOptional()
   xpValueForGreaterThan10LessThanOrEqualTo20MockQuestion?: number;
 
-  @ApiPropertyOptional({ description: 'XP value for > 20 and ≤ 30 mock questions' })
+  @ApiPropertyOptional({
+    description: 'XP value for > 20 and ≤ 30 mock questions',
+  })
   @IsNumber()
   @IsOptional()
   xpValueForGreaterThan20LessThanOrEqualTo30MockQuestion?: number;
@@ -147,12 +163,16 @@ export class UpdateXpConfigurationDto {
   @IsOptional()
   xpValueForLessThanOrEqualTo10V1BattleQuestion?: number;
 
-  @ApiPropertyOptional({ description: 'XP value for > 10 and ≤ 20 V1 battle questions' })
+  @ApiPropertyOptional({
+    description: 'XP value for > 10 and ≤ 20 V1 battle questions',
+  })
   @IsNumber()
   @IsOptional()
   xpValueForGreaterThan10LessThanOrEqualTo20V1BattleQuestion?: number;
 
-  @ApiPropertyOptional({ description: 'XP value for > 20 and ≤ 30 V1 battle questions' })
+  @ApiPropertyOptional({
+    description: 'XP value for > 20 and ≤ 30 V1 battle questions',
+  })
   @IsNumber()
   @IsOptional()
   xpValueForGreaterThan20LessThanOrEqualTo30V1BattleQuestion?: number;
@@ -187,12 +207,16 @@ export class UpdateXpConfigurationDto {
   @IsOptional()
   xpValuePerDayLogin?: number;
 
-  @ApiPropertyOptional({ description: 'XP use limit per time (% of daily earnings)' })
+  @ApiPropertyOptional({
+    description: 'XP use limit per time (% of daily earnings)',
+  })
   @IsNumber()
   @IsOptional()
   xpLimitPerTimePercentage?: number;
 
-  @ApiPropertyOptional({ description: 'XP use limit per day (% of daily earnings)' })
+  @ApiPropertyOptional({
+    description: 'XP use limit per day (% of daily earnings)',
+  })
   @IsNumber()
   @IsOptional()
   xpLimitPerDayPercentage?: number;
@@ -202,13 +226,41 @@ export class UpdateXpConfigurationDto {
   @IsOptional()
   airtimeXpValuePerNaira?: number;
 
-  @ApiPropertyOptional({ description: 'Scholar subscription plan (XP Required)' })
+  @ApiPropertyOptional({
+    description: 'Scholar subscription plan (XP Required)',
+  })
   @IsNumber()
   @IsOptional()
   scholarSubscriptionXpRequired?: number;
 
-  @ApiPropertyOptional({ description: 'Champion subscription plan (XP Required)' })
+  @ApiPropertyOptional({
+    description: 'Champion subscription plan (XP Required)',
+  })
   @IsNumber()
   @IsOptional()
   championSubscriptionXpRequired?: number;
+
+  @ApiPropertyOptional({ description: 'Show real names on the leaderboard' })
+  @IsBoolean()
+  @IsOptional()
+  showRealNames?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Anonymize users outside top 10 on the boards',
+  })
+  @IsBoolean()
+  @IsOptional()
+  anonymizeOutsideTop10?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Allow users to opt-out of leaderboards',
+  })
+  @IsBoolean()
+  @IsOptional()
+  allowOptOut?: boolean;
+
+  @ApiPropertyOptional({ description: 'Show rank movement per day' })
+  @IsBoolean()
+  @IsOptional()
+  showRankMovement?: boolean;
 }

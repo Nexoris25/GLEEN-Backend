@@ -32,6 +32,9 @@ import {
 import { UpdateXpConversionDto } from '../dto/update-xp-conversion.dto';
 import { StreakConfigurationService } from '../services/streak-configuration.service';
 import { UpdateStreakConfigurationDto } from '../dto/update-streak-configuration.dto';
+import { UpdateLeaderboardSettingsDto } from '../dto/update-leaderboard-settings.dto';
+import { LeaderboardRankRewardService } from '../services/leaderboard-rank-reward.service';
+import { BulkUpdateRankRewardsDto } from '../dto/update-leaderboard-rank-reward.dto';
 
 @ApiTags('XP Configuration')
 @ApiBearerAuth()
@@ -42,7 +45,150 @@ export class XpConfigurationController {
     private readonly xpConfigurationService: XpConfigurationService,
     private readonly xpLogService: XpLogService,
     private readonly streakConfigurationService: StreakConfigurationService,
+    private readonly rankRewardService: LeaderboardRankRewardService,
   ) {}
+
+  @Get('leaderboard-rank-rewards')
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiOperation({
+    summary: 'Get leaderboard rank rewards',
+    description: 'Retrieve current XP and badge rewards for leaderboard ranks.',
+  })
+  @ApiOkResponse({
+    description: 'Successfully retrieved leaderboard rank rewards',
+  })
+  async getLeaderboardRankRewards() {
+    try {
+      const data = await this.rankRewardService.findAll();
+      return {
+        status: HttpStatus.OK,
+        message: 'Leaderboard rank rewards retrieved successfully',
+        data,
+      };
+    } catch (error: any) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Error retrieving leaderboard rank rewards',
+        error: stringify({
+          message: (error as Error)?.message || 'Unknown error',
+          stack: (error as Error)?.stack,
+          details: (error as any)?.response || error,
+        }),
+      };
+    }
+  }
+
+  @Patch('leaderboard-rank-rewards')
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiOperation({
+    summary: 'Update leaderboard rank rewards',
+    description: 'Bulk update XP and badge rewards for leaderboard ranks.',
+  })
+  @ApiBody({
+    type: BulkUpdateRankRewardsDto,
+  })
+  @ApiOkResponse({
+    description: 'Leaderboard rank rewards successfully updated',
+  })
+  async updateLeaderboardRankRewards(
+    @Body() updateDto: BulkUpdateRankRewardsDto,
+  ) {
+    try {
+      const data = await this.rankRewardService.updateAll(updateDto);
+      return {
+        status: HttpStatus.OK,
+        message: 'Leaderboard rank rewards updated successfully',
+        data,
+      };
+    } catch (error: any) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Error updating leaderboard rank rewards',
+        error: stringify({
+          message: (error as Error)?.message || 'Unknown error',
+          stack: (error as Error)?.stack,
+          details: (error as any)?.response || error,
+        }),
+      };
+    }
+  }
+
+  @Get('leaderboard-settings')
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiOperation({
+    summary: 'Get leaderboard display settings',
+    description:
+      'Retrieve current configuration for leaderboard display toggles.',
+  })
+  @ApiOkResponse({
+    description: 'Successfully retrieved leaderboard settings',
+  })
+  async getLeaderboardSettings() {
+    try {
+      const config = await this.xpConfigurationService.findOne();
+      return {
+        status: HttpStatus.OK,
+        message: 'Leaderboard settings retrieved successfully',
+        data: {
+          showRealNames: config.showRealNames,
+          anonymizeOutsideTop10: config.anonymizeOutsideTop10,
+          allowOptOut: config.allowOptOut,
+          showRankMovement: config.showRankMovement,
+        },
+      };
+    } catch (error: any) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Error retrieving leaderboard settings',
+        error: stringify({
+          message: (error as Error)?.message || 'Unknown error',
+          stack: (error as Error)?.stack,
+          details: (error as any)?.response || error,
+        }),
+      };
+    }
+  }
+
+  @Patch('leaderboard-settings')
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiOperation({
+    summary: 'Update leaderboard display settings',
+    description:
+      'Update toggles for real names, anonymization, opt-out, and rank movement.',
+  })
+  @ApiBody({
+    type: UpdateLeaderboardSettingsDto,
+  })
+  @ApiOkResponse({
+    description: 'Leaderboard settings successfully updated',
+  })
+  async updateLeaderboardSettings(
+    @Body() updateDto: UpdateLeaderboardSettingsDto,
+  ) {
+    try {
+      const data = await this.xpConfigurationService.update(updateDto);
+      return {
+        status: HttpStatus.OK,
+        message: 'Leaderboard settings updated successfully',
+        data: {
+          showRealNames: data.showRealNames,
+          anonymizeOutsideTop10: data.anonymizeOutsideTop10,
+          allowOptOut: data.allowOptOut,
+          showRankMovement: data.showRankMovement,
+        },
+      };
+    } catch (error: any) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Error updating leaderboard settings',
+        error: stringify({
+          message: (error as Error)?.message || 'Unknown error',
+          stack: (error as Error)?.stack,
+          details: (error as any)?.response || error,
+        }),
+      };
+    }
+  }
 
   @Get('streak-settings')
   @Roles('ADMIN', 'SUPER_ADMIN')

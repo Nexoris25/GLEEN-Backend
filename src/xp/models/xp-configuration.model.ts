@@ -29,11 +29,11 @@ export class XpConfiguration extends Model {
   @ApiProperty()
   @Column(DataType.DOUBLE)
   xpValueForMockTheory: number;
- 
+
   @ApiProperty()
   @Column(DataType.DOUBLE)
   xpValueForMockObjective: number;
-  
+
   @ApiProperty()
   @Column(DataType.DOUBLE)
   xpValueForJamb: number;
@@ -81,7 +81,6 @@ export class XpConfiguration extends Model {
   @ApiProperty()
   @Column(DataType.DOUBLE)
   xpValueForGreaterThan30QuizQuestion: number;
-
 
   @ApiProperty()
   @Column(DataType.DOUBLE)
@@ -202,4 +201,24 @@ export class XpConfiguration extends Model {
   @ApiProperty({ description: 'Champion subscription plan (XP Required)' })
   @Column(DataType.DOUBLE)
   championSubscriptionXpRequired: number;
+
+  @ApiProperty({ description: 'Show real names on the leaderboard' })
+  @Default(false)
+  @Column(DataType.BOOLEAN)
+  showRealNames: boolean;
+
+  @ApiProperty({ description: 'Anonymize users outside top 10 on the boards' })
+  @Default(true)
+  @Column(DataType.BOOLEAN)
+  anonymizeOutsideTop10: boolean;
+
+  @ApiProperty({ description: 'Allow users to opt-out of leaderboards' })
+  @Default(true)
+  @Column(DataType.BOOLEAN)
+  allowOptOut: boolean;
+
+  @ApiProperty({ description: 'Show rank movement per day' })
+  @Default(true)
+  @Column(DataType.BOOLEAN)
+  showRankMovement: boolean;
 }
