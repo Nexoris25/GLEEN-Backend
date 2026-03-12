@@ -22,15 +22,21 @@ export class CreateXpConfigurationDto {
   @IsNumber()
   xpValueForLessThanOrEqualTo1HourLesson: number;
 
-  @ApiProperty({ description: 'XP value for lesson interaction > 1 hour and ≤ 4 hours' })
+  @ApiProperty({
+    description: 'XP value for lesson interaction > 1 hour and ≤ 4 hours',
+  })
   @IsNumber()
   xpValueForGreaterThan1HourLessThanOrEqualTo4HoursLesson: number;
 
-  @ApiProperty({ description: 'XP value for lesson interaction > 4 hours and ≤ 10 hours' })
+  @ApiProperty({
+    description: 'XP value for lesson interaction > 4 hours and ≤ 10 hours',
+  })
   @IsNumber()
   xpValueForGreaterThan4HourLessThanOrEqualTo10HoursLesson: number;
 
-  @ApiProperty({ description: 'XP value for lesson interaction > 10 hours and ≤ 24 hours' })
+  @ApiProperty({
+    description: 'XP value for lesson interaction > 10 hours and ≤ 24 hours',
+  })
   @IsNumber()
   xpValueForGreaterThan10HourLessThanOrEqualTo24HoursLesson: number;
 
@@ -66,19 +72,17 @@ export class CreateXpConfigurationDto {
   @IsNumber()
   xpValueForGreaterThan30MockQuestion: number;
 
-@ApiProperty({ description: 'XP value for mock theory' })
-@IsNumber()
-xpValueForMockTheory: number;
+  @ApiProperty({ description: 'XP value for mock theory' })
+  @IsNumber()
+  xpValueForMockTheory: number;
 
+  @ApiProperty({ description: 'XP value for mock objective' })
+  @IsNumber()
+  xpValueForMockObjective: number;
 
-@ApiProperty({ description: 'XP value for mock objective' })
-@IsNumber()
-xpValueForMockObjective: number;
-
-
-@ApiProperty({ description: 'XP value for jamb' })
-@IsNumber()
-xpValueForJamb: number;
+  @ApiProperty({ description: 'XP value for JAMB' })
+  @IsNumber()
+  xpValueForJamb: number;
 
   // @ApiProperty({ description: 'XP value for ≤ 10 mock JAMB questions' })
   // @IsNumber()
@@ -132,11 +136,15 @@ xpValueForJamb: number;
   @IsNumber()
   xpValueForLessThanOrEqualTo10V1BattleQuestion: number;
 
-  @ApiProperty({ description: 'XP value for > 10 and ≤ 20 V1 battle questions' })
+  @ApiProperty({
+    description: 'XP value for > 10 and ≤ 20 V1 battle questions',
+  })
   @IsNumber()
   xpValueForGreaterThan10LessThanOrEqualTo20V1BattleQuestion: number;
 
-  @ApiProperty({ description: 'XP value for > 20 and ≤ 30 V1 battle questions' })
+  @ApiProperty({
+    description: 'XP value for > 20 and ≤ 30 V1 battle questions',
+  })
   @IsNumber()
   xpValueForGreaterThan20LessThanOrEqualTo30V1BattleQuestion: number;
 
@@ -163,4 +171,24 @@ xpValueForJamb: number;
   @ApiProperty({ description: 'XP value per day login' })
   @IsNumber()
   xpValuePerDayLogin: number;
+
+  @ApiProperty({ description: 'XP use limit per time (% of daily earnings)' })
+  @IsNumber()
+  xpLimitPerTimePercentage: number;
+
+  @ApiProperty({ description: 'XP use limit per day (% of daily earnings)' })
+  @IsNumber()
+  xpLimitPerDayPercentage: number;
+
+  @ApiProperty({ description: 'XP value per N of airtime' })
+  @IsNumber()
+  airtimeXpValuePerNaira: number;
+
+  @ApiProperty({ description: 'Scholar subscription plan (XP Required)' })
+  @IsNumber()
+  scholarSubscriptionXpRequired: number;
+
+  @ApiProperty({ description: 'Champion subscription plan (XP Required)' })
+  @IsNumber()
+  championSubscriptionXpRequired: number;
 }

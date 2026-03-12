@@ -87,6 +87,11 @@ export class XpConfigurationService {
                 v1BattleXpDrawBonus: 25,
                 xpValuePerReferral: 100,
                 xpValuePerDayLogin: 10,
+                xpLimitPerTimePercentage: 10,
+                xpLimitPerDayPercentage: 20,
+                airtimeXpValuePerNaira: 100,
+                scholarSubscriptionXpRequired: 5000,
+                championSubscriptionXpRequired: 10000,
             };
 
             const xpConfiguration = await this.xpConfigurationRepository.create({ ...defaultConfig });

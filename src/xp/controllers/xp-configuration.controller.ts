@@ -28,6 +28,7 @@ import {
   XpStatisticsQueryDto,
   XpStatisticsResponseDto,
 } from '../dto/xp-statistics.dto';
+import { UpdateXpConversionDto } from '../dto/update-xp-conversion.dto';
 
 @ApiTags('XP Configuration')
 @ApiBearerAuth()
@@ -38,6 +39,44 @@ export class XpConfigurationController {
     private readonly xpConfigurationService: XpConfigurationService,
     private readonly xpLogService: XpLogService,
   ) {}
+
+  @Patch('conversion-settings')
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiOperation({
+    summary: 'Update XP conversion settings for airtime and subscriptions',
+    description:
+      'Set XP limits for airtime conversion and required XP for subscription plans.',
+  })
+  @ApiBody({
+    type: UpdateXpConversionDto,
+    description: 'XP conversion configuration data',
+  })
+  @ApiResponse({
+    description: 'XP conversion settings successfully updated',
+    type: ResponseDto<XpConfiguration>,
+  })
+  async updateConversionSettings(
+    @Body() updateDto: UpdateXpConversionDto,
+  ): Promise<ResponseDto<XpConfiguration>> {
+    try {
+      const data = await this.xpConfigurationService.update(updateDto);
+      return {
+        status: HttpStatus.OK,
+        message: 'XP conversion settings updated successfully',
+        data,
+      };
+    } catch (error: any) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Error updating XP conversion settings',
+        error: stringify({
+          message: (error as Error)?.message || 'Unknown error',
+          stack: (error as Error)?.stack,
+          details: (error as any)?.response || error,
+        }),
+      };
+    }
+  }
 
   @Get('statistics')
   @Roles('ADMIN', 'SUPER_ADMIN')
@@ -58,7 +97,7 @@ export class XpConfigurationController {
       return {
         status: HttpStatus.OK,
         message: 'XP statistics retrieved successfully',
-        data,
+        data: data,
       };
     } catch (error: any) {
       return {

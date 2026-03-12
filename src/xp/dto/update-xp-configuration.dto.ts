@@ -186,4 +186,29 @@ export class UpdateXpConfigurationDto {
   @IsNumber()
   @IsOptional()
   xpValuePerDayLogin?: number;
+
+  @ApiPropertyOptional({ description: 'XP use limit per time (% of daily earnings)' })
+  @IsNumber()
+  @IsOptional()
+  xpLimitPerTimePercentage?: number;
+
+  @ApiPropertyOptional({ description: 'XP use limit per day (% of daily earnings)' })
+  @IsNumber()
+  @IsOptional()
+  xpLimitPerDayPercentage?: number;
+
+  @ApiPropertyOptional({ description: 'XP value per N of airtime' })
+  @IsNumber()
+  @IsOptional()
+  airtimeXpValuePerNaira?: number;
+
+  @ApiPropertyOptional({ description: 'Scholar subscription plan (XP Required)' })
+  @IsNumber()
+  @IsOptional()
+  scholarSubscriptionXpRequired?: number;
+
+  @ApiPropertyOptional({ description: 'Champion subscription plan (XP Required)' })
+  @IsNumber()
+  @IsOptional()
+  championSubscriptionXpRequired?: number;
 }

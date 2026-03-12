@@ -183,4 +183,23 @@ export class XpConfiguration extends Model {
   @Column(DataType.DOUBLE)
   xpValuePerDayLogin: number;
 
+  @ApiProperty({ description: 'XP use limit per time (% of daily earnings)' })
+  @Column(DataType.DOUBLE)
+  xpLimitPerTimePercentage: number;
+
+  @ApiProperty({ description: 'XP use limit per day (% of daily earnings)' })
+  @Column(DataType.DOUBLE)
+  xpLimitPerDayPercentage: number;
+
+  @ApiProperty({ description: 'XP value per N of airtime' })
+  @Column(DataType.DOUBLE)
+  airtimeXpValuePerNaira: number;
+
+  @ApiProperty({ description: 'Scholar subscription plan (XP Required)' })
+  @Column(DataType.DOUBLE)
+  scholarSubscriptionXpRequired: number;
+
+  @ApiProperty({ description: 'Champion subscription plan (XP Required)' })
+  @Column(DataType.DOUBLE)
+  championSubscriptionXpRequired: number;
 }
