@@ -25,6 +25,7 @@ import { RolesGuard } from 'src/auth/GuardsDecorMiddleware/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { XpLogService } from '../services/xp-log.service';
 import {
+  XpRewardStoreAnalyticsResponseDto,
   XpStatisticsQueryDto,
   XpStatisticsResponseDto,
 } from '../dto/xp-statistics.dto';
@@ -39,6 +40,40 @@ export class XpConfigurationController {
     private readonly xpConfigurationService: XpConfigurationService,
     private readonly xpLogService: XpLogService,
   ) {}
+
+  @Get('reward-store-analytics')
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiOperation({
+    summary: 'Get XP reward store analytics',
+    description:
+      'Retrieve analytics for XP conversions and rewards, including total converted, average daily conversion, and usage over time.',
+  })
+  @ApiOkResponse({
+    description: 'Successfully retrieved reward store analytics',
+    type: ResponseDto<XpRewardStoreAnalyticsResponseDto>,
+  })
+  async getRewardStoreAnalytics(
+    @Query() query: XpStatisticsQueryDto,
+  ): Promise<ResponseDto<XpRewardStoreAnalyticsResponseDto>> {
+    try {
+      const data = await this.xpLogService.getRewardStoreAnalytics(query);
+      return {
+        status: HttpStatus.OK,
+        message: 'Reward store analytics retrieved successfully',
+        data,
+      };
+    } catch (error: any) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Error retrieving reward store analytics',
+        error: stringify({
+          message: (error as Error)?.message || 'Unknown error',
+          stack: (error as Error)?.stack,
+          details: (error as any)?.response || error,
+        }),
+      };
+    }
+  }
 
   @Patch('conversion-settings')
   @Roles('ADMIN', 'SUPER_ADMIN')
@@ -63,7 +98,7 @@ export class XpConfigurationController {
       return {
         status: HttpStatus.OK,
         message: 'XP conversion settings updated successfully',
-        data,
+        data: data,
       };
     } catch (error: any) {
       return {

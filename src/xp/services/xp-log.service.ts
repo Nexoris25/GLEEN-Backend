@@ -11,6 +11,7 @@ import { XpRecordsService } from './xp-records.service';
 import { XpConfiguration } from '../models/xp-configuration.model';
 import { XpConfigurationService } from './xp-configuration.service';
 import {
+  XpRewardStoreAnalyticsResponseDto,
   XpStatisticsQueryDto,
   XpStatisticsResponseDto,
 } from '../dto/xp-statistics.dto';
@@ -39,10 +40,10 @@ export class XpLogService {
       if (startDate || endDate) {
         whereClause.createdAt = {};
         if (startDate) {
-          whereClause.createdAt[Op.gte] = new Date(startDate);
+          (whereClause.createdAt as any)[Op.gte] = new Date(startDate);
         }
         if (endDate) {
-          whereClause.createdAt[Op.lte] = new Date(endDate);
+          (whereClause.createdAt as any)[Op.lte] = new Date(endDate);
         }
       }
 
@@ -68,8 +69,8 @@ export class XpLogService {
         raw: true,
       });
       const xpByAction = xpByActionRaw.map((item: any) => ({
-        action: (item as any).xpType,
-        totalXp: parseFloat((item as any).totalXp),
+        action: String(item.xpType),
+        totalXp: parseFloat(String(item.totalXp)),
       }));
 
       // 4. XP over time (Graph data)
@@ -85,8 +86,8 @@ export class XpLogService {
       });
 
       const xpOverTime = xpOverTimeRaw.map((item: any) => ({
-        xp: parseFloat((item as any).dailyXp),
-        date: (item as any).date,
+        xp: parseFloat(String(item.dailyXp)),
+        date: String(item.date),
       }));
 
       return {
@@ -94,6 +95,96 @@ export class XpLogService {
         averageXpPerUser,
         xpByAction,
         xpOverTime,
+      };
+    } catch (error: any) {
+      throw new Error(
+        stringify({
+          message: (error as Error).message,
+          stack: (error as Error).stack,
+          details: (error as any).response || error,
+        }),
+      );
+    }
+  }
+
+  async getRewardStoreAnalytics(
+    query: XpStatisticsQueryDto,
+  ): Promise<XpRewardStoreAnalyticsResponseDto> {
+    try {
+      const { startDate, endDate } = query;
+      const whereClause: any = {};
+      if (startDate || endDate) {
+        whereClause.createdAt = {};
+        if (startDate) {
+          (whereClause.createdAt as any)[Op.gte] = new Date(startDate);
+        }
+        if (endDate) {
+          (whereClause.createdAt as any)[Op.lte] = new Date(endDate);
+        }
+      }
+
+      // Define types for conversion and rewards
+      const conversionTypes = ['AIRTIME_CONVERSION', 'SUBSCRIPTION_RENEWAL'];
+      const rewardTypes = ['REWARD_STORE_PURCHASE', 'REWARD'];
+
+      // 1. Total XP Converted (Airtime + Subscription)
+      // We take the absolute value since spent XP should be negative
+      const totalXpConvertedRaw =
+        (await this.xpLogRepository.sum('xpValue', {
+          where: {
+            ...whereClause,
+            xpType: { [Op.in]: conversionTypes },
+          },
+        })) || 0;
+      const totalXpConverted = Math.abs(totalXpConvertedRaw);
+
+      // 2. Total Used for Reward
+      const totalUsedForRewardRaw =
+        (await this.xpLogRepository.sum('xpValue', {
+          where: {
+            ...whereClause,
+            xpType: { [Op.in]: rewardTypes },
+          },
+        })) || 0;
+      const totalUsedForReward = Math.abs(totalUsedForRewardRaw);
+
+      // 3. Average Daily Conversion
+      let days = 1;
+      if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        days = Math.max(
+          1,
+          Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)),
+        );
+      }
+      const averageDailyConversion = totalXpConverted / days;
+
+      // 4. XP Converted Over Time (Graph Data)
+      const xpConvertedOverTimeRaw = await this.xpLogRepository.findAll({
+        attributes: [
+          [fn('DATE', col('createdAt')), 'date'],
+          [fn('SUM', col('xpValue')), 'dailyXp'],
+        ],
+        where: {
+          ...whereClause,
+          xpType: { [Op.in]: [...conversionTypes, ...rewardTypes] },
+        },
+        group: [fn('DATE', col('createdAt'))],
+        order: [[fn('DATE', col('createdAt')), 'ASC']],
+        raw: true,
+      });
+
+      const xpConvertedOverTime = xpConvertedOverTimeRaw.map((item: any) => ({
+        xp: Math.abs(parseFloat(String(item.dailyXp))),
+        date: String(item.date),
+      }));
+
+      return {
+        totalXpConverted,
+        averageDailyConversion,
+        totalUsedForReward,
+        xpConvertedOverTime,
       };
     } catch (error: any) {
       throw new Error(

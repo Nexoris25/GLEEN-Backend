@@ -42,3 +42,17 @@ export class XpStatisticsResponseDto {
   @ApiProperty({ type: [XpGraphPointDto] })
   xpOverTime: XpGraphPointDto[];
 }
+
+export class XpRewardStoreAnalyticsResponseDto {
+  @ApiProperty({ description: 'Total XP converted to airtime or subscriptions' })
+  totalXpConverted: number;
+
+  @ApiProperty({ description: 'Average daily XP conversion' })
+  averageDailyConversion: number;
+
+  @ApiProperty({ description: 'Total XP used for other rewards' })
+  totalUsedForReward: number;
+
+  @ApiProperty({ type: [XpGraphPointDto], description: 'XP converted over time (Graph data)' })
+  xpConvertedOverTime: XpGraphPointDto[];
+}
