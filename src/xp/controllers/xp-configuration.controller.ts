@@ -30,6 +30,8 @@ import {
   XpStatisticsResponseDto,
 } from '../dto/xp-statistics.dto';
 import { UpdateXpConversionDto } from '../dto/update-xp-conversion.dto';
+import { StreakConfigurationService } from '../services/streak-configuration.service';
+import { UpdateStreakConfigurationDto } from '../dto/update-streak-configuration.dto';
 
 @ApiTags('XP Configuration')
 @ApiBearerAuth()
@@ -39,7 +41,72 @@ export class XpConfigurationController {
   constructor(
     private readonly xpConfigurationService: XpConfigurationService,
     private readonly xpLogService: XpLogService,
+    private readonly streakConfigurationService: StreakConfigurationService,
   ) {}
+
+  @Get('streak-settings')
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiOperation({
+    summary: 'Get streak rules and milestone rewards',
+    description: 'Retrieve current streak configuration and rewards.',
+  })
+  @ApiOkResponse({
+    description: 'Successfully retrieved streak settings',
+  })
+  async getStreakSettings() {
+    try {
+      const data = await this.streakConfigurationService.findOne();
+      return {
+        status: HttpStatus.OK,
+        message: 'Streak settings retrieved successfully',
+        data,
+      };
+    } catch (error: any) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Error retrieving streak settings',
+        error: stringify({
+          message: (error as Error)?.message || 'Unknown error',
+          stack: (error as Error)?.stack,
+          details: (error as any)?.response || error,
+        }),
+      };
+    }
+  }
+
+  @Patch('streak-settings')
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiOperation({
+    summary: 'Update streak rules and milestone rewards',
+    description:
+      'Update streak trigger, time window, grace days, and milestone rewards.',
+  })
+  @ApiBody({
+    type: UpdateStreakConfigurationDto,
+  })
+  @ApiOkResponse({
+    description: 'Streak settings successfully updated',
+  })
+  async updateStreakSettings(@Body() updateDto: UpdateStreakConfigurationDto) {
+    try {
+      const data = await this.streakConfigurationService.update(updateDto);
+      return {
+        status: HttpStatus.OK,
+        message: 'Streak settings updated successfully',
+        data,
+      };
+    } catch (error: any) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Error updating streak settings',
+        error: stringify({
+          message: (error as Error)?.message || 'Unknown error',
+          stack: (error as Error)?.stack,
+          details: (error as any)?.response || error,
+        }),
+      };
+    }
+  }
 
   @Get('reward-store-analytics')
   @Roles('ADMIN', 'SUPER_ADMIN')

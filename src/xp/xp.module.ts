@@ -10,9 +10,11 @@ import { XpConfiguration } from './models/xp-configuration.model';
 import { XpConfigurationService } from './services/xp-configuration.service';
 import { XpRecordsService } from './services/xp-records.service';
 import { XpLogService } from './services/xp-log.service';
+import { StreakConfigurationService } from './services/streak-configuration.service';
 import { XpConfigurationController } from './controllers/xp-configuration.controller';
 import { XpRecordsController } from './controllers/xp-record.controller';
 import { XpLogController } from './controllers/xp-log.controller';
+import { StreakConfiguration, StreakMilestoneReward } from './models/streak-configuration.model';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { XpLogController } from './controllers/xp-log.controller';
       XpLog,
       XpRecords,
       XpConfiguration,
+      StreakConfiguration,
+      StreakMilestoneReward,
     ]),
     forwardRef(() => AuthModule),
     forwardRef(() => UserModule),
@@ -32,7 +36,8 @@ import { XpLogController } from './controllers/xp-log.controller';
   providers: [
     XpConfigurationService,
     XpRecordsService,
-    XpLogService
+    XpLogService,
+    StreakConfigurationService,
   ],
   controllers: [
     XpConfigurationController,
@@ -42,7 +47,8 @@ import { XpLogController } from './controllers/xp-log.controller';
   exports: [
     XpConfigurationService,
     XpRecordsService,
-    XpLogService
+    XpLogService,
+    StreakConfigurationService,
   ],
 })
 export class XpModule { }
