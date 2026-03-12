@@ -108,6 +108,35 @@ export class XpConfigurationController {
     }
   }
 
+  @Get('streak-analytics')
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiOperation({
+    summary: 'Get streak analytics',
+    description:
+      'Retrieve analytics for user streaks, including highest streak, grace day usage, and retention graph.',
+  })
+  async getStreakAnalytics(@Query() query: XpStatisticsQueryDto) {
+    try {
+      const data =
+        await this.streakConfigurationService.getStreakAnalytics(query);
+      return {
+        status: HttpStatus.OK,
+        message: 'Streak analytics retrieved successfully',
+        data,
+      };
+    } catch (error: any) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Error retrieving streak analytics',
+        error: stringify({
+          message: (error as Error)?.message || 'Unknown error',
+          stack: (error as Error)?.stack,
+          details: (error as any)?.response || error,
+        }),
+      };
+    }
+  }
+
   @Get('reward-store-analytics')
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiOperation({

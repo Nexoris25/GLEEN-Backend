@@ -15,6 +15,7 @@ import { XpConfigurationController } from './controllers/xp-configuration.contro
 import { XpRecordsController } from './controllers/xp-record.controller';
 import { XpLogController } from './controllers/xp-log.controller';
 import { StreakConfiguration, StreakMilestoneReward } from './models/streak-configuration.model';
+import { UserStreak, UserStreakLog } from './models/user-streak.model';
 
 @Module({
   imports: [
@@ -28,6 +29,8 @@ import { StreakConfiguration, StreakMilestoneReward } from './models/streak-conf
       XpConfiguration,
       StreakConfiguration,
       StreakMilestoneReward,
+      UserStreak,
+      UserStreakLog,
     ]),
     forwardRef(() => AuthModule),
     forwardRef(() => UserModule),
