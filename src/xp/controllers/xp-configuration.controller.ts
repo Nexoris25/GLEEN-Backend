@@ -1,25 +1,21 @@
 import {
-    Controller,
-    Get,
-    Post,
-    Body,
-    Patch,
-    Delete,
-    HttpCode,
-    HttpStatus,
-    Param, UseGuards,
+  Controller,
+  Get,
+  HttpStatus,
+  UseGuards,
+  Query,
+  Body,
+  Patch,
 } from '@nestjs/common';
 import {
-    ApiTags,
-    ApiOperation,
-    ApiBody,
-    ApiOkResponse,
-    ApiNoContentResponse,
-    ApiResponse, ApiBearerAuth,
-    
+  ApiTags,
+  ApiOperation,
+  ApiOkResponse,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiBody,
 } from '@nestjs/swagger';
 import { XpConfigurationService } from '../services/xp-configuration.service';
-import { CreateXpConfigurationDto } from '../dto/create-xp-configuration.dto';
 import { XpConfiguration } from '../models/xp-configuration.model';
 import { UpdateXpConfigurationDto } from '../dto/update-xp-configuration.dto';
 import { ResponseDto } from 'src/shared-types/response.dto';
@@ -27,16 +23,56 @@ import stringify from 'safe-stable-stringify';
 import { JwtAuthGuard } from 'src/auth/GuardsDecorMiddleware/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/GuardsDecorMiddleware/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
-
+import { XpLogService } from '../services/xp-log.service';
+import {
+  XpStatisticsQueryDto,
+  XpStatisticsResponseDto,
+} from '../dto/xp-statistics.dto';
 
 @ApiTags('XP Configuration')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('xp-configuration')
 export class XpConfigurationController {
+  constructor(
+    private readonly xpConfigurationService: XpConfigurationService,
+    private readonly xpLogService: XpLogService,
+  ) {}
 
-    constructor(private readonly xpConfigurationService: XpConfigurationService) { }
-/*
+  @Get('statistics')
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiOperation({
+    summary: 'Get XP statistics',
+    description:
+      'Retrieve XP statistics including total issued, average per user, and XP by action.',
+  })
+  @ApiOkResponse({
+    description: 'Successfully retrieved XP statistics',
+    type: ResponseDto<XpStatisticsResponseDto>,
+  })
+  async getStatistics(
+    @Query() query: XpStatisticsQueryDto,
+  ): Promise<ResponseDto<XpStatisticsResponseDto>> {
+    try {
+      const data = await this.xpLogService.getXpStatistics(query);
+      return {
+        status: HttpStatus.OK,
+        message: 'XP statistics retrieved successfully',
+        data,
+      };
+    } catch (error: any) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Error retrieving XP statistics',
+        error: stringify({
+          message: (error as Error)?.message || 'Unknown error',
+          stack: (error as Error)?.stack,
+          details: (error as any)?.response || error,
+        }),
+      };
+    }
+  }
+  /*
     @Post()
     @ApiOperation({
         summary: 'Create XP configuration',
@@ -90,64 +126,77 @@ export class XpConfigurationController {
         }
     }
 */
-    @Get()
-
-      @Roles('ADMIN', 'SUPER_ADMIN', 'TUTOR', 'USER')
-    @ApiOperation({
-        summary: 'Get XP configuration',
-        description: 'Retrieve the single XP configuration for the system.',
-    })
-    @ApiOkResponse({
-        description: 'Successfully retrieved XP configuration',
-        type: ResponseDto<XpConfiguration>,
-    })
-    async findOne(): Promise<ResponseDto<XpConfiguration>> {
-        try {
-            const data = await this.xpConfigurationService.findOne();
-            return { status: HttpStatus.OK, message: 'xp configuarion retrived sucessfully', data: data };
-        } catch (error) {
-            return {
-                status: HttpStatus.BAD_REQUEST, message: 'Error retreiviing xp configuration', error: stringify({
-                    message: error.message,
-                    stack: error.stack,
-                    details: error.response || error,
-                })
-            };
-        }
+  @Get()
+  @Roles('ADMIN', 'SUPER_ADMIN', 'TUTOR', 'USER')
+  @ApiOperation({
+    summary: 'Get XP configuration',
+    description: 'Retrieve the single XP configuration for the system.',
+  })
+  @ApiOkResponse({
+    description: 'Successfully retrieved XP configuration',
+    type: ResponseDto<XpConfiguration>,
+  })
+  async findOne(): Promise<ResponseDto<XpConfiguration>> {
+    try {
+      const data = await this.xpConfigurationService.findOne();
+      return {
+        status: HttpStatus.OK,
+        message: 'xp configuarion retrived sucessfully',
+        data: data,
+      };
+    } catch (error: any) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Error retreiviing xp configuration',
+        error: stringify({
+          message: (error as Error)?.message || 'Unknown error',
+          stack: (error as Error)?.stack,
+          details: (error as any)?.response || error,
+        }),
+      };
     }
+  }
 
-    @Patch()
+  @Patch()
   @Roles('ADMIN', 'SUPER_ADMIN')
-    @ApiOperation({
-        summary: 'Update XP configuration. Admin, Super Admin',
-        description: 'Update the single XP configuration for the system.',
-    })
-    @ApiBody({
-        type: UpdateXpConfigurationDto,
-        description: 'Partial XP configuration data for update',
-    })
-    @ApiResponse({
-        description: 'XP configuration successfully updated',
-        type: ResponseDto<XpConfiguration>,
-    })
-    async update(
-        @Body() updateXpConfigurationDto: UpdateXpConfigurationDto,
-    ): Promise<ResponseDto<XpConfiguration>> {
-        try {
-            const data = await this.xpConfigurationService.update(updateXpConfigurationDto);
-            return { status: HttpStatus.OK, message: 'xp configuarion updated sucessfully', data: data };
-        } catch (error) {
-            return {
-                status: HttpStatus.BAD_REQUEST, message: 'Error updating xp configuration', error: stringify({
-                    message: error.message,
-                    stack: error.stack,
-                    details: error.response || error,
-                })
-            };
-        }
+  @ApiOperation({
+    summary: 'Update XP configuration. Admin, Super Admin',
+    description: 'Update the single XP configuration for the system.',
+  })
+  @ApiBody({
+    type: UpdateXpConfigurationDto,
+    description: 'Partial XP configuration data for update',
+  })
+  @ApiResponse({
+    description: 'XP configuration successfully updated',
+    type: ResponseDto<XpConfiguration>,
+  })
+  async update(
+    @Body() updateXpConfigurationDto: UpdateXpConfigurationDto,
+  ): Promise<ResponseDto<XpConfiguration>> {
+    try {
+      const data = await this.xpConfigurationService.update(
+        updateXpConfigurationDto,
+      );
+      return {
+        status: HttpStatus.OK,
+        message: 'xp configuarion updated sucessfully',
+        data: data,
+      };
+    } catch (error: any) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Error updating xp configuration',
+        error: stringify({
+          message: (error as Error)?.message || 'Unknown error',
+          stack: (error as Error)?.stack,
+          details: (error as any)?.response || error,
+        }),
+      };
     }
+  }
 
-    /*
+  /*
 
     @Delete(':id')
     @HttpCode(HttpStatus.NO_CONTENT)
