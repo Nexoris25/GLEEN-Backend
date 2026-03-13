@@ -502,26 +502,9 @@ export class LessonService {
     }
   }
 
-  async update(
-    id: string,
-    updateLessonDto: UpdateLessonDto,
-    avatarOrCover?: Express.Multer.File,
-  ): Promise<Lesson> {
+  async update(id: string, updateLessonDto: UpdateLessonDto): Promise<Lesson> {
     try {
       const lesson = await this.findOne(id);
-      let imageUrl: string | null = null;
-      // ✅ Upload file to Bunny if provided
-      if (avatarOrCover) {
-        imageUrl = await this.bunnyService.upload({
-          buffer: avatarOrCover.buffer,
-          mimeType: avatarOrCover.mimetype,
-          originalName: avatarOrCover.originalname,
-          directory: 'lesson-topics',
-        });
-
-        // ✅ Store Bunny URL in DB
-        updateLessonDto.avatarOrCover = imageUrl;
-      }
 
       Object.assign(lesson, updateLessonDto);
 

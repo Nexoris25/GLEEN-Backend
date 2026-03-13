@@ -1,13 +1,12 @@
 import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { IsOptional } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import { CreateLessonDto } from './create-lesson.dto';
 
 export class UpdateLessonDto extends PartialType(CreateLessonDto) {
   @ApiPropertyOptional({
-    type: 'string',
-    format: 'binary',
-    description: 'Avatar or cover image (optional)',
+    description: 'Avatar or cover image URL (optional)',
   })
   @IsOptional()
-  avatarOrCover?: any;
+  @IsString()
+  avatarOrCover?: string;
 }

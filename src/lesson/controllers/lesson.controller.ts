@@ -10,7 +10,6 @@ import {
   Patch,
   Query,
   UseGuards,
-  BadRequestException,
   ValidationPipe,
   Req,
 } from '@nestjs/common';
@@ -22,16 +21,10 @@ import {
   ApiTags,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { ParseIntPipe } from '@nestjs/common';
-
 import { CreateLessonDto } from '../dto/create-lesson.dto';
-import { LessonSearchDto } from '../dto/lesson-search.dto';
 import { UpdateLessonDto } from '../dto/update-lesson.dto';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
-
 import { LessonService } from '../services/lesson.service';
 import {
-  LessonArrayResponseCountDto,
   LessonCommentResponseCountDto,
   LessonCommentResponseDto,
   LessonResponseDto,
@@ -40,7 +33,6 @@ import {
 } from 'src/shared-types/response.dto';
 import { UserId } from 'src/auth/GuardsDecorMiddleware/userIdDecorator.guard';
 import { UpdateLessonCommentDto } from '../dto/update-lesson-comment.dto';
-import { UpdateLessonTrackingDto } from '../dto/update-lesson-tracking.dto';
 import { CreateLessonCommentDto } from '../dto/create-lesson-comment.dto';
 import { CreateLessonTrackingDto } from '../dto/create-lesson-tracking.dto';
 import { LessonQueryDto } from '../dto/query.dto';
@@ -49,11 +41,6 @@ import { RolesGuard } from 'src/auth/GuardsDecorMiddleware/roles.guard';
 import stringify from 'safe-stable-stringify';
 import { Lesson } from '../models/lesson.model';
 import { Roles } from 'src/auth/decorators/roles.decorator';
-import { FileInterceptor } from '@nestjs/platform-express';
-
-class MarkLessonDto {
-  lessonId: string;
-}
 
 @ApiTags('Lessons')
 @ApiBearerAuth()
@@ -204,18 +191,6 @@ details: error.response || error,
 */
   //@Put(':id')
   @Patch(':id')
-  @UseInterceptors(
-    FileInterceptor('avatarOrCover', {
-      limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
-      fileFilter: (_, file, cb) => {
-        if (!file.mimetype.startsWith('image/')) {
-          cb(new BadRequestException('Only image files are allowed'), false);
-        }
-        cb(null, true);
-      },
-    }),
-  )
-  @ApiConsumes('multipart/form-data')
   @Roles('TUTOR')
   @ApiOperation({ summary: 'Update a lesson by ID' })
   @ApiParam({ name: 'id', description: 'Lesson ID' })
@@ -245,15 +220,9 @@ details: error.response || error,
       }),
     )
     updateLessonDto: UpdateLessonDto,
-    @UploadedFile() avatarOrCover?: Express.Multer.File, // ⚡ optional file
   ): Promise<LessonResponseDto> {
     try {
-      // ⚡ Pass the uploaded file to the service
-      const lesson = await this.lessonService.update(
-        id,
-        updateLessonDto,
-        avatarOrCover,
-      );
+      const lesson = await this.lessonService.update(id, updateLessonDto);
       return {
         status: 200,
         data: lesson,
