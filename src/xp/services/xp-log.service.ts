@@ -2,11 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { XpLog } from '../models/xp-log.model';
 import stringify from 'safe-stable-stringify';
-import {
-  CreateXpLogDto,
-  UpdateXpLogDto,
-  XpLogQueryDto,
-} from '../dto/xp-log.dto';
+import { CreateXpLogDto, UpdateXpLogDto } from '../dto/xp-log.dto';
+import { XpLogQueryDto } from '../dto/xp-log-query.dto';
 import { XpRecordsService } from './xp-records.service';
 import { XpConfiguration } from '../models/xp-configuration.model';
 import { XpConfigurationService } from './xp-configuration.service';
@@ -255,8 +252,8 @@ export class XpLogService {
 
       if (startDate || endDate) {
         whereClause.createdAt = {};
-        if (startDate) whereClause.createdAt.$gte = new Date(startDate);
-        if (endDate) whereClause.createdAt.$lte = new Date(endDate);
+        if (startDate) whereClause.createdAt[Op.gte] = new Date(startDate);
+        if (endDate) whereClause.createdAt[Op.lte] = new Date(endDate);
       }
 
       const { count, rows } = await this.xpLogRepository.findAndCountAll({
@@ -330,8 +327,8 @@ export class XpLogService {
 
       if (startDate || endDate) {
         whereClause.createdAt = {};
-        if (startDate) whereClause.createdAt.$gte = new Date(startDate);
-        if (endDate) whereClause.createdAt.$lte = new Date(endDate);
+        if (startDate) whereClause.createdAt[Op.gte] = new Date(startDate);
+        if (endDate) whereClause.createdAt[Op.lte] = new Date(endDate);
       }
 
       const { count, rows } = await this.xpLogRepository.findAndCountAll({
@@ -471,6 +468,29 @@ export class XpLogService {
           message: error.message,
           stack: error.stack,
           details: error.response || error,
+        }),
+      );
+    }
+  }
+
+  async resetUserXp(userId: string): Promise<void> {
+    const t = await this.sequelize.transaction();
+    try {
+      await this.xpLogRepository.destroy({
+        where: { userId },
+        transaction: t,
+      });
+
+      await this.xpRecordService.resetUserXp(userId, t);
+
+      await t.commit();
+    } catch (error) {
+      await t.rollback();
+      throw new Error(
+        stringify({
+          message: (error as Error).message,
+          stack: (error as Error).stack,
+          details: (error as any).response || error,
         }),
       );
     }
