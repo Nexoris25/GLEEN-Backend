@@ -42,10 +42,9 @@ export class LessonService {
   async create(
     createLessonDto: CreateLessonDto,
     userId: string,
-    avatarOrCover?: Express.Multer.File,
   ): Promise<Lesson> {
     try {
-      const { subjectId, title } = createLessonDto;
+      const { subjectId, title, avatarOrCover } = createLessonDto;
       const subjectExists = await Subject.findOne({ where: { id: subjectId } });
       const userExists = await User.findOne({ where: { id: userId } });
 
@@ -70,21 +69,8 @@ export class LessonService {
         );
       }
 
-      let imageUrl: string | null = null;
-      if (avatarOrCover) {
-        console.log(
-          'Uploading avatar or cover image...',
-          avatarOrCover.originalname,
-        );
-        imageUrl = await this.bunnyService.upload({
-          buffer: avatarOrCover.buffer,
-          mimeType: avatarOrCover.mimetype,
-          originalName: avatarOrCover.originalname,
-          directory: 'lesson-topics',
-        });
-      }
       const lesson = await this.lessonModel.create(
-        { ...createLessonDto, userId, avatarOrCover: imageUrl },
+        { ...createLessonDto, userId, avatarOrCover },
         { isNewRecord: true, userId },
       );
 

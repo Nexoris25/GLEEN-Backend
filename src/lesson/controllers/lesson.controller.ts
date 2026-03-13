@@ -10,22 +10,17 @@ import {
   Patch,
   Query,
   UseGuards,
-  UploadedFile,
-  UseInterceptors,
   BadRequestException,
   ValidationPipe,
   Req,
-  ParseUUIDPipe,
 } from '@nestjs/common';
 import {
-  ApiQuery,
   ApiBody,
   ApiOperation,
   ApiParam,
   ApiResponse,
   ApiTags,
   ApiBearerAuth,
-  ApiConsumes,
 } from '@nestjs/swagger';
 import { ParseIntPipe } from '@nestjs/common';
 
@@ -69,37 +64,8 @@ export class LessonController {
 
   @Post()
   @Roles('TUTOR', 'SUPER_ADMIN')
-  @ApiConsumes('multipart/form-data')
-  @UseInterceptors(
-    FileInterceptor('avatarOrCover', {
-      limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
-      fileFilter: (_, file, cb) => {
-        if (!file.mimetype.startsWith('image/')) {
-          cb(new BadRequestException('Only image files are allowed'), false);
-        }
-        cb(null, true);
-      },
-    }),
-  )
   @ApiOperation({ summary: 'Create a new lesson, tutor, super admin' })
-  //@ApiBody({ type: CreateLessonDto })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        subjectId: { type: 'string', format: 'uuid' },
-        title: { type: 'string' },
-        subtitle: { type: 'string' },
-        description: { type: 'string' },
-        mainContent: { type: 'string' },
-        avatarOrCover: {
-          type: 'string',
-          format: 'binary',
-        },
-      },
-      required: ['title', 'subjectId', 'subtitle'],
-    },
-  })
+  @ApiBody({ type: CreateLessonDto })
   @ApiResponse({
     status: 201,
     description: 'Lesson created successfully',
@@ -113,14 +79,9 @@ export class LessonController {
   async create(
     @Body() createLessonDto: CreateLessonDto,
     @UserId() userId: string,
-    @UploadedFile() avatarOrCover: Express.Multer.File,
   ) {
     try {
-      const lesson = await this.lessonService.create(
-        createLessonDto,
-        userId,
-        avatarOrCover,
-      );
+      const lesson = await this.lessonService.create(createLessonDto, userId);
       return {
         status: 201,
         data: lesson,

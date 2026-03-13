@@ -34,12 +34,11 @@ title: string;
 
 
 @ApiPropertyOptional({
-type: 'string',
-format: 'binary', // ⚡ tells Swagger this is a file
-description: 'Avatar image file (optional)',
+description: 'Avatar image URL (optional)',
 })
 @IsOptional()
-avatarOrCover?: any; // ⚡ must be any for multer file
+@IsString()
+avatarOrCover?: string;
 
 @ApiProperty()
 @IsString()
