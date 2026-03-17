@@ -12,6 +12,8 @@ import { User } from 'src/user/models/user.model';
 import { CreateClassDto } from '../dto/create-class.dto';
 import { UpdateClassDto } from '../dto/update-class.dto';
 import { AttendanceQueryDto } from '../dto/attendance-query.dto';
+import { CreateClassRecordingDto } from '../dto/create-class-recording.dto';
+import { ClassRecording } from '../models/class-recording.model';
 import { UserService } from '../../user/services/user.service';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { Op } from 'sequelize';
@@ -62,6 +64,8 @@ export class ClassesService {
     private readonly userModel: typeof User,
     @InjectModel(ClassEnrollment)
     private readonly enrollmentModel: typeof ClassEnrollment,
+    @InjectModel(ClassRecording)
+    private readonly recordingModel: typeof ClassRecording,
   ) {}
 
   private readonly MAX_LIMIT = 500;
@@ -625,5 +629,41 @@ export class ClassesService {
     return this.enrollmentModel.findOne({
       where: { userId, classId },
     });
+  }
+
+  // UPLOAD CLASS RECORDING
+  async uploadRecording(dto: CreateClassRecordingDto) {
+    try {
+      const recording = await this.recordingModel.create({
+        ...dto,
+      });
+      return { success: true, data: recording };
+    } catch (error: any) {
+      throw new InternalServerErrorException(
+        `Failed to upload recording: ${error.message}`,
+      );
+    }
+  }
+
+  // GET ALL RECORDINGS (optional search/pagination)
+  async getRecordings(subjectId?: string) {
+    try {
+      const where: any = {};
+      if (subjectId) where.subjectId = subjectId;
+
+      const recordings = await this.recordingModel.findAll({
+        where,
+        include: [
+          { model: Subject, as: 'subject', attributes: ['id', 'title'] },
+        ],
+        order: [['createdAt', 'DESC']],
+      });
+
+      return { success: true, data: recordings };
+    } catch (error: any) {
+      throw new InternalServerErrorException(
+        `Failed to fetch recordings: ${error.message}`,
+      );
+    }
   }
 }

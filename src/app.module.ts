@@ -47,6 +47,7 @@ import { ClassesModule } from './classes/classes.module';
 //import { Classes } from './classes/models/classes.model';
 import { ClassEntity } from './classes/entities/class.entity';
 import { ClassEnrollment } from './classes/models/class-enrollment.model';
+import { ClassRecording } from './classes/models/class-recording.model';
 import { RoomsModule } from './rooms/rooms.module';
 import { Room } from './rooms/models/room.model';
 
@@ -144,6 +145,7 @@ import { CountriesModule } from './countries/countries.module';
         ClassEntity,
         ClassEnrollment,
         Room,
+        ClassRecording,
         // Mock Exams
         MockTypes,
         MockExams,

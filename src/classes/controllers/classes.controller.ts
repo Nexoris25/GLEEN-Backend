@@ -24,6 +24,7 @@ import { ClassesService } from '../services/classes.service';
 import { CreateClassDto } from '../dto/create-class.dto';
 import { UpdateClassDto } from '../dto/update-class.dto';
 import { AttendanceQueryDto } from '../dto/attendance-query.dto';
+import { CreateClassRecordingDto } from '../dto/create-class-recording.dto';
 import { EnrollDto } from '../dto/enroll.dto';
 import { ClassEntity } from '../entities/class.entity';
 import { AttendanceDto } from '../dto/attendance.dto';
@@ -187,6 +188,20 @@ export class ClassesController {
   //@Roles('ADMIN', 'SUPER_ADMIN', 'TUTOR')
   getAttendanceList(@Query() query: AttendanceQueryDto) {
     return this.classesService.getAttendanceList(query);
+  }
+
+  @ApiOperation({ summary: 'Upload a class recording' })
+  @ApiBody({ type: CreateClassRecordingDto })
+  @Post('recordings')
+  //@Roles('ADMIN', 'SUPER_ADMIN', 'TUTOR')
+  uploadRecording(@Body() dto: CreateClassRecordingDto) {
+    return this.classesService.uploadRecording(dto);
+  }
+
+  @ApiOperation({ summary: 'Get all class recordings' })
+  @Get('recordings/all')
+  getRecordings(@Query('subjectId') subjectId?: string) {
+    return this.classesService.getRecordings(subjectId);
   }
   /*
 
