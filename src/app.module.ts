@@ -18,7 +18,6 @@ import { DailyUserActivities } from './auth/models/daily-user-activities.model';
 //validators
 import { StateExistsConstraint } from 'src/common/validators/IsStateExists'; // your file
 
-
 // Email
 import { MailModule } from './email/email.module';
 import { SeedModule } from './seeds/seed.module';
@@ -48,6 +47,8 @@ import { ClassesModule } from './classes/classes.module';
 //import { Classes } from './classes/models/classes.model';
 import { ClassEntity } from './classes/entities/class.entity';
 import { ClassEnrollment } from './classes/models/class-enrollment.model';
+import { RoomsModule } from './rooms/rooms.module';
+import { Room } from './rooms/models/room.model';
 
 // Mock Exams
 import { MockExamModule } from './mock-exam/mock-exam.module';
@@ -100,7 +101,6 @@ import { NotificationTrackingModule } from './notification-tracking/notification
 //import { NotificationTracking } from './notification-tracking/models/notification-recipient.model';
 import { TutorMessageModule } from './messages/tutor-message.module';
 
-
 // XP
 import { XpModule } from './xp/xp.module';
 import { XpConfiguration } from './xp/models/xp-configuration.model';
@@ -120,30 +120,64 @@ import { CountriesModule } from './countries/countries.module';
       ...config,
       models: [
         // Users & Auth
-        User, PasswordResetOtp, EmailVerificationOtp, DailyLoginRecord, DailyUserActivities,
+        User,
+        PasswordResetOtp,
+        EmailVerificationOtp,
+        DailyLoginRecord,
+        DailyUserActivities,
         // Subjects & Goals
-        Subject, UserSubject, Goal, UserGoal,
+        Subject,
+        UserSubject,
+        Goal,
+        UserGoal,
         // Lessons & Quizzes
-        Lesson, LessonComment, LessonTracking, StudentsQuizAnswers, QuizQuestions,
-        Quizzes, QuizComment, LessonTopic, QuizRecord,
-        // Classes (new)
-        ClassEntity, ClassEnrollment, 
+        Lesson,
+        LessonComment,
+        LessonTracking,
+        StudentsQuizAnswers,
+        QuizQuestions,
+        Quizzes,
+        QuizComment,
+        LessonTopic,
+        QuizRecord,
+        // Classes & Rooms (new)
+        ClassEntity,
+        ClassEnrollment,
+        Room,
         // Mock Exams
-        MockTypes, MockExams, MockQuestions, StudentsMockAnswers, MockExamComment, MockExamRecord,
+        MockTypes,
+        MockExams,
+        MockQuestions,
+        StudentsMockAnswers,
+        MockExamComment,
+        MockExamRecord,
         // States
-        State, City, Lga,
+        State,
+        City,
+        Lga,
         // Study Crew
-        Group, UserGroup, GroupChat,
+        Group,
+        UserGroup,
+        GroupChat,
         // V1 Battles
-        V1Battle, V1BattleRecord, V1BattleQuestionAnswers,
+        V1Battle,
+        V1BattleRecord,
+        V1BattleQuestionAnswers,
         // Subscriptions & Payments
-        Subscription, SubscriptionTransaction, PaystackNotifications, PaystackTransferRecipients,
+        Subscription,
+        SubscriptionTransaction,
+        PaystackNotifications,
+        PaystackTransferRecipients,
         // FAQ & Support
-        Faq, Complaint, ComplaintComment,
+        Faq,
+        Complaint,
+        ComplaintComment,
         // Notifications
         NotificationSettings,
         // XP
-        XpConfiguration, XpLog, XpRecords
+        XpConfiguration,
+        XpLog,
+        XpRecords,
       ],
       pool: {
         max: 10,
@@ -153,7 +187,7 @@ import { CountriesModule } from './countries/countries.module';
       },
       autoLoadModels: true, // true for dev and production. false for debug
       synchronize: true, // temporary set to true for initial run so to create tables
-  logging: false,   // temporary set to true for debugging
+      logging: false, // temporary set to true for debugging
     }),
     // Modules
     AuthModule,
@@ -163,7 +197,8 @@ import { CountriesModule } from './countries/countries.module';
     SubjectModule,
     GoalModule,
     LessonModule,
-    ClassesModule, 
+    ClassesModule,
+    RoomsModule,
     LgaModule,
     MockExamModule,
     StatesModule,
@@ -182,7 +217,7 @@ import { CountriesModule } from './countries/countries.module';
     UploadModule,
   ],
   controllers: [AppController],
-  providers: [AppService, StateExistsConstraint,],
+  providers: [AppService, StateExistsConstraint],
 })
 export class AppModule implements OnModuleInit {
   constructor(private sequelize: Sequelize) {}
@@ -190,9 +225,8 @@ export class AppModule implements OnModuleInit {
   async onModuleInit() {
     console.log('Module initialized successfully');
 
-       // ✅ Only for first run / dev environment
-    //await this.sequelize.sync({ force: true }); 
-   // console.log('Database tables created fresh!');
-
+    // ✅ Only for first run / dev environment
+    //await this.sequelize.sync({ force: true });
+    // console.log('Database tables created fresh!');
   }
 }

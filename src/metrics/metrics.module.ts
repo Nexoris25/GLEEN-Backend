@@ -9,6 +9,8 @@ import { ClassEnrollment } from '../classes/models/class-enrollment.model';
 import { StudentsQuizAnswers } from '../lesson/models/students_quiz_answers';
 import { ClassesModule } from '../classes/classes.module';
 import { LessonModule } from '../lesson/lesson.module';
+import { Subject } from 'src/subject/models/subject.model';
+import { Room } from 'src/rooms/models/room.model';
 
 @Module({
   imports: [
@@ -17,6 +19,8 @@ import { LessonModule } from '../lesson/lesson.module';
       ClassEntity,
       ClassEnrollment,
       StudentsQuizAnswers,
+      Subject,
+      Room,
     ]),
     forwardRef(() => ClassesModule),
     forwardRef(() => LessonModule),

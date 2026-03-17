@@ -5,12 +5,18 @@ import { ClassesController } from './controllers/classes.controller';
 import { ClassEnrollment } from 'src/classes/models/class-enrollment.model';
 import { ClassEntity } from './entities/class.entity';
 import { UserModule } from '../user/user.module';
+import { Subject } from 'src/subject/models/subject.model';
+import { Room } from 'src/rooms/models/room.model';
 
 @Module({
   imports: [
-    SequelizeModule.forFeature([ClassEntity, 
-    ClassEnrollment,]), 
-    UserModule,  // for user/tutor validation
+    SequelizeModule.forFeature([
+      ClassEntity,
+      ClassEnrollment,
+      Subject,
+      Room,
+    ]),
+    UserModule, // for user/tutor validation
   ],
   controllers: [
     ClassesController

@@ -1,9 +1,13 @@
 // src/classes/dto/create-class.dto.ts
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsUUID, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsUUID,
+  IsOptional,
+  IsDate,
+} from 'class-validator';
 import { IsBefore } from 'src/common/validators/is-before.validator';
-
-import { IsISO8601, IsDate, IsNotEmpty } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateClassDto {
@@ -16,13 +20,11 @@ export class CreateClassDto {
   @IsString()
   description?: string;
 
-
-  
- @ApiProperty({
+  @ApiProperty({
     example: '2026-01-10T10:00:00Z',
     description: 'Class start time (ISO 8601)',
   })
-   @IsNotEmpty()
+  @IsNotEmpty()
   @Type(() => Date) // ⬅️ transforms string → Date
   @IsDate({ message: 'startTime must be a valid date' })
   @IsBefore('endTime', {
@@ -39,9 +41,28 @@ export class CreateClassDto {
   @IsDate({ message: 'endTime must be a valid date' })
   endTime: Date;
 
-
   @ApiProperty({ example: 'uuid-of-tutor' })
   @IsUUID()
   @IsOptional()
   tutorId?: string;
+
+  @ApiPropertyOptional({ example: 'uuid-of-subject' })
+  @IsUUID()
+  @IsOptional()
+  subjectId?: string;
+
+  @ApiPropertyOptional({ example: 'Room 101' })
+  @IsString()
+  @IsOptional()
+  roomName?: string;
+
+  @ApiPropertyOptional({ example: '2026-01-10' })
+  @IsString()
+  @IsOptional()
+  date?: string;
+
+  @ApiPropertyOptional({ example: '10:00 AM' })
+  @IsString()
+  @IsOptional()
+  time?: string;
 }
