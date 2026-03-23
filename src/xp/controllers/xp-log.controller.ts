@@ -24,7 +24,7 @@ export class XpLogController {
   @Get()
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiOperation({
-    summary: 'Get all XP logs',
+    summary: 'Get all XP logs as admin',
     description: 'Retrieve a paginated list of all user XP logs.',
   })
   async findAll(@Query() query: XpLogQueryDto) {

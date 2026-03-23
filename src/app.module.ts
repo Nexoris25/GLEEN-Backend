@@ -142,17 +142,9 @@ import { CountriesModule } from './countries/countries.module';
         LessonTopic,
         QuizRecord,
         // Classes & Rooms (new)
-        ClassEntity,
-        ClassEnrollment,
-        Room,
-        ClassRecording,
+        ClassEntity, ClassEnrollment, Room, ClassRecording,
         // Mock Exams
-        MockTypes,
-        MockExams,
-        MockQuestions,
-        StudentsMockAnswers,
-        MockExamComment,
-        MockExamRecord,
+        MockTypes, MockExams, MockQuestions, StudentsMockAnswers, MockExamComment, MockExamRecord,
         // States
         State,
         City,
