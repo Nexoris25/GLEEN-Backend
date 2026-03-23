@@ -51,7 +51,8 @@ import { LeaderboardRankReward } from './models/leaderboard-rank-reward.model';
   ],
   controllers: [
     XpConfigurationController,
-    XpRecordsController
+    XpRecordsController,
+    XpLogController,
   ],
   exports: [
     XpConfigurationService,
