@@ -355,6 +355,42 @@ export class XpConfigurationController {
     }
   }
 
+  @Get('conversion-settings')
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiOperation({
+    summary: 'Get XP conversion settings for airtime and subscriptions',
+    description:
+      'Retrieve XP conversion limits and required XP for subscription plans.',
+  })
+  @ApiOkResponse({
+    description: 'Successfully retrieved XP conversion settings',
+  })
+  async getConversionSettings() {
+    try {
+      const config = await this.xpConfigurationService.findOne();
+      return {
+        status: HttpStatus.OK,
+        message: 'XP conversion settings retrieved successfully',
+        data: {
+          xpLimitPerTimePercentage: config.xpLimitPerTimePercentage,
+          xpLimitPerDayPercentage: config.xpLimitPerDayPercentage,
+          airtimeXpValuePerNaira: config.airtimeXpValuePerNaira,
+          scholarSubscriptionXpRequired: config.scholarSubscriptionXpRequired,
+        },
+      };
+    } catch (error: any) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Error retrieving XP conversion settings',
+        error: stringify({
+          message: (error as Error)?.message || 'Unknown error',
+          stack: (error as Error)?.stack,
+          details: (error as any)?.response || error,
+        }),
+      };
+    }
+  }
+
   @Get('statistics')
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiOperation({
