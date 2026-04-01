@@ -16,6 +16,7 @@ import stringify from 'safe-stable-stringify';
 import { UserSubject } from '../models/user-subject.model';
 import { validate as isUUID } from 'uuid';
 import { LessonQueryDto } from 'src/lesson/dto/query.dto';
+import { SubjectStudentsQueryDto } from '../dto/subject-students-query.dto';
 
 @Injectable()
 export class SubjectService {
@@ -514,5 +515,144 @@ export class SubjectService {
     );
 
     return subjectsWithStudents;
+  }
+
+  async getStudentsForSubject(
+    subjectId: string,
+    query: SubjectStudentsQueryDto,
+  ) {
+    if (!isUUID(subjectId)) {
+      throw new BadRequestException('Invalid subject ID');
+    }
+
+    const subject = await this.subjectModel.findByPk(subjectId);
+    if (!subject) {
+      throw new NotFoundException('Subject not found');
+    }
+
+    const limit = Math.min(query?.limit ?? 10, this.MAX_LIMIT);
+    const offset = query?.offset ?? 0;
+    const search = query?.search?.trim();
+
+    const where: any = {};
+    if (search) {
+      where[Op.or] = [
+        { fullName: { [Op.iLike]: `%${search}%` } },
+        { username: { [Op.iLike]: `%${search}%` } },
+        { email: { [Op.iLike]: `%${search}%` } },
+        { phone: { [Op.iLike]: `%${search}%` } },
+      ];
+    }
+
+    const conversionTypes = `'AIRTIME_CONVERSION','SUBSCRIPTION_RENEWAL'`;
+
+    const result = await this.userModel.findAndCountAll({
+      where,
+      include: [
+        {
+          model: Subject,
+          as: 'subjects',
+          attributes: [],
+          through: { attributes: [] },
+          where: { id: subjectId },
+          required: true,
+        },
+      ],
+      attributes: {
+        exclude: ['password'],
+        include: [
+          [
+            literal(`(
+              SELECT COUNT(*)
+              FROM "lesson_trackings" lt
+              INNER JOIN "lessons" l ON l."id" = lt."lessonId"
+              WHERE lt."userId" = "User"."id"
+                AND l."subjectId" = '${subjectId}'
+                AND lt."dateCompleted" IS NOT NULL
+            )`),
+            'lessonsCount',
+          ],
+          [
+            literal(`(
+              SELECT COUNT(*)
+              FROM "quiz_records" qr
+              INNER JOIN "quizzes" q ON q."id" = qr."quizId"
+              WHERE qr."userId" = "User"."id"
+                AND q."subjectId" = '${subjectId}'
+            )`),
+            'quizCount',
+          ],
+          [
+            literal(`(
+              SELECT COUNT(*)
+              FROM "mock_exam_records" mer
+              INNER JOIN "mock_exams" me ON me."id" = mer."mockExamId"
+              WHERE mer."userId" = "User"."id"
+                AND me."subjectId" = '${subjectId}'
+            )`),
+            'mockExamsCount',
+          ],
+          [
+            literal(`(
+              SELECT COALESCE(xr."currentXpValue", 0)
+              FROM "xp_records" xr
+              WHERE xr."userId" = "User"."id"
+              ORDER BY xr."updatedAt" DESC
+              LIMIT 1
+            )`),
+            'totalRewards',
+          ],
+          [
+            literal(`(
+              SELECT json_build_object(
+                'xpType', xl."xpType",
+                'xpValue', xl."xpValue",
+                'detail', xl."detail",
+                'createdAt', xl."createdAt"
+              )
+              FROM "xp_logs" xl
+              WHERE xl."userId" = "User"."id"
+                AND xl."xpType" IN (${conversionTypes})
+              ORDER BY xl."createdAt" DESC
+              LIMIT 1
+            )`),
+            'rewardRequest',
+          ],
+          [
+            literal(`(
+              SELECT COUNT(*)
+              FROM "xp_logs" xl
+              WHERE xl."userId" = "User"."id"
+                AND xl."xpType" IN (${conversionTypes})
+            )`),
+            'rewardRequestCount',
+          ],
+        ],
+      },
+      order: [['createdAt', 'DESC']],
+      limit,
+      offset,
+      subQuery: false,
+    });
+
+    const total = Array.isArray(result.count)
+      ? result.count.reduce((sum, item) => sum + Number(item.count), 0)
+      : result.count;
+
+    return {
+      subject: {
+        id: subject.id,
+        title: subject.title,
+      },
+      data: result.rows,
+      meta: {
+        totalItems: total,
+        limit,
+        offset,
+        currentCount: result.rows.length,
+        hasNext: offset + limit < total,
+        hasPrevious: offset > 0,
+      },
+    };
   }
 }

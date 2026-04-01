@@ -23,6 +23,7 @@ import { SubjectService } from '../services/subject.service';
 import { CreateSubjectDto } from '../dto/create-subject.dto';
 import { UpdateSubjectDto } from '../dto/update-subject.dto';
 import { LessonQueryDto } from 'src/lesson/dto/query.dto';
+import { SubjectStudentsQueryDto } from '../dto/subject-students-query.dto';
 import { RolesGuard } from 'src/auth/GuardsDecorMiddleware/roles.guard';
 import { JwtAuthGuard } from 'src/auth/GuardsDecorMiddleware/jwt-auth.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
@@ -54,10 +55,7 @@ export class SubjectController {
     status: 409,
     description: 'Conflict - unique title already exists',
   })
-  async create(
-    @Body() dto: CreateSubjectDto,
-    @GetUser() user: User,
-  ) {
+  async create(@Body() dto: CreateSubjectDto, @GetUser() user: User) {
     return this.subjectService.create(dto, user.id);
   }
 
@@ -295,6 +293,46 @@ return this.subjectService.restore(id);
           message: error.message,
           stack: error.stack,
           details: error.response || error,
+        }),
+      };
+    }
+  }
+
+  @Get(':id/students')
+  @ApiOperation({
+    summary: 'Get students registered for a subject',
+    description:
+      'Returns paginated students registered for a subject with activity counts and rewards data.',
+  })
+  @ApiParam({ name: 'id', type: String, format: 'uuid' })
+  @ApiResponse({
+    status: 200,
+    description: 'Students retrieved successfully',
+    type: ResponseDto,
+  })
+  @Roles('ADMIN', 'SUPER_ADMIN', 'TUTOR')
+  async getStudentsForSubject(
+    @Param('id') subjectId: string,
+    @Query() query: SubjectStudentsQueryDto,
+  ) {
+    try {
+      const data = await this.subjectService.getStudentsForSubject(
+        subjectId,
+        query,
+      );
+      return {
+        status: HttpStatus.OK,
+        message: 'Students retrieved successfully',
+        data,
+      };
+    } catch (error: any) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Error retrieving students for subject',
+        error: stringify({
+          message: (error as Error)?.message || 'Unknown error',
+          stack: (error as Error)?.stack,
+          details: (error as any)?.response || error,
         }),
       };
     }
