@@ -55,7 +55,10 @@ export class SubjectController {
     status: 409,
     description: 'Conflict - unique title already exists',
   })
-  async create(@Body() dto: CreateSubjectDto, @GetUser() user: User) {
+  async create(
+    @Body() dto: CreateSubjectDto,
+    @GetUser() user: User,
+  ) {
     return this.subjectService.create(dto, user.id);
   }
 

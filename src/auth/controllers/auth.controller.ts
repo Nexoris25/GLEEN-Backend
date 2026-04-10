@@ -72,6 +72,7 @@ export class AuthController {
     data?: {
       user: User;
       token: string;
+      expiresIn: number;
     };
     error?: any;
   }> {

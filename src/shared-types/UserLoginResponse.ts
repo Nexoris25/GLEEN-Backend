@@ -7,4 +7,10 @@ export class UserLoginResponse {
 
   @ApiProperty()
   token: string;
+
+  @ApiProperty({
+    example: 1768065600,
+    description: 'JWT exp claim (unix timestamp in seconds)',
+  })
+  expiresIn: number;
 }

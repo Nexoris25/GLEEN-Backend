@@ -87,7 +87,11 @@ export class AuthService {
   }: {
     email: string;
     password: string;
-  }): Promise<{ user: User; token: string }> {
+  }): Promise<{
+    user: User;
+    token: string;
+    expiresIn: number;
+  }> {
     const user = await this.validateUser(email, password);
 
     if (!user.isEmailVerified) {
@@ -95,7 +99,7 @@ export class AuthService {
     }
 
     const token = await this.generateJwtToken(user);
-    return { user, token };
+    return { user, token, expiresIn: this.getJwtExpUnix(token) };
   }
 
   /**
@@ -284,7 +288,15 @@ export class AuthService {
   private async generateJwtToken(user: User): Promise<string> {
     const payload = { username: user.username, sub: user.id, role: user.role };
     const secretKey = process.env.JWT_SECRET_KEY || 'default-secret-key';
-    return jwt.sign(payload, secretKey, { expiresIn: '30d' });
+    return jwt.sign(payload, secretKey, {
+      expiresIn: process.env.JWT_EXPIRATION_TIME || '30d',
+    });
+  }
+
+  private getJwtExpUnix(token: string): number {
+    const decoded = jwt.decode(token) as jwt.JwtPayload | null;
+    const expUnix = typeof decoded?.exp === 'number' ? decoded.exp : 0;
+    return expUnix;
   }
 
   private async generateResetPasswordToken(userId: string): Promise<string> {
@@ -327,7 +339,7 @@ export class AuthService {
 
   async loginWithGoogle(
     idToken: string,
-  ): Promise<{ user: User; token: string }> {
+  ): Promise<{ user: User; token: string; expiresIn: number }> {
     const ticket = await this.googleClient.verifyIdToken({
       idToken,
       audience: process.env.GOOGLE_CLIENT_ID,
@@ -365,13 +377,17 @@ export class AuthService {
     }
 
     const token = await this.generateJwtToken(user);
-    return { user, token };
+    return { user, token, expiresIn: this.getJwtExpUnix(token) };
   }
 
   async loginWithApple(
     idToken: string,
     userName?: { firstName?: string; lastName?: string },
-  ): Promise<{ user: User; token: string }> {
+  ): Promise<{
+    user: User;
+    token: string;
+    expiresIn: number;
+  }> {
     const client = jwksClient({
       jwksUri: 'https://appleid.apple.com/auth/keys',
     });
@@ -415,7 +431,7 @@ export class AuthService {
     }
 
     const token = await this.generateJwtToken(user);
-    return { user, token };
+    return { user, token, expiresIn: this.getJwtExpUnix(token) };
   }
 
   /**
