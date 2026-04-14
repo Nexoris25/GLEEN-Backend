@@ -202,6 +202,10 @@ export class XpLogService {
     return xp;
   }
 
+  applyXpMultiplier(config: XpConfiguration, key: string, value: number) {
+    return this.xpConfiguationService.applyMultiplierIfNeeded(config, key, value);
+  }
+
   /**
    * Create a new XP log entry
    */

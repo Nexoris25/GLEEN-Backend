@@ -221,4 +221,35 @@ export class XpConfiguration extends Model {
   @Default(true)
   @Column(DataType.BOOLEAN)
   showRankMovement: boolean;
+
+  @ApiProperty({ description: 'Multiplier key (selected XP item key)' })
+  @Column(DataType.STRING)
+  xpMultiplierKey: string;
+
+  @ApiProperty({ description: 'Multiplier value' })
+  @Default(1)
+  @Column(DataType.DOUBLE)
+  xpMultiplierValue: number;
+
+  @ApiProperty({ description: 'Multiplier duration in days' })
+  @Default(0)
+  @Column(DataType.INTEGER)
+  xpMultiplierDays: number;
+
+  @ApiProperty({ description: 'Multiplier start date' })
+  @Column(DataType.DATE)
+  xpMultiplierStartAt: Date;
+
+  @ApiProperty({ description: 'Multiplier name' })
+  @Column(DataType.STRING)
+  xpMultiplierName: string;
+
+  @ApiProperty({ description: 'Multiplier details' })
+  @Column(DataType.TEXT)
+  xpMultiplierDetails: string;
+
+  @ApiProperty({ description: 'Multiplier enabled flag' })
+  @Default(false)
+  @Column(DataType.BOOLEAN)
+  xpMultiplierEnabled: boolean;
 }

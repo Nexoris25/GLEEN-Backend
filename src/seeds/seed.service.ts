@@ -206,6 +206,9 @@ async seedXpConfig() {
           v1BattleXpDrawBonus: 0,
           xpValuePerReferral: 0,
           xpValuePerDayLogin: 0,
+          xpMultiplierValue: 1,
+          xpMultiplierDays: 0,
+          xpMultiplierEnabled: false,
         });
         console.log('✅ XpConfiguration seeded successfully with 0 values');
       } else {

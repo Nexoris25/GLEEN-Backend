@@ -18,6 +18,7 @@ import {
 import { XpConfigurationService } from '../services/xp-configuration.service';
 import { XpConfiguration } from '../models/xp-configuration.model';
 import { UpdateXpConfigurationDto } from '../dto/update-xp-configuration.dto';
+import { UpdateXpMultiplierDto } from '../dto/update-xp-multiplier.dto';
 import { ResponseDto } from 'src/shared-types/response.dto';
 import stringify from 'safe-stable-stringify';
 import { JwtAuthGuard } from 'src/auth/GuardsDecorMiddleware/jwt-auth.guard';
@@ -35,6 +36,7 @@ import { UpdateStreakConfigurationDto } from '../dto/update-streak-configuration
 import { UpdateLeaderboardSettingsDto } from '../dto/update-leaderboard-settings.dto';
 import { LeaderboardRankRewardService } from '../services/leaderboard-rank-reward.service';
 import { BulkUpdateRankRewardsDto } from '../dto/update-leaderboard-rank-reward.dto';
+import { XP_MULTIPLIER_ITEMS } from '../constants/xp-multiplier-keys';
 
 @ApiTags('XP Configuration')
 @ApiBearerAuth()
@@ -104,6 +106,102 @@ export class XpConfigurationController {
       return {
         status: HttpStatus.BAD_REQUEST,
         message: 'Error updating leaderboard rank rewards',
+        error: stringify({
+          message: (error as Error)?.message || 'Unknown error',
+          stack: (error as Error)?.stack,
+          details: (error as any)?.response || error,
+        }),
+      };
+    }
+  }
+
+  @Get('multiplier/keys')
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiOperation({
+    summary: 'Get XP multiplier keys',
+    description:
+      'Retrieve allowed keys for selecting which XP value to multiply.',
+  })
+  @ApiOkResponse({
+    description: 'Successfully retrieved XP multiplier keys',
+  })
+  async getXpMultiplierKeys() {
+    try {
+      return {
+        status: HttpStatus.OK,
+        message: 'XP multiplier keys retrieved successfully',
+        data: XP_MULTIPLIER_ITEMS,
+      };
+    } catch (error: any) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Error retrieving XP multiplier keys',
+        error: stringify({
+          message: (error as Error)?.message || 'Unknown error',
+          stack: (error as Error)?.stack,
+          details: (error as any)?.response || error,
+        }),
+      };
+    }
+  }
+
+  @Get('multiplier')
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiOperation({
+    summary: 'Get XP multiplier settings',
+    description: 'Retrieve current XP multiplier settings and active state.',
+  })
+  @ApiOkResponse({
+    description: 'Successfully retrieved XP multiplier settings',
+  })
+  async getXpMultiplier() {
+    try {
+      const config = await this.xpConfigurationService.findOne();
+      return {
+        status: HttpStatus.OK,
+        message: 'XP multiplier settings retrieved successfully',
+        data: this.xpConfigurationService.getMultiplierState(config),
+      };
+    } catch (error: any) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Error retrieving XP multiplier settings',
+        error: stringify({
+          message: (error as Error)?.message || 'Unknown error',
+          stack: (error as Error)?.stack,
+          details: (error as any)?.response || error,
+        }),
+      };
+    }
+  }
+
+  @Patch('multiplier')
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiOperation({
+    summary: 'Update XP multiplier settings',
+    description:
+      'Set an XP multiplier for a selected XP key for a specified number of days.',
+  })
+  @ApiBody({
+    type: UpdateXpMultiplierDto,
+    description: 'XP multiplier configuration data',
+  })
+  @ApiOkResponse({
+    description: 'XP multiplier settings successfully updated',
+  })
+  async updateXpMultiplier(@Body() updateDto: UpdateXpMultiplierDto) {
+    try {
+      const data =
+        await this.xpConfigurationService.updateMultiplier(updateDto);
+      return {
+        status: HttpStatus.OK,
+        message: 'XP multiplier settings updated successfully',
+        data: this.xpConfigurationService.getMultiplierState(data),
+      };
+    } catch (error: any) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Error updating XP multiplier settings',
         error: stringify({
           message: (error as Error)?.message || 'Unknown error',
           stack: (error as Error)?.stack,
