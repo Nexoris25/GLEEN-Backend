@@ -135,6 +135,7 @@ export class SubjectService {
 
       await subject.destroy(); // soft delete (paranoid: true)
     } catch (error) {
+      console.log(error);
       if (
         error instanceof BadRequestException ||
         error instanceof NotFoundException

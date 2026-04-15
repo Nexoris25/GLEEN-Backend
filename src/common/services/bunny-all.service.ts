@@ -31,9 +31,7 @@ export class BunnyService {
         ? 'storage.bunnycdn.com'
         : `${region}.storage.bunnycdn.com`;
 
-    const normalizedPath = filePath.startsWith('/')
-      ? filePath
-      : `/${filePath}`;
+    const normalizedPath = filePath.startsWith('/') ? filePath : `/${filePath}`;
 
     return `https://${hostname}/${process.env.BUNNY_STORAGE_ZONE}${normalizedPath}`;
   }
@@ -71,32 +69,43 @@ export class BunnyService {
     const fileName = `${safeDir}/${uuid()}${extension}`;
 
     try {
-      const response = await axios.put(
-        this.getUploadUrl(fileName),
-        buffer,
-        {
-          headers: {
-            AccessKey: this.accessKey,
-            'Content-Type': mimeType,
-          },
-          maxBodyLength: Infinity,
+      const response = await axios.put(this.getUploadUrl(fileName), buffer, {
+        headers: {
+          AccessKey: this.accessKey,
+          'Content-Type': mimeType,
         },
-      );
+        maxBodyLength: Infinity,
+      });
 
       if (response.status !== 201) {
         throw new Error(`Unexpected status: ${response.status}`);
       }
 
       return `${process.env.BUNNY_PULL_ZONE_URL}/${fileName}`;
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const status = axios.isAxiosError(err) ? err.response?.status : undefined;
+      const data = axios.isAxiosError(err)
+        ? (err.response?.data as unknown)
+        : undefined;
+      const message =
+        err instanceof Error
+          ? err.message
+          : (() => {
+              try {
+                return JSON.stringify(err);
+              } catch {
+                return 'Unknown error';
+              }
+            })();
+
       console.error('Bunny upload failed:', {
-        status: err.response?.status,
-        data: err.response?.data,
-        message: err.message,
+        status,
+        data,
+        message,
       });
 
       throw new Error(
-        `File upload failed: ${err.response?.status || 'unknown'} - ${err.message}`,
+        `File upload failed: ${status || 'unknown'} - ${message}`,
       );
     }
   }
@@ -142,17 +151,38 @@ export class BunnyService {
   async deleteByUrl(url: string): Promise<void> {
     if (!url) return;
 
-    const relativePath = url.replace(
-      `${process.env.BUNNY_PULL_ZONE_URL}/`,
-      '',
-    );
+    const cleanedUrl = String(url)
+      .trim()
+      .replace(/^`+|`+$/g, '')
+      .replace(/^"+|"+$/g, '')
+      .replace(/^'+|'+$/g, '')
+      .trim();
+
+    if (!cleanedUrl) return;
+
+    const pullZone = (process.env.BUNNY_PULL_ZONE_URL || '')
+      .trim()
+      .replace(/\/+$/g, '');
+
+    if (!pullZone) return;
+    if (!cleanedUrl.startsWith(`${pullZone}/`)) return;
+
+    const withoutPrefix = cleanedUrl.slice(pullZone.length + 1);
+    const relativePath = withoutPrefix.split('?')[0]?.split('#')[0];
+
+    if (!relativePath) return;
 
     const deleteUrl = this.getUploadUrl(relativePath);
 
-    await axios.delete(deleteUrl, {
-      headers: {
-        AccessKey: this.accessKey,
-      },
-    });
+    try {
+      await axios.delete(deleteUrl, {
+        headers: {
+          AccessKey: this.accessKey,
+        },
+      });
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err) && err.response?.status === 404) return;
+      throw err;
+    }
   }
 }

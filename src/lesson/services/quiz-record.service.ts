@@ -20,17 +20,11 @@ export class QuizRecordService {
     private readonly quizRecordModel: typeof QuizRecord,
     private readonly studentQuizAnswerService: StudentsQuizAnswersService,
     private readonly xpLogService: XpLogService,
-  ) {}
+  ) { }
 
-  async create(
-    createDto: CreateQuizRecordDto,
-    userId: string,
-  ): Promise<QuizRecord> {
+  async create(createDto: CreateQuizRecordDto, userId: string): Promise<QuizRecord> {
     try {
-      return await this.quizRecordModel.create(
-        { ...createDto, userId },
-        { isNewRecord: true, userId: userId },
-      );
+      return await this.quizRecordModel.create({ ...createDto, userId }, { isNewRecord: true, userId: userId });
     } catch (error) {
       throw new BadRequestException({
         message: 'Error creating quiz record',
@@ -43,36 +37,23 @@ export class QuizRecordService {
     }
   }
 
-  async findAll(
-    search?: SearchQuizRecordDto,
-  ): Promise<{ rows: QuizRecord[]; count: number }> {
+  async findAll(search?: SearchQuizRecordDto): Promise<{ rows: QuizRecord[]; count: number }> {
     try {
       const where: any = {};
       if (search) {
         if (search.quizId) where.quizId = search.quizId;
         if (search.userId) where.userId = search.userId;
-        if (search.totalMarks !== undefined)
-          where.totalMarks = search.totalMarks;
-        if (search.obtainedMarks !== undefined)
-          where.obtainedMarks = search.obtainedMarks;
-        if (search.totalQuestions !== undefined)
-          where.totalQuestions = search.totalQuestions;
-        if (search.totalAnsweredQuestions !== undefined)
-          where.totalAnsweredQuestions = search.totalAnsweredQuestions;
-        if (search.totalUnansweredQuestions !== undefined)
-          where.totalUnansweredQuestions = search.totalUnansweredQuestions;
-        if (search.correctAnswers !== undefined)
-          where.correctAnswers = search.correctAnswers;
-        if (search.incorrectAnswers !== undefined)
-          where.incorrectAnswers = search.incorrectAnswers;
+        if (search.totalMarks !== undefined) where.totalMarks = search.totalMarks;
+        if (search.obtainedMarks !== undefined) where.obtainedMarks = search.obtainedMarks;
+        if (search.totalQuestions !== undefined) where.totalQuestions = search.totalQuestions;
+        if (search.totalAnsweredQuestions !== undefined) where.totalAnsweredQuestions = search.totalAnsweredQuestions;
+        if (search.totalUnansweredQuestions !== undefined) where.totalUnansweredQuestions = search.totalUnansweredQuestions;
+        if (search.correctAnswers !== undefined) where.correctAnswers = search.correctAnswers;
+        if (search.incorrectAnswers !== undefined) where.incorrectAnswers = search.incorrectAnswers;
         if (search.endedAt) where.endedAt = search.endedAt;
         if (search.startedAt) where.startedAt = search.startedAt;
       }
-      return await this.quizRecordModel.findAndCountAll({
-        where,
-        offset: search?.offset,
-        limit: search?.limit,
-      });
+      return await this.quizRecordModel.findAndCountAll({ where, offset: search?.offset, limit: search?.limit });
     } catch (error) {
       throw new BadRequestException({
         message: 'Error fetching quiz records',
@@ -88,7 +69,7 @@ export class QuizRecordService {
   async findOne(id: string): Promise<QuizRecord> {
     try {
       const record = await this.quizRecordModel.findByPk(id, {
-        include: [{ association: 'quizzes' }],
+        include: [{ association: "quizzes" }]
       });
       if (!record) {
         throw new NotFoundException(`Quiz record with ID ${id} not found`);
@@ -106,10 +87,7 @@ export class QuizRecordService {
     }
   }
 
-  async update(
-    id: string,
-    updateDto: UpdateQuizRecordDto,
-  ): Promise<QuizRecord> {
+  async update(id: string, updateDto: UpdateQuizRecordDto): Promise<QuizRecord> {
     try {
       const record = await this.findOne(id);
       return await record.update(updateDto);
@@ -129,56 +107,36 @@ export class QuizRecordService {
     try {
       const record = await this.findOne(id);
       if (record.endedAt == null) {
+
         const answersWithCount = await this.studentQuizAnswerService.findAll({
           userId: record.userId,
           quizRecordId: record.id,
           offset: 0,
           limit: 1000,
         });
-        const totalScore = answersWithCount.rows.reduce(
-          (sum, answer) => sum + (answer.score || 0),
-          0,
-        );
+        const totalScore = answersWithCount.rows.reduce((sum, answer) => sum + (answer.score || 0), 0);
 
         await record.update({ endedAt: new Date(), totalScore });
         const xpConfig: XpConfiguration = await this.xpLogService.getXpConfig();
         let xpValue: number;
         if (totalScore <= 10) {
           xpValue = xpConfig.xpValueForLessThanOrEqualTo10QuizQuestion;
-          xpValue = this.xpLogService.applyXpMultiplier(
-            xpConfig,
-            'QUIZ_XP',
-            xpValue,
-          );
+          xpValue = this.xpLogService.applyXpMultiplier(xpConfig, 'QUIZ_XP', xpValue);
         } else if (totalScore > 10 && totalScore <= 20) {
-          xpValue =
-            xpConfig.xpValueForGreaterThan10LessThanOrEqualTo20QuizQuestion;
-          xpValue = this.xpLogService.applyXpMultiplier(
-            xpConfig,
-            'QUIZ_XP',
-            xpValue,
-          );
+          xpValue = xpConfig.xpValueForGreaterThan10LessThanOrEqualTo20QuizQuestion;
+          xpValue = this.xpLogService.applyXpMultiplier(xpConfig, 'QUIZ_XP', xpValue);
         } else if (totalScore > 20 && totalScore <= 30) {
-          xpValue =
-            xpConfig.xpValueForGreaterThan20LessThanOrEqualTo30QuizQuestion;
-          xpValue = this.xpLogService.applyXpMultiplier(
-            xpConfig,
-            'QUIZ_XP',
-            xpValue,
-          );
+          xpValue = xpConfig.xpValueForGreaterThan20LessThanOrEqualTo30QuizQuestion;
+          xpValue = this.xpLogService.applyXpMultiplier(xpConfig, 'QUIZ_XP', xpValue);
         } else if (totalScore > 30) {
           xpValue = xpConfig.xpValueForGreaterThan30QuizQuestion;
-          xpValue = this.xpLogService.applyXpMultiplier(
-            xpConfig,
-            'QUIZ_XP',
-            xpValue,
-          );
+          xpValue = this.xpLogService.applyXpMultiplier(xpConfig, 'QUIZ_XP', xpValue);
         }
         await this.xpLogService.create({
           userId: record?.userId,
           xpValue: xpValue,
-          xpType: 'quiz_completion',
-          detail: `xp bonus for quiz with title ${record.quizzes.title} `,
+          xpType: "quiz_completion",
+          detail: `xp bonus for quiz with title ${record.quizzes.title} `
         });
         return record;
       }
