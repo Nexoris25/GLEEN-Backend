@@ -13,6 +13,7 @@ import { Op } from 'sequelize';
 import { BunnyService } from 'src/common/services/bunny-all.service';
 
 import { BulkCreateLessonTopicDto } from '../dto/bulk-create-lesson-topic.dto';
+import { BulkUpdateLessonTopicDto } from '../dto/bulk-update-lesson-topic.dto';
 
 @Injectable()
 export class LessonTopicService {
@@ -41,6 +42,54 @@ export class LessonTopicService {
     } catch (error) {
       throw new BadRequestException({
         message: 'Error bulk creating lesson topics',
+        details: stringify({
+          message: error.message,
+          stack: error.stack,
+          details: error.response || error,
+        }),
+      });
+    }
+  }
+
+  async bulkUpdate(
+    lessonId: string,
+    bulkDto: BulkUpdateLessonTopicDto,
+    userId: string,
+  ): Promise<LessonTopic[]> {
+    try {
+      const updatedTopics: LessonTopic[] = [];
+
+      for (const item of bulkDto.topics) {
+        const topic = await this.lessonTopicModel.findByPk(item.id);
+        if (!topic) {
+          throw new NotFoundException(`Lesson topic with ID ${item.id} not found`);
+        }
+
+        if (topic.lessonId !== lessonId) {
+          throw new BadRequestException(
+            `Lesson topic ${item.id} does not belong to lesson ${lessonId}`,
+          );
+        }
+
+        if (topic.userId !== userId) {
+          throw new BadRequestException(
+            'You are not allowed to update this lesson topic',
+          );
+        }
+
+        const payload: Partial<LessonTopic> = { ...item } as any;
+        delete (payload as any).id;
+        delete (payload as any).status;
+        delete (payload as any).lessonId;
+
+        const updated = await topic.update(payload);
+        updatedTopics.push(updated);
+      }
+
+      return updatedTopics;
+    } catch (error) {
+      throw new BadRequestException({
+        message: 'Error bulk updating lesson topics',
         details: stringify({
           message: error.message,
           stack: error.stack,

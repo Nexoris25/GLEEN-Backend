@@ -29,6 +29,7 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { LessonTopicService } from '../services/lesson-topic.service';
 import { CreateLessonTopicDto } from '../dto/create-lesson-topic.dto';
 import { BulkCreateLessonTopicDto } from '../dto/bulk-create-lesson-topic.dto';
+import { BulkUpdateLessonTopicDto } from '../dto/bulk-update-lesson-topic.dto';
 import { UpdateLessonTopicDto } from '../dto/update-lesson-topic.dto';
 import { SearchLessonTopicDto } from '../dto/search-lesson-topic.dto';
 import stringify from 'safe-stable-stringify';
@@ -88,6 +89,55 @@ export class LessonTopicController {
       return {
         status: HttpStatus.INTERNAL_SERVER_ERROR,
         message: 'Error bulk creating lesson topics',
+        error: stringify({
+          message: error?.message,
+          stack: error?.stack,
+          details: error?.response || error,
+        }),
+      };
+    }
+  }
+
+  @Patch('bulk/:lessonId')
+  @Roles('TUTOR', 'SUPER_ADMIN')
+  @ApiOperation({ summary: 'Bulk update lesson topics (Tutor, Super Admin)' })
+  @ApiParam({
+    name: 'lessonId',
+    format: 'uuid',
+    description: 'ID of the lesson',
+  })
+  @ApiBody({ type: BulkUpdateLessonTopicDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Lesson topics updated successfully',
+    type: LessonTopicArrayResponseDto,
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Error bulk updating lesson topics',
+    type: ResponseDto,
+  })
+  async bulkUpdate(
+    @Param('lessonId', ParseUUIDPipe) lessonId: string,
+    @Body() bulkDto: BulkUpdateLessonTopicDto,
+    @UserId() userId: string,
+  ): Promise<LessonTopicArrayResponseDto> {
+    try {
+      const topics = await this.lessonTopicService.bulkUpdate(
+        lessonId,
+        bulkDto,
+        userId,
+      );
+
+      return {
+        status: HttpStatus.OK,
+        message: 'Lesson topics updated successfully',
+        data: topics,
+      };
+    } catch (error: any) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Error bulk updating lesson topics',
         error: stringify({
           message: error?.message,
           stack: error?.stack,

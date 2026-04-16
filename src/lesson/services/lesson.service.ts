@@ -98,6 +98,8 @@ export class LessonService {
       if (!lesson) {
         throw new NotFoundException(`Lesson with id ${id} not found`);
       }
+      const subject = await Subject.findByPk(lesson.subjectId);
+      (lesson as any).setDataValue('subjectName', subject?.title ?? null);
       return lesson;
     } catch (error) {
       throw new BadRequestException({
@@ -461,7 +463,7 @@ export class LessonService {
     searchDto: LessonSearchDto,
   ): Promise<{ rows: Lesson[]; count: number }> {
     try {
-      const { offset, limit, ...rest } = searchDto;
+      const { offset, limit } = searchDto;
       const whereClause: any = {};
       if (searchDto.title) {
         whereClause.title = { [Op.iLike]: `%${searchDto.title}%` };
