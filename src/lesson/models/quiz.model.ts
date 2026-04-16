@@ -10,7 +10,8 @@ import {
   IsUUID,
   Model,
   PrimaryKey,
-  Table, Unique,
+  Table,
+  Unique,
 } from 'sequelize-typescript';
 import { v4 as uuidv4 } from 'uuid';
 import { Subject } from 'src/subject/models/subject.model';
@@ -30,21 +31,21 @@ export class Quizzes extends Model {
   id: string;
 
   @ApiProperty()
-  @Unique 
+  @Unique
   @Column({ type: DataType.STRING, allowNull: false })
   title: string;
 
-@ApiProperty({
-description: 'Duration in seconds',
-example: 120,
-minimum: 0,
-})
-@Column({
-type: DataType.INTEGER,
-allowNull: false,           // ← makes it required in database
-defaultValue: 0,            // optional but often useful
-})
-duration: number;
+  @ApiProperty({
+    description: 'Duration in seconds',
+    example: 120,
+    minimum: 0,
+  })
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false, // ← makes it required in database
+    defaultValue: 0, // optional but often useful
+  })
+  duration: number;
 
   @ApiProperty()
   @Column({
@@ -54,10 +55,10 @@ duration: number;
   description?: string;
 
   @ApiProperty()
-  @Default("PENDING")
+  @Default('PENDING')
   @Column({
     type: DataType.ENUM('PENDING', 'APPROVED', 'REJECTED'),
-    allowNull: false
+    allowNull: false,
   })
   status: string;
 
@@ -73,36 +74,38 @@ duration: number;
     type: DataType.STRING,
     allowNull: true,
   })
-  avatar: string
+  avatar: string;
 
   @ApiProperty()
   @ForeignKey(() => Subject)
   @Column({
     type: DataType.UUID,
-    allowNull: false
+    allowNull: false,
   })
-  subjectId: string
+  subjectId: string;
 
   // @ApiProperty()
   @Column({
     type: DataType.UUID,
     allowNull: true,
   })
-  userId?: string
-
-  
+  userId?: string;
 
   @ApiProperty()
   @HasMany(() => QuizQuestions, { foreignKey: 'quizId' })
   quizQuestions: QuizQuestions[];
 
   @ApiProperty()
-  @BelongsToMany(() => StudentsQuizAnswers, () => QuizQuestions, 'quizId', 'quizQuestionId')
+  @BelongsToMany(
+    () => StudentsQuizAnswers,
+    () => QuizQuestions,
+    'quizId',
+    'quizQuestionId',
+  )
   studentsQuizAnswers: StudentsQuizAnswers[];
 
   @BeforeCreate
   static async setUserId(instance: Quizzes, options: { [key: string]: any }) {
-
     // Retrieve the authenticated user ID
     const authUserId = options.userId;
     if (!authUserId) {
@@ -110,5 +113,4 @@ duration: number;
     }
     instance.userId = authUserId;
   }
-
 }

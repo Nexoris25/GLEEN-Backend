@@ -14,8 +14,6 @@ import { User } from 'src/user/models/user.model';
 import { NotificationEntityType } from 'src/shared-types/FileTypeEnum';
 import { v4 as uuidv4 } from 'uuid';
 
-
-
 @Table({
   tableName: 'notification_tracking',
   timestamps: true,

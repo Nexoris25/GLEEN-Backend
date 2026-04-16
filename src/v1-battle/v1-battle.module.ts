@@ -14,7 +14,6 @@ import { XpModule } from 'src/xp/xp.module';
 import { LessonModule } from 'src/lesson/lesson.module';
 import { NotificationTrackingModule } from 'src/notification-tracking/notification-tracking.module';
 
-
 @Module({
   imports: [
     JwtModule.register({
@@ -29,7 +28,6 @@ import { NotificationTrackingModule } from 'src/notification-tracking/notificati
     forwardRef(() => XpModule),
     forwardRef(() => LessonModule),
     forwardRef(() => NotificationTrackingModule),
-  
   ],
   providers: [
     V1BattleService,
@@ -47,4 +45,4 @@ import { NotificationTrackingModule } from 'src/notification-tracking/notificati
     V1BattleRecordService,
   ],
 })
-export class V1BattleModule { }
+export class V1BattleModule {}

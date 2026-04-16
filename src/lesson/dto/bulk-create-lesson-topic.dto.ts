@@ -1,6 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsUUID, IsString, IsOptional, IsInt, Min, IsEnum, IsArray, ValidateNested, IsUrl } from 'class-validator';
+import {
+  IsUUID,
+  IsString,
+  IsOptional,
+  IsInt,
+  Min,
+  IsEnum,
+  IsArray,
+  ValidateNested,
+  IsUrl,
+} from 'class-validator';
 import { TopicTypeEnum } from 'src/shared-types/FileTypeEnum';
 
 export class LessonTopicItemDto {

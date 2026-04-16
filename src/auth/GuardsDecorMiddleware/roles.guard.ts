@@ -8,10 +8,10 @@ export class RolesGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     // Get roles from decorator
-    const roles = this.reflector.getAllAndOverride<string[]>(
-      'roles',
-      [context.getHandler(), context.getClass()],
-    );
+    const roles = this.reflector.getAllAndOverride<string[]>('roles', [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
     // No roles defined → allow any authenticated user
     if (!roles || roles.length === 0) return true;
@@ -27,7 +27,8 @@ export class RolesGuard implements CanActivate {
     if (!user || !user.role) return false;
 
     // Normalize roles (remove 'ROLE_' prefix, lowercase)
-    const normalize = (role: string) => role.replace(/^ROLE_/, '').toLowerCase();
+    const normalize = (role: string) =>
+      role.replace(/^ROLE_/, '').toLowerCase();
 
     const allowedRoles = roles.map(normalize);
 
@@ -37,8 +38,6 @@ export class RolesGuard implements CanActivate {
       : [normalize(user.role)];
 
     // Allow access if any role matches
-    return userRoles.some(role => allowedRoles.includes(role));
+    return userRoles.some((role) => allowedRoles.includes(role));
   }
 }
-
-

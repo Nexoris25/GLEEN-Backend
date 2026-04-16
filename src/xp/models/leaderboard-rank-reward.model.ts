@@ -22,7 +22,9 @@ export class LeaderboardRankReward extends Model {
   @Column(DataType.UUID)
   id: string;
 
-  @ApiProperty({ description: 'The rank or percentile (e.g., 1st place, Top 1%)' })
+  @ApiProperty({
+    description: 'The rank or percentile (e.g., 1st place, Top 1%)',
+  })
   @Column(DataType.STRING)
   rank: string;
 

@@ -1,5 +1,14 @@
 // user-subject.model.ts
-import { Table, Column, Model, ForeignKey, DataType, Unique, BelongsToMany, BelongsTo } from 'sequelize-typescript';
+import {
+  Table,
+  Column,
+  Model,
+  ForeignKey,
+  DataType,
+  Unique,
+  BelongsToMany,
+  BelongsTo,
+} from 'sequelize-typescript';
 import { Subject } from './subject.model';
 import { User } from 'src/user/models/user.model';
 
@@ -9,23 +18,21 @@ export class UserSubject extends Model<UserSubject> {
   @Unique('user_subject_unique')
   @Column({
     type: DataType.UUID,
-    allowNull: false
+    allowNull: false,
   })
-  userId: String;
+  userId: string;
 
   @ForeignKey(() => Subject)
   @Unique('user_subject_unique')
   @Column({
     type: DataType.UUID,
-    allowNull: false
+    allowNull: false,
   })
-  subjectId: String;
-
+  subjectId: string;
 
   @BelongsTo(() => User, { foreignKey: 'userId' })
   user: User;
 
   @BelongsTo(() => Subject, { foreignKey: 'subjectId' })
   subject: Subject;
-
 }

@@ -12,18 +12,10 @@ import { JwtModule } from '@nestjs/jwt';
       secret: process.env.JWT_SECRET_KEY,
       signOptions: { expiresIn: process.env.JWT_EXPIRATION_TIME || '30d' },
     }),
-    SequelizeModule.forFeature([
-      Goal, UserGoal
-    ]),
+    SequelizeModule.forFeature([Goal, UserGoal]),
   ],
-  providers: [
-    GoalsService,
-  ],
-  controllers: [
-    GoalController,
-  ],
-  exports: [
-    GoalsService,
-  ],
+  providers: [GoalsService],
+  controllers: [GoalController],
+  exports: [GoalsService],
 })
-export class GoalModule { }
+export class GoalModule {}

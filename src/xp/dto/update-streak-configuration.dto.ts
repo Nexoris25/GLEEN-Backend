@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsString, IsArray, ValidateNested } from 'class-validator';
+import {
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsArray,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class UpdateMilestoneRewardDto {
@@ -23,7 +29,9 @@ export class UpdateMilestoneRewardDto {
 }
 
 export class UpdateStreakConfigurationDto {
-  @ApiPropertyOptional({ description: 'Number of lessons required to trigger a streak count' })
+  @ApiPropertyOptional({
+    description: 'Number of lessons required to trigger a streak count',
+  })
   @IsNumber()
   @IsOptional()
   streakCountTrigger?: number;
@@ -53,7 +61,10 @@ export class UpdateStreakConfigurationDto {
   @IsOptional()
   streakPauseRule?: string;
 
-  @ApiPropertyOptional({ type: [UpdateMilestoneRewardDto], description: 'List of milestone rewards' })
+  @ApiPropertyOptional({
+    type: [UpdateMilestoneRewardDto],
+    description: 'List of milestone rewards',
+  })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => UpdateMilestoneRewardDto)

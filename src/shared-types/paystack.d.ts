@@ -14,27 +14,27 @@ declare module 'paystack' {
   }
 
   interface TransactionAPI {
-    initialize(
-      payload: InitializeTransactionPayload,
-    ): Promise<PaystackResponse<{
-      authorization_url: string;
-      access_code: string;
-      reference: string;
-    }>>;
+    initialize(payload: InitializeTransactionPayload): Promise<
+      PaystackResponse<{
+        authorization_url: string;
+        access_code: string;
+        reference: string;
+      }>
+    >;
 
-    verify(
-      reference: string,
-    ): Promise<PaystackResponse<{
-      status: 'success' | 'failed' | 'abandoned';
-      reference: string;
-      amount: number;
-      paid_at: string;
-      channel: string;
-      currency: string;
-      customer: {
-        email: string;
-      };
-    }>>;
+    verify(reference: string): Promise<
+      PaystackResponse<{
+        status: 'success' | 'failed' | 'abandoned';
+        reference: string;
+        amount: number;
+        paid_at: string;
+        channel: string;
+        currency: string;
+        customer: {
+          email: string;
+        };
+      }>
+    >;
   }
 
   interface PaystackClient {

@@ -1,4 +1,9 @@
-import { Injectable, ExecutionContext, CallHandler, NestMiddleware } from '@nestjs/common';
+import {
+  Injectable,
+  ExecutionContext,
+  CallHandler,
+  NestMiddleware,
+} from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { JwtService } from '@nestjs/jwt';
 
@@ -9,7 +14,9 @@ export class UserIdMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
     const token = req.headers.authorization?.split(' ')[1];
     if (token) {
-      try { req['userId'] = this.jwt.verify(token).sub } catch {}
+      try {
+        req['userId'] = this.jwt.verify(token).sub;
+      } catch {}
     }
     next();
   }

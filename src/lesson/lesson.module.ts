@@ -49,7 +49,8 @@ import { XpModule } from 'src/xp/xp.module';
     QuizQuestionsService,
     StudentsQuizAnswersService,
     QuizzesService,
-    LessonTopicService, BunnyService, 
+    LessonTopicService,
+    BunnyService,
     QuizRecordService,
   ],
   controllers: [
@@ -70,4 +71,4 @@ import { XpModule } from 'src/xp/xp.module';
     QuizRecordService,
   ],
 })
-export class LessonModule { }
+export class LessonModule {}

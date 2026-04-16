@@ -62,7 +62,6 @@ export class User extends Model {
   })
   referral?: string;
 
-
   @ApiProperty()
   @Column({
     type: DataType.STRING,
@@ -136,7 +135,6 @@ export class User extends Model {
   })
   country: string;
 
-
   @ApiProperty()
   @ForeignKey(() => City)
   @Column({
@@ -152,31 +150,27 @@ export class User extends Model {
   })
   password!: string;
 
+  @ApiPropertyOptional()
+  @Column({
+    type: DataType.UUID,
+    allowNull: true,
+  })
+  stateId?: string;
 
+  @ApiPropertyOptional()
+  @Column({
+    type: DataType.UUID,
+    allowNull: true,
+  })
+  lga?: string;
 
-@ApiPropertyOptional()
-@Column({
-type: DataType.UUID,
-allowNull: true,
-})
-stateId?: string;
-
-@ApiPropertyOptional()
-@Column({
-type: DataType.UUID,
-allowNull: true,
-})
-lga?: string;
-
-
-@ApiProperty()
-@Default(false)
-@Column({
-  type: DataType.BOOLEAN,
-  allowNull: false,
-})
-isEmailVerified: boolean;
-
+  @ApiProperty()
+  @Default(false)
+  @Column({
+    type: DataType.BOOLEAN,
+    allowNull: false,
+  })
+  isEmailVerified: boolean;
 
   @ApiProperty()
   @Column({
@@ -223,7 +217,7 @@ isEmailVerified: boolean;
   })
   providerId: string;
 
-    @ApiPropertyOptional()
+  @ApiPropertyOptional()
   @Column({
     type: DataType.STRING,
     allowNull: true,
@@ -253,41 +247,32 @@ isEmailVerified: boolean;
   lastLoginAt: Date;
 
   @ApiPropertyOptional()
-  @BelongsToMany(() => Goal,
-    {
-      through: () => UserGoal,
-      foreignKey: 'userId',
-      otherKey: 'goalId'
-    })
+  @BelongsToMany(() => Goal, {
+    through: () => UserGoal,
+    foreignKey: 'userId',
+    otherKey: 'goalId',
+  })
   goals: Goal[];
 
   @ApiPropertyOptional()
-  @BelongsToMany(() => Group,
-    {
-      through: () => UserGroup,
-      foreignKey: 'userId',
-      otherKey: 'groupId'
-    })
+  @BelongsToMany(() => Group, {
+    through: () => UserGroup,
+    foreignKey: 'userId',
+    otherKey: 'groupId',
+  })
   groups: Group[];
 
   @ApiPropertyOptional()
-  @BelongsToMany(() => Subject,
-    {
-      through: () => UserSubject,
-      foreignKey: 'userId',
-      otherKey: 'subjectId'
-    })
+  @BelongsToMany(() => Subject, {
+    through: () => UserSubject,
+    foreignKey: 'userId',
+    otherKey: 'subjectId',
+  })
   subjects?: Subject[];
-
-
-
 
   @ApiPropertyOptional()
   @BelongsTo(() => SubscriptionTransaction, 'lastSubscriptionTransactionId')
   lastSubscriptionTransaction: SubscriptionTransaction;
-
-
-
 
   @ApiPropertyOptional()
   @BelongsTo(() => City)
@@ -298,7 +283,11 @@ isEmailVerified: boolean;
   quizRecords: QuizRecord[];
 
   @ApiPropertyOptional()
-  @BelongsToMany(() => Lesson, { through: () => LessonTracking, foreignKey: 'userId', otherKey: 'lessonId' })
+  @BelongsToMany(() => Lesson, {
+    through: () => LessonTracking,
+    foreignKey: 'userId',
+    otherKey: 'lessonId',
+  })
   lessons: Lesson[];
 
   // @ApiPropertyOptional()
@@ -312,9 +301,4 @@ isEmailVerified: boolean;
   // @ApiPropertyOptional()
   @HasMany(() => XpRecords, 'userId')
   xpRecords: XpRecords[];
-
-  
-
 }
-
-

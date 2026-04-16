@@ -7,4 +7,6 @@ export class CreateSubscriptionTransactionDto extends OmitType(
   ['id', 'userId', 'reference', 'status'] as const,
 ) {}
 
-export class UpdateSubscriptionTransactionDto extends PartialType(CreateSubscriptionTransactionDto) {}
+export class UpdateSubscriptionTransactionDto extends PartialType(
+  CreateSubscriptionTransactionDto,
+) {}

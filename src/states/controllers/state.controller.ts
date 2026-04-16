@@ -1,20 +1,32 @@
 import {
-Controller,
-Get,
-Post,
-Body,
-Patch,
-Param,
-Delete,
-Query,
-HttpStatus,
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiQuery, ApiResponse, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiQuery,
+  ApiResponse,
+  ApiBody,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/GuardsDecorMiddleware/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/GuardsDecorMiddleware/roles.guard';
 import { UserId } from 'src/auth/GuardsDecorMiddleware/userIdDecorator.guard';
-import { CityArrayResponseDto, CityResponseDto, ResponseDto, StateArrayResponseDto, StateResponseDto } from 'src/shared-types/response.dto';
-import stringify from "safe-stable-stringify";
+import {
+  CityArrayResponseDto,
+  CityResponseDto,
+  ResponseDto,
+  StateArrayResponseDto,
+  StateResponseDto,
+} from 'src/shared-types/response.dto';
+import stringify from 'safe-stable-stringify';
 import { StatesService } from '../services/state.service';
 import { CreateStateDto } from '../dto/create-state.dto';
 import { UpdateStateDto } from '../dto/update-state.dto';
@@ -23,9 +35,9 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 @ApiTags('States')
 @Controller('states')
 export class StateController {
-constructor(private readonly stateService: StatesService) { }
+  constructor(private readonly stateService: StatesService) {}
 
-/*
+  /*
 @Post()
 @Roles('ADMIN', 'SUPER_ADMIN')
 @ApiOperation({ summary: 'Create a new state' })
@@ -54,50 +66,61 @@ details: error.response || error,
 }
 */
 
-@Get()
-@ApiOperation({ summary: 'Get all states with pagination' })
-@ApiQuery({ name: 'page', required: false, type: Number, example: 1, description: 'Page number, starting from 1' })
-@ApiQuery({ name: 'limit', required: false, type: Number, example: 10, description: 'Number of items per page' })
-@ApiResponse({ status: 200, description: 'States retrieved successfully', type: StateArrayResponseDto })
-@ApiResponse({ status: 500, description: 'Error retrieving states', type: ResponseDto })
-async findAll(
-  @Query('page') page = 1,
-  @Query('limit') limit = 10,
-) {
-  return this.stateService.findAll(page, limit);
-}
+  @Get()
+  @ApiOperation({ summary: 'Get all states with pagination' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    example: 1,
+    description: 'Page number, starting from 1',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    example: 10,
+    description: 'Number of items per page',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'States retrieved successfully',
+    type: StateArrayResponseDto,
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Error retrieving states',
+    type: ResponseDto,
+  })
+  async findAll(@Query('page') page = 1, @Query('limit') limit = 10) {
+    return this.stateService.findAll(page, limit);
+  }
 
+  @Get(':id')
+  @ApiOperation({ summary: 'Retrieve a state by ID' })
+  @ApiResponse({ status: 200, description: 'State retrieved successfully' })
+  async findOne(@Param('id') id: string): Promise<StateResponseDto> {
+    try {
+      const state = await this.stateService.findOne(id);
+      return {
+        status: HttpStatus.OK,
+        message: 'State retrieved successfully',
+        data: state,
+      };
+    } catch (error) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Error retrieving state',
+        error: stringify({
+          message: error.message,
+          stack: error.stack,
+          details: error.response || error,
+        }),
+      };
+    }
+  }
 
-
-
-
-
-
-@Get(':id')
-@ApiOperation({ summary: 'Retrieve a state by ID' })
-@ApiResponse({ status: 200, description: 'State retrieved successfully' })
-async findOne(@Param('id') id: string): Promise<StateResponseDto> {
-try {
-const state = await this.stateService.findOne(id);
-return {
-status: HttpStatus.OK,
-message: 'State retrieved successfully',
-data: state,
-};
-} catch (error) {
-return {
-status: HttpStatus.INTERNAL_SERVER_ERROR,
-message: 'Error retrieving state',
-error: stringify({
-message: error.message,
-stack: error.stack,
-details: error.response || error,
-}),
-};
-}
-}
-
-/*
+  /*
 @Patch(':id')
 @Roles('ADMIN', 'SUPER_ADMIN')
 @ApiOperation({ summary: 'Update a state by ID' })

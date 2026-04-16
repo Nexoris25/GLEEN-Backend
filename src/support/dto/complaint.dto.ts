@@ -4,17 +4,27 @@ import { PResponseDto, ResponseDto } from 'src/shared-types/response.dto';
 import { Complaint } from '../models/complaint.model';
 
 export class CreateComplaintDto {
-  @ApiProperty({ example: 'Payment not received', description: 'Complaint title' })
+  @ApiProperty({
+    example: 'Payment not received',
+    description: 'Complaint title',
+  })
   @IsString()
   title: string;
 
-  @ApiProperty({ example: 'I made a payment but it was not confirmed', description: 'Detailed description of the complaint' })
+  @ApiProperty({
+    example: 'I made a payment but it was not confirmed',
+    description: 'Detailed description of the complaint',
+  })
   @IsString()
   description: string;
 }
 
 export class UpdateComplaintDto extends PartialType(CreateComplaintDto) {
-  @ApiProperty({ enum: ['open', 'in_progress', 'resolved'], required: false, example: 'resolved' })
+  @ApiProperty({
+    enum: ['open', 'in_progress', 'resolved'],
+    required: false,
+    example: 'resolved',
+  })
   @IsOptional()
   @IsEnum(['open', 'in_progress', 'resolved'])
   status?: string;
@@ -34,7 +44,9 @@ export class ComplaintArrayResponseDto extends ResponseDto<Complaint> {
   data?: Complaint[];
 }
 
-export class ComplaintArrayResponseCountDto extends ResponseDto<PResponseDto<Complaint>> {
+export class ComplaintArrayResponseCountDto extends ResponseDto<
+  PResponseDto<Complaint>
+> {
   @ApiPropertyOptional({ type: () => PResponseDto<Complaint> })
   data?: PResponseDto<Complaint>;
 }

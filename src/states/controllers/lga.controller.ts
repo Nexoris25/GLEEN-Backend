@@ -48,9 +48,7 @@ export class LgaController {
     return this.lgaService.findAll(+page, +limit);
   }
 
-
-  
-    // --------------------
+  // --------------------
   // Get all LGAs by stateId
   // --------------------
   @Get('state/:stateId')
@@ -62,11 +60,11 @@ export class LgaController {
   findByState(
     @Param('stateId') stateId: string,
     @Query('page') page = 1,
-    @Query('limit') limit = 10
+    @Query('limit') limit = 10,
   ) {
     return this.lgaService.findByState(stateId, +page, +limit);
   }
-  
+
   // --------------------
   // Get single LGA
   // --------------------

@@ -1,6 +1,23 @@
-import { Controller, Post, Get, Patch, Delete, Body, Param, HttpStatus, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  HttpStatus,
+  UseGuards,
+} from '@nestjs/common';
 import stringify from 'safe-stable-stringify';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBody,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { NotificationSettingsService } from '../services/notification-settings.service';
 import { CreateNotificationSettingsDto } from '../dto/create-notification-settings.dto';
 import { UpdateNotificationSettingsDto } from '../dto/update-notification-settings.dto';
@@ -12,16 +29,31 @@ import { UserId } from 'src/auth/GuardsDecorMiddleware/userIdDecorator.guard';
 @Controller('notification-settings')
 @UseGuards(JwtAuthGuard)
 export class NotificationSettingsController {
-  constructor(private readonly notificationSettingsService: NotificationSettingsService) {}
+  constructor(
+    private readonly notificationSettingsService: NotificationSettingsService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Create notification settings' })
   @ApiBody({ type: CreateNotificationSettingsDto })
-  @ApiResponse({ status: 201, description: 'Notification settings created', type: NotificationSettings })
-  @ApiResponse({ status: 400, description: 'Error creating notification settings' })
-  async create(@Body() dto: CreateNotificationSettingsDto, @UserId() userId: string) {
+  @ApiResponse({
+    status: 201,
+    description: 'Notification settings created',
+    type: NotificationSettings,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Error creating notification settings',
+  })
+  async create(
+    @Body() dto: CreateNotificationSettingsDto,
+    @UserId() userId: string,
+  ) {
     try {
-      const settings = await this.notificationSettingsService.create(dto, userId);
+      const settings = await this.notificationSettingsService.create(
+        dto,
+        userId,
+      );
       return {
         status: HttpStatus.CREATED,
         message: 'Notification settings created successfully',
@@ -38,7 +70,11 @@ export class NotificationSettingsController {
 
   @Get()
   @ApiOperation({ summary: 'Get all notification settings' })
-  @ApiResponse({ status: 200, description: 'Notification settings retrieved', type: [NotificationSettings] })
+  @ApiResponse({
+    status: 200,
+    description: 'Notification settings retrieved',
+    type: [NotificationSettings],
+  })
   async findAll() {
     try {
       const settings = await this.notificationSettingsService.findAll();
@@ -59,7 +95,11 @@ export class NotificationSettingsController {
   @Get(':id')
   @ApiOperation({ summary: 'Get notification settings by id' })
   @ApiParam({ name: 'id', description: 'NotificationSettings ID' })
-  @ApiResponse({ status: 200, description: 'Notification settings retrieved', type: NotificationSettings })
+  @ApiResponse({
+    status: 200,
+    description: 'Notification settings retrieved',
+    type: NotificationSettings,
+  })
   @ApiResponse({ status: 404, description: 'Notification settings not found' })
   async findOne(@Param('id') id: string) {
     try {
@@ -82,11 +122,16 @@ export class NotificationSettingsController {
   @Get('user/:userId')
   @ApiOperation({ summary: 'Get notification settings by user ID' })
   @ApiParam({ name: 'userId', description: 'User ID' })
-  @ApiResponse({ status: 200, description: 'Notification settings retrieved', type: NotificationSettings })
+  @ApiResponse({
+    status: 200,
+    description: 'Notification settings retrieved',
+    type: NotificationSettings,
+  })
   @ApiResponse({ status: 404, description: 'Notification settings not found' })
   async findOneByUserId(@Param('userId') userId: string) {
     try {
-      const settings = await this.notificationSettingsService.findByUserId(userId);
+      const settings =
+        await this.notificationSettingsService.findByUserId(userId);
       return {
         status: HttpStatus.OK,
         message: 'Notification settings retrieved successfully',
@@ -106,9 +151,19 @@ export class NotificationSettingsController {
   @ApiOperation({ summary: 'Update notification settings by id' })
   @ApiParam({ name: 'id', description: 'NotificationSettings ID' })
   @ApiBody({ type: UpdateNotificationSettingsDto })
-  @ApiResponse({ status: 200, description: 'Notification settings updated', type: NotificationSettings })
-  @ApiResponse({ status: 400, description: 'Error updating notification settings' })
-  async update(@Param('id') id: string, @Body() dto: UpdateNotificationSettingsDto) {
+  @ApiResponse({
+    status: 200,
+    description: 'Notification settings updated',
+    type: NotificationSettings,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Error updating notification settings',
+  })
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateNotificationSettingsDto,
+  ) {
     try {
       const settings = await this.notificationSettingsService.update(id, dto);
       return {
@@ -130,11 +185,24 @@ export class NotificationSettingsController {
   @ApiOperation({ summary: 'Update notification settings by user ID' })
   @ApiParam({ name: 'userId', description: 'User ID' })
   @ApiBody({ type: UpdateNotificationSettingsDto })
-  @ApiResponse({ status: 200, description: 'Notification settings updated', type: NotificationSettings })
-  @ApiResponse({ status: 400, description: 'Error updating notification settings' })
-  async updateByUserId(@Param('userId') userId: string, @Body() dto: UpdateNotificationSettingsDto) {
+  @ApiResponse({
+    status: 200,
+    description: 'Notification settings updated',
+    type: NotificationSettings,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Error updating notification settings',
+  })
+  async updateByUserId(
+    @Param('userId') userId: string,
+    @Body() dto: UpdateNotificationSettingsDto,
+  ) {
     try {
-      const settings = await this.notificationSettingsService.updateByUserId(userId, dto);
+      const settings = await this.notificationSettingsService.updateByUserId(
+        userId,
+        dto,
+      );
       return {
         status: HttpStatus.OK,
         message: 'Notification settings updated successfully',
@@ -149,7 +217,6 @@ export class NotificationSettingsController {
       };
     }
   }
-
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete notification settings by id' })

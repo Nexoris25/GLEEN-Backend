@@ -13,17 +13,16 @@ export class CreateGroupDto {
   @IsOptional()
   description?: string;
 
-
-    @ApiPropertyOptional({
-      type: 'string',
-      format: 'binary', // ⚡ tells Swagger this is a file
-      description: 'Avatar image file (optional)',
-    })
-    @IsOptional()
-    avatar?: any; // ⚡ must be any for multer file
+  @ApiPropertyOptional({
+    type: 'string',
+    format: 'binary', // ⚡ tells Swagger this is a file
+    description: 'Avatar image file (optional)',
+  })
+  @IsOptional()
+  avatar?: any; // ⚡ must be any for multer file
 
   @ApiPropertyOptional({ default: true })
-   @IsOptional()
+  @IsOptional()
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   openToPublic?: boolean;

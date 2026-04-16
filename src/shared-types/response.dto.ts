@@ -43,7 +43,6 @@ export class ResponseDto<T> {
   message?: string;
 }
 
-
 export class PResponseDto<T> {
   @ApiProperty()
   count: number;
@@ -95,7 +94,9 @@ export class SubjectArrayResponseDto extends ResponseDto<Subject> {
   data?: Subject[];
 }
 
-export class SubjectArrayResponseCountDto extends ResponseDto<PResponseDto<Subject>> {
+export class SubjectArrayResponseCountDto extends ResponseDto<
+  PResponseDto<Subject>
+> {
   @ApiPropertyOptional({ type: () => PResponseDto<Subject> })
   data?: PResponseDto<Subject>;
 }
@@ -110,7 +111,9 @@ export class LessonArrayResponseDto extends ResponseDto<Lesson> {
   data?: Lesson[];
 }
 
-export class LessonArrayResponseCountDto extends ResponseDto<PResponseDto<Lesson>> {
+export class LessonArrayResponseCountDto extends ResponseDto<
+  PResponseDto<Lesson>
+> {
   @ApiPropertyOptional({ type: () => PResponseDto<Lesson> })
   data?: PResponseDto<Lesson>;
 }
@@ -125,7 +128,9 @@ export class StateArrayResponseDto extends ResponseDto<State> {
   data?: State[];
 }
 
-export class StateArrayResponseCountDto extends ResponseDto<PResponseDto<State>> {
+export class StateArrayResponseCountDto extends ResponseDto<
+  PResponseDto<State>
+> {
   @ApiPropertyOptional({ type: () => PResponseDto<State> })
   data?: PResponseDto<State>;
 }
@@ -159,12 +164,13 @@ export class FaqArrayResponseDto extends ResponseDto<Faq> {
   data?: Faq[];
 }
 
-
 export class LessonTopicResponseDto extends ResponseDto<LessonTopic> {
   @ApiProperty({ type: () => LessonTopic })
   data?: LessonTopic;
 }
-export class LessonTopicResponseCountDto extends ResponseDto<PResponseDto<LessonTopic>> {
+export class LessonTopicResponseCountDto extends ResponseDto<
+  PResponseDto<LessonTopic>
+> {
   @ApiPropertyOptional({ type: () => PResponseDto<LessonTopic> })
   data?: PResponseDto<LessonTopic>;
 }
@@ -178,7 +184,9 @@ export class MockExamRecordResponseDto extends ResponseDto<MockExamRecord> {
   @ApiProperty({ type: () => MockExamRecord })
   data?: MockExamRecord;
 }
-export class MockExamRecordResponseCountDto extends ResponseDto<PResponseDto<MockExamRecord>> {
+export class MockExamRecordResponseCountDto extends ResponseDto<
+  PResponseDto<MockExamRecord>
+> {
   @ApiPropertyOptional({ type: () => PResponseDto<MockExamRecord> })
   data?: PResponseDto<MockExamRecord>;
 }
@@ -188,13 +196,14 @@ export class MockExamRecordArrayResponseDto extends ResponseDto<MockExamRecord> 
   data?: MockExamRecord[];
 }
 
-
 export class MockExamsResponseDto extends ResponseDto<MockExams> {
   @ApiProperty({ type: () => MockExams })
   data?: MockExams;
 }
 
-export class MockExamsResponseCountDto extends ResponseDto<PResponseDto<MockExams>> {
+export class MockExamsResponseCountDto extends ResponseDto<
+  PResponseDto<MockExams>
+> {
   @ApiPropertyOptional({ type: () => PResponseDto<MockExams> })
   data?: PResponseDto<MockExams>;
 }
@@ -208,7 +217,9 @@ export class MockExamCommentResponseDto extends ResponseDto<MockExamComment> {
   @ApiProperty({ type: () => MockExamComment })
   data?: MockExamComment;
 }
-export class MockExamCommentResponseCountDto extends ResponseDto<PResponseDto<MockExamComment>> {
+export class MockExamCommentResponseCountDto extends ResponseDto<
+  PResponseDto<MockExamComment>
+> {
   @ApiPropertyOptional({ type: () => PResponseDto<MockExamComment> })
   data?: PResponseDto<MockExamComment>;
 }
@@ -218,13 +229,14 @@ export class MockExamCommentArrayResponseDto extends ResponseDto<MockExamComment
   data?: MockExamComment[];
 }
 
-
 export class MockQuestionsResponseDto extends ResponseDto<MockQuestions> {
   @ApiProperty({ type: () => MockQuestions })
   data?: MockQuestions;
 }
 
-export class MockQuestionsResponseCountDto extends ResponseDto<PResponseDto<MockQuestions>> {
+export class MockQuestionsResponseCountDto extends ResponseDto<
+  PResponseDto<MockQuestions>
+> {
   @ApiPropertyOptional({ type: () => PResponseDto<MockQuestions> })
   data?: PResponseDto<MockQuestions>;
 }
@@ -234,13 +246,14 @@ export class MockQuestionsArrayResponseDto extends ResponseDto<MockQuestions> {
   data?: MockQuestions[];
 }
 
-
 export class MockTypesResponseDto extends ResponseDto<MockTypes> {
   @ApiProperty({ type: () => MockTypes })
   data?: MockTypes;
 }
 
-export class MockTypesResponseCountDto extends ResponseDto<PResponseDto<MockTypes>> {
+export class MockTypesResponseCountDto extends ResponseDto<
+  PResponseDto<MockTypes>
+> {
   @ApiPropertyOptional({ type: () => PResponseDto<MockTypes> })
   data?: PResponseDto<MockTypes>;
 }
@@ -250,14 +263,14 @@ export class MockTypesArrayResponseDto extends ResponseDto<MockTypes> {
   data?: MockTypes[];
 }
 
-
-
 export class StudentsMockAnswersResponseDto extends ResponseDto<StudentsMockAnswers> {
   @ApiProperty({ type: () => StudentsMockAnswers })
   data?: StudentsMockAnswers;
 }
 
-export class StudentsMockAnswersResponseCountDto extends ResponseDto<PResponseDto<StudentsMockAnswers>> {
+export class StudentsMockAnswersResponseCountDto extends ResponseDto<
+  PResponseDto<StudentsMockAnswers>
+> {
   @ApiPropertyOptional({ type: () => PResponseDto<StudentsMockAnswers> })
   data?: PResponseDto<StudentsMockAnswers>;
 }
@@ -267,14 +280,14 @@ export class StudentsMockAnswersArrayResponseDto extends ResponseDto<StudentsMoc
   data?: StudentsMockAnswers[];
 }
 
-
-
 export class GroupChatResponseDto extends ResponseDto<GroupChat> {
   @ApiProperty({ type: () => GroupChat })
   data?: GroupChat;
 }
 
-export class GroupChatResponseCountDto extends ResponseDto<PResponseDto<GroupChat>> {
+export class GroupChatResponseCountDto extends ResponseDto<
+  PResponseDto<GroupChat>
+> {
   @ApiPropertyOptional({ type: () => PResponseDto<GroupChat> })
   data?: PResponseDto<GroupChat>;
 }
@@ -283,9 +296,6 @@ export class GroupChatArrayResponseDto extends ResponseDto<GroupChat> {
   @ApiProperty({ type: () => GroupChat, isArray: true })
   data?: GroupChat[];
 }
-
-
-
 
 export class GroupResponseDto extends ResponseDto<Group> {
   @ApiProperty({ type: () => Group })
@@ -302,13 +312,14 @@ export class GroupArrayResponseDto extends ResponseDto<Group> {
   data?: Group[];
 }
 
-
 export class UserSubjectResponseDto extends ResponseDto<UserSubject> {
   @ApiProperty({ type: () => UserSubject })
   data?: UserSubject;
 }
 
-export class UserSubjectResponseCountDto extends ResponseDto<PResponseDto<UserSubject>> {
+export class UserSubjectResponseCountDto extends ResponseDto<
+  PResponseDto<UserSubject>
+> {
   @ApiPropertyOptional({ type: () => PResponseDto<UserSubject> })
   data?: PResponseDto<UserSubject>;
 }
@@ -323,7 +334,9 @@ export class SubscriptionTransactionResponseDto extends ResponseDto<Subscription
   data?: SubscriptionTransaction;
 }
 
-export class SubscriptionTransactionResponseCountDto extends ResponseDto<PResponseDto<SubscriptionTransaction>> {
+export class SubscriptionTransactionResponseCountDto extends ResponseDto<
+  PResponseDto<SubscriptionTransaction>
+> {
   @ApiPropertyOptional({ type: () => PResponseDto<SubscriptionTransaction> })
   data?: PResponseDto<SubscriptionTransaction>;
 }
@@ -333,13 +346,14 @@ export class SubscriptionTransactionArrayResponseDto extends ResponseDto<Subscri
   data?: SubscriptionTransaction[];
 }
 
-
 export class SubscriptionResponseDto extends ResponseDto<Subscription> {
   @ApiProperty({ type: () => Subscription })
   data?: Subscription;
 }
 
-export class SubscriptionResponseCountDto extends ResponseDto<PResponseDto<Subscription>> {
+export class SubscriptionResponseCountDto extends ResponseDto<
+  PResponseDto<Subscription>
+> {
   @ApiPropertyOptional({ type: () => PResponseDto<Subscription> })
   data?: PResponseDto<Subscription>;
 }
@@ -349,13 +363,14 @@ export class SubscriptionArrayResponseDto extends ResponseDto<Subscription> {
   data?: Subscription[];
 }
 
-
 export class V1BattleQuestionAnswersResponseDto extends ResponseDto<V1BattleQuestionAnswers> {
   @ApiProperty({ type: () => V1BattleQuestionAnswers })
   data?: V1BattleQuestionAnswers;
 }
 
-export class V1BattleQuestionAnswersResponseCountDto extends ResponseDto<PResponseDto<V1BattleQuestionAnswers>> {
+export class V1BattleQuestionAnswersResponseCountDto extends ResponseDto<
+  PResponseDto<V1BattleQuestionAnswers>
+> {
   @ApiPropertyOptional({ type: () => PResponseDto<V1BattleQuestionAnswers> })
   data?: PResponseDto<V1BattleQuestionAnswers>;
 }
@@ -365,13 +380,14 @@ export class V1BattleQuestionAnswersArrayResponseDto extends ResponseDto<V1Battl
   data?: V1BattleQuestionAnswers[];
 }
 
-
 export class V1BattleRecordResponseDto extends ResponseDto<V1BattleRecord> {
   @ApiProperty({ type: () => V1BattleRecord })
   data?: V1BattleRecord;
 }
 
-export class V1BattleRecordResponseCountDto extends ResponseDto<PResponseDto<V1BattleRecord>> {
+export class V1BattleRecordResponseCountDto extends ResponseDto<
+  PResponseDto<V1BattleRecord>
+> {
   @ApiPropertyOptional({ type: () => PResponseDto<V1BattleRecord> })
   data?: PResponseDto<V1BattleRecord>;
 }
@@ -381,13 +397,14 @@ export class V1BattleRecordArrayResponseDto extends ResponseDto<V1BattleRecord> 
   data?: V1BattleRecord[];
 }
 
-
 export class V1BattleResponseDto extends ResponseDto<V1Battle> {
   @ApiProperty({ type: () => V1Battle })
   data?: V1Battle;
 }
 
-export class V1BattleResponseCountDto extends ResponseDto<PResponseDto<V1Battle>> {
+export class V1BattleResponseCountDto extends ResponseDto<
+  PResponseDto<V1Battle>
+> {
   @ApiPropertyOptional({ type: () => PResponseDto<V1Battle> })
   data?: PResponseDto<V1Battle>;
 }
@@ -402,7 +419,9 @@ export class LessonCommentResponseDto extends ResponseDto<LessonComment> {
   data?: LessonComment;
 }
 
-export class LessonCommentResponseCountDto extends ResponseDto<PResponseDto<LessonComment>> {
+export class LessonCommentResponseCountDto extends ResponseDto<
+  PResponseDto<LessonComment>
+> {
   @ApiPropertyOptional({ type: () => PResponseDto<LessonComment> })
   data?: PResponseDto<LessonComment>;
 }
@@ -417,7 +436,9 @@ export class LessonTrackingResponseDto extends ResponseDto<LessonTracking> {
   data?: LessonTracking;
 }
 
-export class LessonTrackingResponseCountDto extends ResponseDto<PResponseDto<LessonTracking>> {
+export class LessonTrackingResponseCountDto extends ResponseDto<
+  PResponseDto<LessonTracking>
+> {
   @ApiPropertyOptional({ type: () => PResponseDto<LessonTracking> })
   data?: PResponseDto<LessonTracking>;
 }
@@ -432,7 +453,9 @@ export class QuizQuestionsResponseDto extends ResponseDto<QuizQuestions> {
   data?: QuizQuestions;
 }
 
-export class QuizQuestionsResponseCountDto extends ResponseDto<PResponseDto<QuizQuestions>> {
+export class QuizQuestionsResponseCountDto extends ResponseDto<
+  PResponseDto<QuizQuestions>
+> {
   @ApiPropertyOptional({ type: () => PResponseDto<QuizQuestions> })
   data?: PResponseDto<QuizQuestions>;
 }
@@ -442,13 +465,14 @@ export class QuizQuestionsArrayResponseDto extends ResponseDto<QuizQuestions> {
   data?: QuizQuestions[];
 }
 
-
 export class QuizRecordResponseDto extends ResponseDto<QuizRecord> {
   @ApiProperty({ type: () => QuizRecord })
   data?: QuizRecord;
 }
 
-export class QuizRecordResponseCountDto extends ResponseDto<PResponseDto<QuizRecord>> {
+export class QuizRecordResponseCountDto extends ResponseDto<
+  PResponseDto<QuizRecord>
+> {
   @ApiPropertyOptional({ type: () => PResponseDto<QuizRecord> })
   data?: PResponseDto<QuizRecord>;
 }
@@ -458,13 +482,14 @@ export class QuizRecordArrayResponseDto extends ResponseDto<QuizRecord> {
   data?: QuizRecord[];
 }
 
-
 export class QuizzesResponseDto extends ResponseDto<Quizzes> {
   @ApiProperty({ type: () => Quizzes })
   data?: Quizzes;
 }
 
-export class QuizzesResponseCountDto extends ResponseDto<PResponseDto<Quizzes>> {
+export class QuizzesResponseCountDto extends ResponseDto<
+  PResponseDto<Quizzes>
+> {
   @ApiPropertyOptional({ type: () => PResponseDto<Quizzes> })
   data?: PResponseDto<Quizzes>;
 }
@@ -474,13 +499,14 @@ export class QuizzesArrayResponseDto extends ResponseDto<Quizzes> {
   data?: Quizzes[];
 }
 
-
 export class QuizCommentResponseDto extends ResponseDto<QuizComment> {
   @ApiProperty({ type: () => QuizComment })
   data?: QuizComment;
 }
 
-export class QuizCommentResponseCountDto extends ResponseDto<PResponseDto<QuizComment>> {
+export class QuizCommentResponseCountDto extends ResponseDto<
+  PResponseDto<QuizComment>
+> {
   @ApiPropertyOptional({ type: () => PResponseDto<QuizComment> })
   data?: PResponseDto<QuizComment>;
 }
@@ -495,7 +521,9 @@ export class StudentsQuizAnswersResponseDto extends ResponseDto<StudentsQuizAnsw
   data?: StudentsQuizAnswers;
 }
 
-export class StudentsQuizAnswersResponseCountDto extends ResponseDto<PResponseDto<StudentsQuizAnswers>> {
+export class StudentsQuizAnswersResponseCountDto extends ResponseDto<
+  PResponseDto<StudentsQuizAnswers>
+> {
   @ApiPropertyOptional({ type: () => PResponseDto<StudentsQuizAnswers> })
   data?: PResponseDto<StudentsQuizAnswers>;
 }

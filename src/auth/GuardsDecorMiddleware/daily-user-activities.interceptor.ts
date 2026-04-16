@@ -1,4 +1,9 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { DailyUserActivities } from '../models/daily-user-activities.model';
 import { Observable } from 'rxjs';
@@ -9,8 +14,8 @@ export class DailyUserActivitiesInterceptor implements NestInterceptor {
   constructor(
     @InjectModel(DailyUserActivities)
     private readonly activitiesModel: typeof DailyUserActivities,
-    private readonly jwtService: JwtService
-  ) { }
+    private readonly jwtService: JwtService,
+  ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
@@ -37,9 +42,12 @@ export class DailyUserActivitiesInterceptor implements NestInterceptor {
         modulueName: context.getClass().name,
         modelClassName: context.getClass().name,
         methodName: context.getHandler().name,
-        ipAddress: request.ip || request.headers['x-forwarded-for'] || request.connection?.remoteAddress,
+        ipAddress:
+          request.ip ||
+          request.headers['x-forwarded-for'] ||
+          request.connection?.remoteAddress,
       };
-      this.activitiesModel.create(record).catch(() => { });
+      this.activitiesModel.create(record).catch(() => {});
     }
     return next.handle();
   }

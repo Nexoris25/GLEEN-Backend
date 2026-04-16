@@ -1,9 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsString, IsArray, ValidateNested } from 'class-validator';
+import {
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsArray,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class UpdateRankRewardDto {
-  @ApiProperty({ description: 'The rank or percentile (e.g., 1st place, Top 1%)' })
+  @ApiProperty({
+    description: 'The rank or percentile (e.g., 1st place, Top 1%)',
+  })
   @IsString()
   rank: string;
 
@@ -17,7 +25,10 @@ export class UpdateRankRewardDto {
 }
 
 export class BulkUpdateRankRewardsDto {
-  @ApiProperty({ type: [UpdateRankRewardDto], description: 'List of rank rewards' })
+  @ApiProperty({
+    type: [UpdateRankRewardDto],
+    description: 'List of rank rewards',
+  })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => UpdateRankRewardDto)

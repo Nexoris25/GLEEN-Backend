@@ -518,7 +518,10 @@ export class SubjectService {
     return subjectsWithStudents;
   }
 
-  async getStudentsForSubject(subjectId: string, query: SubjectStudentsQueryDto) {
+  async getStudentsForSubject(
+    subjectId: string,
+    query: SubjectStudentsQueryDto,
+  ) {
     if (!isUUID(subjectId)) {
       throw new BadRequestException('Invalid subject ID');
     }

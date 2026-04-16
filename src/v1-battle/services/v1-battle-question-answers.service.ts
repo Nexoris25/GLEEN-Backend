@@ -17,21 +17,31 @@ export class V1BattleQuestionAnswersService {
     @InjectModel(V1BattleQuestionAnswers)
     private readonly v1BattleQuestionAnswersModel: typeof V1BattleQuestionAnswers,
     private readonly quizQuestionService: QuizQuestionsService,
-  ) { }
+  ) {}
 
-  async create(createDto: CreateV1BattleQuestionAnswersDto, userId: string): Promise<V1BattleQuestionAnswers> {
+  async create(
+    createDto: CreateV1BattleQuestionAnswersDto,
+    userId: string,
+  ): Promise<V1BattleQuestionAnswers> {
     try {
-
-      const quizQuestion = await this.quizQuestionService.findById(createDto.quizQuestionId);
+      const quizQuestion = await this.quizQuestionService.findById(
+        createDto.quizQuestionId,
+      );
 
       if (!quizQuestion) {
-        throw new Error("Quiz Question for the given Id Could not be found");
-
+        throw new Error('Quiz Question for the given Id Could not be found');
       }
 
-      const score = quizQuestion.correctAnswer.toLowerCase() === createDto.answer.toLowerCase() || quizQuestion.correctAnswer === createDto.answer ? 1 : 0;
-      const newAnswer = await this.v1BattleQuestionAnswersModel.create({ ...createDto, score, userId }, { isNewRecord: true, userId });
-
+      const score =
+        quizQuestion.correctAnswer.toLowerCase() ===
+          createDto.answer.toLowerCase() ||
+        quizQuestion.correctAnswer === createDto.answer
+          ? 1
+          : 0;
+      const newAnswer = await this.v1BattleQuestionAnswersModel.create(
+        { ...createDto, score, userId },
+        { isNewRecord: true, userId },
+      );
 
       // Compute and update V1BattleRecord after answer creation
       await this.computeAndUpdateBattleRecord(newAnswer.vOneBattleId, userId);
@@ -49,20 +59,28 @@ export class V1BattleQuestionAnswersService {
     }
   }
 
-  async findAll(searchDto?: SearchV1BattleQuestionAnswersDto): Promise<{ rows: V1BattleQuestionAnswers[]; count: number }> {
+  async findAll(
+    searchDto?: SearchV1BattleQuestionAnswersDto,
+  ): Promise<{ rows: V1BattleQuestionAnswers[]; count: number }> {
     try {
       const where: any = {};
       if (searchDto) {
-        if (searchDto.quizQuestionId) where.quizQuestionId = searchDto.quizQuestionId;
+        if (searchDto.quizQuestionId)
+          where.quizQuestionId = searchDto.quizQuestionId;
         if (searchDto.vOneBattleId) where.vOneBattleId = searchDto.vOneBattleId;
         if (searchDto.userId) where.userId = searchDto.userId;
         if (searchDto.score !== undefined) where.score = searchDto.score;
         if (searchDto.answer) where.answer = searchDto.answer;
       }
       return await this.v1BattleQuestionAnswersModel.findAndCountAll({
-        where, offset: searchDto?.offset, limit: searchDto?.limit, include: [{
-          association: 'quizQuestion',
-        }]
+        where,
+        offset: searchDto?.offset,
+        limit: searchDto?.limit,
+        include: [
+          {
+            association: 'quizQuestion',
+          },
+        ],
       });
     } catch (error) {
       throw new BadRequestException({
@@ -80,7 +98,9 @@ export class V1BattleQuestionAnswersService {
     try {
       const answer = await this.v1BattleQuestionAnswersModel.findByPk(id);
       if (!answer) {
-        throw new NotFoundException(`Battle question answer with ID ${id} not found`);
+        throw new NotFoundException(
+          `Battle question answer with ID ${id} not found`,
+        );
       }
       return answer;
     } catch (error) {
@@ -95,19 +115,31 @@ export class V1BattleQuestionAnswersService {
     }
   }
 
-  async update(id: string, updateDto: UpdateV1BattleQuestionAnswersDto): Promise<V1BattleQuestionAnswers> {
+  async update(
+    id: string,
+    updateDto: UpdateV1BattleQuestionAnswersDto,
+  ): Promise<V1BattleQuestionAnswers> {
     try {
       const answer = await this.findOne(id);
-      const quizQuestion = await this.quizQuestionService.findById(answer.quizQuestionId);
+      const quizQuestion = await this.quizQuestionService.findById(
+        answer.quizQuestionId,
+      );
       if (!quizQuestion) {
-        throw new Error("Quiz Question for the given Id Could not be found");
-
+        throw new Error('Quiz Question for the given Id Could not be found');
       }
-      const score = quizQuestion.correctAnswer.toLowerCase() === updateDto.answer.toLowerCase() || quizQuestion.correctAnswer === updateDto.answer ? 1 : 0;
-      const updatedAnswer = await answer.update({...updateDto, score});
-      
+      const score =
+        quizQuestion.correctAnswer.toLowerCase() ===
+          updateDto.answer.toLowerCase() ||
+        quizQuestion.correctAnswer === updateDto.answer
+          ? 1
+          : 0;
+      const updatedAnswer = await answer.update({ ...updateDto, score });
+
       // Compute and update V1BattleRecord after answer update
-      await this.computeAndUpdateBattleRecord(answer.vOneBattleId, answer.userId);
+      await this.computeAndUpdateBattleRecord(
+        answer.vOneBattleId,
+        answer.userId,
+      );
 
       return updatedAnswer;
     } catch (error) {
@@ -124,15 +156,21 @@ export class V1BattleQuestionAnswersService {
   /**
    * Computes and updates the V1BattleRecord for a user and battle after answer creation or update
    */
-  private async computeAndUpdateBattleRecord(vOneBattleId: string, userId: string): Promise<void> {
+  private async computeAndUpdateBattleRecord(
+    vOneBattleId: string,
+    userId: string,
+  ): Promise<void> {
     // Get all questions for the battle
-    const quizQuestionsModel = this.v1BattleQuestionAnswersModel.sequelize.models.QuizQuestions;
-    const allQuestions = await quizQuestionsModel.findAll({ where: { quizId: vOneBattleId } });
+    const quizQuestionsModel =
+      this.v1BattleQuestionAnswersModel.sequelize.models.QuizQuestions;
+    const allQuestions = await quizQuestionsModel.findAll({
+      where: { quizId: vOneBattleId },
+    });
     const totalQuestions = allQuestions.length;
 
     // Get all answers for this user and battle
     const allAnswers = await this.v1BattleQuestionAnswersModel.findAll({
-      where: { userId, vOneBattleId }
+      where: { userId, vOneBattleId },
     });
     const totalAnsweredQuestions = allAnswers.length;
     const totalUnansweredQuestions = totalQuestions - totalAnsweredQuestions;
@@ -141,11 +179,15 @@ export class V1BattleQuestionAnswersService {
     let correctAnswers = 0;
     let incorrectAnswers = 0;
     let obtainedMarks = 0;
-    let totalMarks = totalQuestions; // assuming 1 mark per question
+    const totalMarks = totalQuestions; // assuming 1 mark per question
     for (const ans of allAnswers) {
       // Load the related quiz question to check correct answer
-      const quizQuestion = await quizQuestionsModel.findByPk(ans.quizQuestionId);
-      const correctAnswer = quizQuestion ? quizQuestion.getDataValue('correctAnswer') : undefined;
+      const quizQuestion = await quizQuestionsModel.findByPk(
+        ans.quizQuestionId,
+      );
+      const correctAnswer = quizQuestion
+        ? quizQuestion.getDataValue('correctAnswer')
+        : undefined;
       if (quizQuestion && ans.answer === correctAnswer) {
         correctAnswers++;
         obtainedMarks++;
@@ -155,7 +197,8 @@ export class V1BattleQuestionAnswersService {
     }
 
     // Upsert V1BattleRecord
-    const battleRecordModel = this.v1BattleQuestionAnswersModel.sequelize.models.V1BattleRecord;
+    const battleRecordModel =
+      this.v1BattleQuestionAnswersModel.sequelize.models.V1BattleRecord;
     const [record, created] = await battleRecordModel.findOrCreate({
       where: { vOneBattleId, userId },
       defaults: {
@@ -170,7 +213,7 @@ export class V1BattleQuestionAnswersService {
         incorrectAnswers,
         startedAt: new Date().toISOString(),
         endedAt: new Date().toISOString(),
-      }
+      },
     });
     await record.update({
       totalMarks,

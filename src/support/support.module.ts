@@ -22,17 +22,8 @@ import { ComplaintCommentController } from './controllers/complaint-comment.cont
     forwardRef(() => UserModule),
     forwardRef(() => MailModule),
   ],
-  providers: [
-    ComplaintService,
-    ComplaintCommentService,
-  ],
-  controllers: [
-    ComplaintController,
-    ComplaintCommentController,
-  ],
-  exports: [
-    ComplaintService,
-    ComplaintCommentService,
-  ],
+  providers: [ComplaintService, ComplaintCommentService],
+  controllers: [ComplaintController, ComplaintCommentController],
+  exports: [ComplaintService, ComplaintCommentService],
 })
-export class SupportModule { }
+export class SupportModule {}

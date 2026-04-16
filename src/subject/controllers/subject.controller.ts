@@ -55,10 +55,7 @@ export class SubjectController {
     status: 409,
     description: 'Conflict - unique title already exists',
   })
-  async create(
-    @Body() dto: CreateSubjectDto,
-    @GetUser() user: User,
-  ) {
+  async create(@Body() dto: CreateSubjectDto, @GetUser() user: User) {
     return this.subjectService.create(dto, user.id);
   }
 
@@ -335,7 +332,7 @@ return this.subjectService.restore(id);
         error: stringify({
           message: (error as Error)?.message || 'Unknown error',
           stack: (error as Error)?.stack,
-          details: (error as any)?.response || error,
+          details: error?.response || error,
         }),
       };
     }

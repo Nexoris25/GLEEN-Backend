@@ -2,12 +2,12 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CreateLessonDto {
-@ApiProperty()
-@IsUUID()
-@IsNotEmpty()
-subjectId: string;
+  @ApiProperty()
+  @IsUUID()
+  @IsNotEmpty()
+  subjectId: string;
 
-/*
+  /*
 @ApiProperty()
 @IsUUID()
 @IsNotEmpty()
@@ -27,34 +27,30 @@ status: string = 'PENDING';
 publishedAt?: Date;
 */
 
-@ApiProperty()
-@IsString()
-@IsNotEmpty()
-title: string;
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  title: string;
 
+  @ApiPropertyOptional({
+    description: 'Avatar image URL (optional)',
+  })
+  @IsOptional()
+  @IsString()
+  avatarOrCover?: string;
 
-@ApiPropertyOptional({
-description: 'Avatar image URL (optional)',
-})
-@IsOptional()
-@IsString()
-avatarOrCover?: string;
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  subtitle?: string;
 
-@ApiProperty()
-@IsString()
-@IsOptional()
-subtitle?: string;
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  description?: string;
 
-@ApiPropertyOptional()
-@IsString()
-@IsOptional()
-description?: string;
-
-@ApiPropertyOptional()
-@IsString()
-@IsOptional()
-mainContent?: string;
-
-
-
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  mainContent?: string;
 }

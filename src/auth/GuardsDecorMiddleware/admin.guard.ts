@@ -1,4 +1,9 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { RoleEnum } from 'src/shared-types/RoleEnum';
 import { User } from 'src/user/models/user.model';
@@ -21,7 +26,7 @@ export class AdminGuard implements CanActivate {
         console.error('JWT validation failed', error);
       }
     }
-    
+
     if (!userId) {
       throw new ForbiddenException('User not authenticated');
     }

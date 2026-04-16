@@ -66,15 +66,13 @@ export class V1Battle extends Model {
   })
   participationXP?: number;
 
-
-
   @ApiProperty()
   @Default('PENDING')
   @Column({
-    type: DataType.ENUM("ACCEPTED", "REJECTED", "PENDING"),
+    type: DataType.ENUM('ACCEPTED', 'REJECTED', 'PENDING'),
     allowNull: true,
   })
-  acceptanceStatus?: "ACCEPTED" | "REJECTED" | "PENDING";
+  acceptanceStatus?: 'ACCEPTED' | 'REJECTED' | 'PENDING';
 
   @ApiProperty()
   @ForeignKey(() => Subject)
@@ -82,7 +80,7 @@ export class V1Battle extends Model {
     type: DataType.UUID,
     allowNull: true,
   })
-  subjectId?: string
+  subjectId?: string;
 
   @ApiProperty()
   @ForeignKey(() => Quizzes)
@@ -90,7 +88,7 @@ export class V1Battle extends Model {
     type: DataType.UUID,
     allowNull: true,
   })
-  quizId?: string
+  quizId?: string;
 
   @ApiProperty()
   @ForeignKey(() => User)
@@ -98,7 +96,7 @@ export class V1Battle extends Model {
     type: DataType.UUID,
     allowNull: true,
   })
-  userId?: string
+  userId?: string;
 
   @ApiProperty()
   @ForeignKey(() => User)
@@ -107,8 +105,7 @@ export class V1Battle extends Model {
     type: DataType.UUID,
     allowNull: true,
   })
-  winnerUserId?: string
-
+  winnerUserId?: string;
 
   @ApiProperty()
   @ForeignKey(() => User)
@@ -116,23 +113,25 @@ export class V1Battle extends Model {
     type: DataType.UUID,
     allowNull: true,
   })
-  opponentUserId?: string
+  opponentUserId?: string;
 
   @ApiProperty({ type: () => User })
   @BelongsTo(() => User, 'userId')
-  user: User
+  user: User;
 
   @ApiProperty()
   @BelongsTo(() => User, 'opponentUserId')
-  opponentUser: User
+  opponentUser: User;
 
-  @ApiProperty({ description: 'ISO week start (Monday) for uniqueness per week', example: '2025-10-20' })
+  @ApiProperty({
+    description: 'ISO week start (Monday) for uniqueness per week',
+    example: '2025-10-20',
+  })
   @Column({
     type: DataType.DATEONLY,
     allowNull: false,
   })
   weekStart?: string;
-
 
   @BeforeValidate
   static ensureWeekStart(instance: V1Battle) {
@@ -157,12 +156,13 @@ export class V1Battle extends Model {
 
   // Helper: compute Monday (UTC) of the week and return YYYY-MM-DD
   private static getIsoWeekStartDateOnly(date: Date): string {
-    const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+    const d = new Date(
+      Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+    );
     const day = d.getUTCDay(); // 0=Sun, 1=Mon, ... 6=Sat
     const diff = (day === 0 ? -6 : 1) - day; // shift to Monday
     d.setUTCDate(d.getUTCDate() + diff);
     d.setUTCHours(0, 0, 0, 0);
     return d.toISOString().slice(0, 10); // YYYY-MM-DD
   }
-
 }

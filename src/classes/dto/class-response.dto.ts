@@ -19,31 +19,23 @@ export class ClassResponseDto {
   @ApiProperty({ example: 'https://zoom.us/j/12345' })
   roomId: string;
 
-
   @ApiProperty({ example: 'uuid-of-tutor' })
   tutorId: string;
 
-
-    @ApiProperty({example: ['student-uuid-1', 'student-uuid-2'],
-  })
+  @ApiProperty({ example: ['student-uuid-1', 'student-uuid-2'] })
   enrolledStudents: string[];
 
-  @ApiProperty({example: ['student-uuid-1'],
-  })
+  @ApiProperty({ example: ['student-uuid-1'] })
   attendance: string[];
 
-  @ApiProperty({example: 'https://zoom.us/j/123456789',
-    required: false,
-  })
+  @ApiProperty({ example: 'https://zoom.us/j/123456789', required: false })
   roomUrl?: string;
 
-
-
-   @ApiProperty({ example: 'uuid-of-subject' })
+  @ApiProperty({ example: 'uuid-of-subject' })
   subjectId: string;
 
-@ApiProperty({ example: 'https://bunny.net/j/12345', required: false })
-videoURL?: string;
+  @ApiProperty({ example: 'https://bunny.net/j/12345', required: false })
+  videoURL?: string;
 
   @ApiProperty({ example: true })
   isActive: boolean;

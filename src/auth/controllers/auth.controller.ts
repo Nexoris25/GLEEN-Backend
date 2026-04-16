@@ -7,9 +7,7 @@ import {
   HttpStatus,
   UseGuards,
   ValidationPipe,
-  Req,
   BadRequestException,
-  Res,
 } from '@nestjs/common';
 import { State } from 'src/states/models/state.model';
 import { InjectModel } from '@nestjs/sequelize';
@@ -31,12 +29,12 @@ import { GetUser } from 'src/shared-types/user.decorator';
 import { NoGuard } from '../GuardsDecorMiddleware/no-protection.guard';
 import { JwtAuthGuard } from '../GuardsDecorMiddleware/jwt-auth.guard';
 import { ChangePasswordDto } from '../dto/change-password.dto';
-import { UserId } from '../GuardsDecorMiddleware/userIdDecorator.guard';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { UserLoginResponse } from 'src/shared-types/UserLoginResponse';
 import { UserService } from 'src/user/services/user.service';
 import stringify from 'safe-stable-stringify';
 import { ResponseDto, UserResponseDto } from 'src/shared-types/response.dto';
+import { RegisterLiteDto } from '../dto/register-lite.dto';
 
 import { UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -136,9 +134,8 @@ export class AuthController {
     // throw new BadRequestException('Invalid stateId provided');
     //}
 
-    let existingUser: User;
     if (createUserDto.username) {
-      existingUser = await this.userService
+      const existingUser = await this.userService
         .findOneByUsername(createUserDto.username)
         .catch(() => null);
 
@@ -146,9 +143,7 @@ export class AuthController {
         throw new BadRequestException('Username is already taken');
       }
     }
-    let existingEmail: User;
-
-    existingEmail = await this.userService
+    const existingEmail = await this.userService
       .findOneByEmail(createUserDto.email)
       .catch(() => null);
 
@@ -159,8 +154,6 @@ export class AuthController {
     try {
       // ✅ Validate stateId exists
       // if (!createUserDto.stateId) { throw new BadRequestException('stateId is required');  }
-
-      const stateExists = await this.stateModel.findByPk(createUserDto.stateId);
 
       // if (!stateExists) {
       //  throw new BadRequestException('Invalid stateId supplied'); }
@@ -185,6 +178,59 @@ export class AuthController {
     }
   }
 
+  @Post('register-lite')
+  @ApiOperation({
+    summary: 'Register with email and password only',
+    description:
+      'Register a user by providing email, password, confirmPassword, optional referral, and role.',
+  })
+  @ApiBody({ type: RegisterLiteDto })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'User registered successfully',
+    type: UserResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Registration failed',
+    type: ResponseDto,
+  })
+  @UseGuards(NoGuard)
+  async registerLite(
+    @Body(new ValidationPipe()) dto: RegisterLiteDto,
+  ): Promise<{ status: number; message: string; data?: any; error?: any }> {
+    try {
+      if (dto.password !== dto.confirmPassword) {
+        throw new BadRequestException('Passwords do not match');
+      }
+
+      const user = await this.authService.registerLite({
+        email: dto.email,
+        password: dto.password,
+        referral: dto.referral,
+        role: dto.role,
+      });
+
+      await this.authService.generateEmailVerificationOtp(dto.email);
+
+      return {
+        status: HttpStatus.CREATED,
+        message: 'User registered successfully',
+        data: user,
+      };
+    } catch (error) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Registration failed',
+        error: stringify({
+          message: (error as Error)?.message || 'Unknown error',
+          stack: (error as Error)?.stack,
+          details: (error as { response?: unknown })?.response || error,
+        }),
+      };
+    }
+  }
+
   @Get('verify-email/:token')
   @ApiOperation({ summary: 'Verify user email with token' })
   @ApiParam({ name: 'token', description: 'Verification token' })
@@ -203,10 +249,11 @@ export class AuthController {
     @Param('token') token: string,
   ): Promise<{ status: number; message: string; data?: any; error?: any }> {
     try {
-      await this.authService.verifyEmail(token);
+      const data = await this.authService.verifyEmail(token);
       return {
         status: HttpStatus.OK,
         message: 'Email verified successfully',
+        data,
       };
     } catch (error) {
       return {
@@ -464,7 +511,7 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: 'OTP validated successfully',
-    type: ResponseDto,
+    type: UserLoginResponse,
   })
   @ApiResponse({
     status: 404,
@@ -476,10 +523,11 @@ export class AuthController {
     @Body('otp') otp: string,
   ) {
     try {
-      await this.authService.verifyEmailOtp(email, otp);
+      const data = await this.authService.verifyEmailOtp(email, otp);
       return {
         status: HttpStatus.OK,
         message: 'OTP validated successfully',
+        data,
       };
     } catch (error) {
       return {

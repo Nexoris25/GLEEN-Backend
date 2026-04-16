@@ -14,7 +14,7 @@ import { State } from 'src/states/models/state.model';
 @Table({
   tableName: 'lgas',
   timestamps: true,
-   indexes: [
+  indexes: [
     {
       unique: true,
       fields: ['stateId', 'title'],

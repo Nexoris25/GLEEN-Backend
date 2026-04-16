@@ -5,9 +5,7 @@ import { TransactionService } from '../services/transaction.service';
 @ApiTags('Subscription Transactions')
 @Controller('transactions')
 export class TransactionController {
-  constructor(
-    private readonly transactionService: TransactionService,
-  ) {}
+  constructor(private readonly transactionService: TransactionService) {}
 
   @Get('user/:userId')
   @ApiParam({ name: 'userId', type: String })

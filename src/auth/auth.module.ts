@@ -41,11 +41,11 @@ dotenv.config();
       EmailVerificationOtp,
       DailyLoginRecord,
       DailyUserActivities,
-      User,   // ✅ add User
-      State,  // ✅ add State
+      User, // ✅ add User
+      State, // ✅ add State
     ]),
-    BunnyModule, 
-    MailModule
+    BunnyModule,
+    MailModule,
   ],
   controllers: [AuthController, DailyLoginRecordController],
   providers: [
@@ -65,4 +65,4 @@ dotenv.config();
   ],
   exports: [AuthService],
 })
-export class AuthModule { }
+export class AuthModule {}

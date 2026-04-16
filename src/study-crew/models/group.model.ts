@@ -53,7 +53,7 @@ export class Group extends Model {
     type: DataType.STRING,
     allowNull: true,
   })
-  avatar: string
+  avatar: string;
 
   @ApiProperty()
   @Default(true)
@@ -61,7 +61,7 @@ export class Group extends Model {
     type: DataType.BOOLEAN,
     allowNull: true,
   })
-  openToPublic: boolean
+  openToPublic: boolean;
 
   @ApiProperty()
   @Default(false)
@@ -69,7 +69,7 @@ export class Group extends Model {
     type: DataType.BOOLEAN,
     allowNull: true,
   })
-  restrictMessaging: boolean
+  restrictMessaging: boolean;
 
   @ApiProperty()
   @Default(false)
@@ -77,15 +77,14 @@ export class Group extends Model {
     type: DataType.BOOLEAN,
     allowNull: true,
   })
-  onlyOwnerAddMembers: boolean
-
+  onlyOwnerAddMembers: boolean;
 
   @ApiProperty()
   @Column({
     type: DataType.UUID,
     allowNull: true,
   })
-  userId?: string
+  userId?: string;
 
   @ApiProperty({ isArray: true })
   @BelongsToMany(() => User, () => UserGroup, 'groupId', 'userId')
@@ -94,22 +93,32 @@ export class Group extends Model {
   // Optionally, you can add a scope or a getter to filter users where status is 'accepted'
   get acceptedUsers(): User[] {
     // This assumes UserGroup has a 'status' field and users are loaded with the join table
-    return this.users?.filter((user: any) => user.UserGroup?.status === 'ACCEPTED') ?? [];
+    return (
+      this.users?.filter(
+        (user: any) => user.UserGroup?.status === 'ACCEPTED',
+      ) ?? []
+    );
   }
 
   get pendingUsers(): User[] {
     // This assumes UserGroup has a 'status' field and users are loaded with the join table
-    return this.users?.filter((user: any) => user.UserGroup?.status === 'PENDING') ?? [];
+    return (
+      this.users?.filter((user: any) => user.UserGroup?.status === 'PENDING') ??
+      []
+    );
   }
 
   get rejectedUsers(): User[] {
     // This assumes UserGroup has a 'status' field and users are loaded with the join table
-    return this.users?.filter((user: any) => user.UserGroup?.status === 'REJECTED') ?? [];
+    return (
+      this.users?.filter(
+        (user: any) => user.UserGroup?.status === 'REJECTED',
+      ) ?? []
+    );
   }
 
   @BeforeCreate
   static async setUserId(instance: Group, options: { [key: string]: any }) {
-
     // Retrieve the authenticated user ID
     const authUserId = options.userId;
     if (!authUserId) {
@@ -130,14 +139,15 @@ export class Group extends Model {
       //all chars should be 10 chars long at most
       uniqueID = `GROUP-${Math.random().toString(36).substr(2, 4).toUpperCase()}-${attempts}-${timestamp.toString().substr(-4)}`;
       // Check if uniqueID already exists in the DB
-      exists = await Group.findOne({ where: { uniqueID } }) !== null;
+      exists = (await Group.findOne({ where: { uniqueID } })) !== null;
       attempts++;
       if (attempts > maxAttempts) {
-        throw new Error('Failed to generate a unique group ID after multiple attempts');
+        throw new Error(
+          'Failed to generate a unique group ID after multiple attempts',
+        );
       }
     } while (exists);
 
     instance.uniqueID = uniqueID;
   }
-
 }

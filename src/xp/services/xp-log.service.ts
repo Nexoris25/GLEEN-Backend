@@ -37,10 +37,10 @@ export class XpLogService {
       if (startDate || endDate) {
         whereClause.createdAt = {};
         if (startDate) {
-          (whereClause.createdAt as any)[Op.gte] = new Date(startDate);
+          whereClause.createdAt[Op.gte] = new Date(startDate);
         }
         if (endDate) {
-          (whereClause.createdAt as any)[Op.lte] = new Date(endDate);
+          whereClause.createdAt[Op.lte] = new Date(endDate);
         }
       }
 
@@ -98,7 +98,7 @@ export class XpLogService {
         stringify({
           message: (error as Error).message,
           stack: (error as Error).stack,
-          details: (error as any).response || error,
+          details: error.response || error,
         }),
       );
     }
@@ -113,10 +113,10 @@ export class XpLogService {
       if (startDate || endDate) {
         whereClause.createdAt = {};
         if (startDate) {
-          (whereClause.createdAt as any)[Op.gte] = new Date(startDate);
+          whereClause.createdAt[Op.gte] = new Date(startDate);
         }
         if (endDate) {
-          (whereClause.createdAt as any)[Op.lte] = new Date(endDate);
+          whereClause.createdAt[Op.lte] = new Date(endDate);
         }
       }
 
@@ -188,7 +188,7 @@ export class XpLogService {
         stringify({
           message: (error as Error).message,
           stack: (error as Error).stack,
-          details: (error as any).response || error,
+          details: error.response || error,
         }),
       );
     }
@@ -203,7 +203,11 @@ export class XpLogService {
   }
 
   applyXpMultiplier(config: XpConfiguration, key: string, value: number) {
-    return this.xpConfiguationService.applyMultiplierIfNeeded(config, key, value);
+    return this.xpConfiguationService.applyMultiplierIfNeeded(
+      config,
+      key,
+      value,
+    );
   }
 
   /**
@@ -494,7 +498,7 @@ export class XpLogService {
         stringify({
           message: (error as Error).message,
           stack: (error as Error).stack,
-          details: (error as any).response || error,
+          details: error.response || error,
         }),
       );
     }

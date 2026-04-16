@@ -1,8 +1,8 @@
 export enum FileTypeEnum {
   VIDEO = 'VIDEO',
- // IMAGE = 'IMAGE',
+  // IMAGE = 'IMAGE',
   TEXT = 'TEXT',
- // OTHERS = 'OTHERS',
+  // OTHERS = 'OTHERS',
 }
 
 export enum TopicTypeEnum {
@@ -16,4 +16,3 @@ export enum NotificationEntityType {
   LEARNING = 'LEARNING',
   SYSTEM = 'SYSTEM',
 }
-

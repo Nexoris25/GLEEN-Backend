@@ -32,6 +32,9 @@
   },
   "include": [
     "src/**/*",
+    "test/**/*",
+    "apps/**/*",
+    "libs/**/*",
     "config/**/*",
     "migrations/**/*",
     "seeders/**/*",

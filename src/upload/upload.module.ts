@@ -8,4 +8,3 @@ import { BunnyService } from 'src/common/services/bunny-all.service';
   exports: [BunnyService],
 })
 export class UploadModule {}
-

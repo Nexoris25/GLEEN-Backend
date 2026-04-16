@@ -10,13 +10,11 @@ import { NotificationTrackingController } from './controllers/notification-track
 import { NotificationAggregatorService } from './services/notification-aggregator.service';
 
 @Module({
-imports: [
-SequelizeModule.forFeature([NotificationTracking,
-V1Battle,
-TutorMessage,]),
-],
-controllers: [NotificationTrackingController,], 
-providers: [NotificationReadService, NotificationAggregatorService,],
-exports: [NotificationReadService, NotificationAggregatorService,],
+  imports: [
+    SequelizeModule.forFeature([NotificationTracking, V1Battle, TutorMessage]),
+  ],
+  controllers: [NotificationTrackingController],
+  providers: [NotificationReadService, NotificationAggregatorService],
+  exports: [NotificationReadService, NotificationAggregatorService],
 })
 export class NotificationTrackingModule {}

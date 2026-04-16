@@ -6,5 +6,4 @@ export class CreateLessonTrackingDto {
   @IsNotEmpty()
   @IsUUID()
   lessonId: string;
-
 }

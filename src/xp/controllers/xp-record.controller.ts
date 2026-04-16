@@ -1,38 +1,41 @@
 import {
-    Controller,
-    Get,
-    Post,
-    Body,
-    Patch,
-    Delete,
-    HttpCode,
-    HttpStatus,
-    Param,
-    Query,
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Delete,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Query,
 } from '@nestjs/common';
 import {
-    ApiTags,
-    ApiOperation,
-    ApiBody,
-    ApiOkResponse,
-    ApiNoContentResponse,
-    ApiResponse,
-    ApiParam,
-    ApiQuery,
+  ApiTags,
+  ApiOperation,
+  ApiBody,
+  ApiOkResponse,
+  ApiNoContentResponse,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { XpRecordsService } from '../services/xp-records.service';
 import { ResponseDto } from 'src/shared-types/response.dto';
 import stringify from 'safe-stable-stringify';
-import { AddXpDto, CreateXpRecordsDto, UpdateXpRecordsDto } from '../dto/xp-records.dto';
+import {
+  AddXpDto,
+  CreateXpRecordsDto,
+  UpdateXpRecordsDto,
+} from '../dto/xp-records.dto';
 import { XpRecords } from '../models/xp-record.model';
 import { LeaderboardQueryDto } from '../dto/xp-log.dto';
 
 @ApiTags('XP Records')
 @Controller('xp-records')
 export class XpRecordsController {
-
-    constructor(private readonly xpRecordsService: XpRecordsService) { }
-/*
+  constructor(private readonly xpRecordsService: XpRecordsService) {}
+  /*
     @Post()
     @ApiOperation({
         summary: 'Create XP record',
@@ -97,63 +100,73 @@ export class XpRecordsController {
         }
     }
 */
-    @Get()
-    @ApiOperation({
-        summary: 'Get all XP records',
-        description: 'Retrieve all XP records for all users.',
-    })
-    @ApiOkResponse({
-        description: 'Successfully retrieved XP records',
-        type: ResponseDto<XpRecords[]>,
-    })
-    async findAll(): Promise<ResponseDto<XpRecords[]>> {
-        try {
-            const data = await this.xpRecordsService.findAll();
-            return { status: HttpStatus.OK, message: 'XP records retrieved successfully', data: data };
-        } catch (error) {
-            return {
-                status: HttpStatus.BAD_REQUEST, message: 'Error retrieving XP records', error: stringify({
-                    message: error.message,
-                    stack: error.stack,
-                    details: error.response || error,
-                })
-            };
-        }
+  @Get()
+  @ApiOperation({
+    summary: 'Get all XP records',
+    description: 'Retrieve all XP records for all users.',
+  })
+  @ApiOkResponse({
+    description: 'Successfully retrieved XP records',
+    type: ResponseDto<XpRecords[]>,
+  })
+  async findAll(): Promise<ResponseDto<XpRecords[]>> {
+    try {
+      const data = await this.xpRecordsService.findAll();
+      return {
+        status: HttpStatus.OK,
+        message: 'XP records retrieved successfully',
+        data: data,
+      };
+    } catch (error) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Error retrieving XP records',
+        error: stringify({
+          message: error.message,
+          stack: error.stack,
+          details: error.response || error,
+        }),
+      };
     }
+  }
 
-    @Get('leaderboard')
-    @ApiOperation({
-        summary: 'Get XP leaderboard',
-        description: 'Get top users by XP (leaderboard).',
-    })
-    @ApiQuery({
-        type: LeaderboardQueryDto,
-        required: false,
-    })
-    @ApiOkResponse({
-        description: 'Successfully retrieved leaderboard',
-        type: ResponseDto<XpRecords[]>,
-    })
-    async getLeaderboard(@Query() queryDto?: LeaderboardQueryDto): Promise<ResponseDto<XpRecords[]>> {
-        try {
-            const data = await this.xpRecordsService.getLeaderboard(queryDto);
-            return { 
-                status: HttpStatus.OK, 
-                message: 'Leaderboard retrieved successfully', 
-                data: data
-            };
-        } catch (error) {
-            return {
-                status: HttpStatus.BAD_REQUEST, message: 'Error retrieving leaderboard', error: stringify({
-                    message: error.message,
-                    stack: error.stack,
-                    details: error.response || error,
-                })
-            };
-        }
+  @Get('leaderboard')
+  @ApiOperation({
+    summary: 'Get XP leaderboard',
+    description: 'Get top users by XP (leaderboard).',
+  })
+  @ApiQuery({
+    type: LeaderboardQueryDto,
+    required: false,
+  })
+  @ApiOkResponse({
+    description: 'Successfully retrieved leaderboard',
+    type: ResponseDto<XpRecords[]>,
+  })
+  async getLeaderboard(
+    @Query() queryDto?: LeaderboardQueryDto,
+  ): Promise<ResponseDto<XpRecords[]>> {
+    try {
+      const data = await this.xpRecordsService.getLeaderboard(queryDto);
+      return {
+        status: HttpStatus.OK,
+        message: 'Leaderboard retrieved successfully',
+        data: data,
+      };
+    } catch (error) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Error retrieving leaderboard',
+        error: stringify({
+          message: error.message,
+          stack: error.stack,
+          details: error.response || error,
+        }),
+      };
     }
+  }
 
-    /*
+  /*
     @Get(':id')
     @ApiOperation({
         summary: 'Get XP record by ID',
@@ -183,66 +196,82 @@ export class XpRecordsController {
         }
     }
 */
-    @Get('user/:userId')
-    @ApiOperation({
-        summary: 'Get XP record by user ID',
-        description: 'Retrieve XP record for a specific user.',
-    })
-    @ApiParam({
-        name: 'userId',
-        description: 'User UUID',
-        type: String,
-    })
-    @ApiOkResponse({
-        description: 'Successfully retrieved user XP record',
-        type: ResponseDto<XpRecords>,
-    })
-    async findByUserId(@Param('userId') userId: string): Promise<ResponseDto<XpRecords>> {
-        try {
-            const data = await this.xpRecordsService.findByUserId(userId);
-            return { status: HttpStatus.OK, message: 'User XP record retrieved successfully', data: data };
-        } catch (error) {
-            return {
-                status: HttpStatus.BAD_REQUEST, message: 'Error retrieving user XP record', error: stringify({
-                    message: error.message,
-                    stack: error.stack,
-                    details: error.response || error,
-                })
-            };
-        }
+  @Get('user/:userId')
+  @ApiOperation({
+    summary: 'Get XP record by user ID',
+    description: 'Retrieve XP record for a specific user.',
+  })
+  @ApiParam({
+    name: 'userId',
+    description: 'User UUID',
+    type: String,
+  })
+  @ApiOkResponse({
+    description: 'Successfully retrieved user XP record',
+    type: ResponseDto<XpRecords>,
+  })
+  async findByUserId(
+    @Param('userId') userId: string,
+  ): Promise<ResponseDto<XpRecords>> {
+    try {
+      const data = await this.xpRecordsService.findByUserId(userId);
+      return {
+        status: HttpStatus.OK,
+        message: 'User XP record retrieved successfully',
+        data: data,
+      };
+    } catch (error) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Error retrieving user XP record',
+        error: stringify({
+          message: error.message,
+          stack: error.stack,
+          details: error.response || error,
+        }),
+      };
     }
+  }
 
-    @Get('user/:userId/current')
-    @ApiOperation({
-        summary: 'Get current XP for user',
-        description: 'Get current XP value for a specific user.',
-    })
-    @ApiParam({
-        name: 'userId',
-        description: 'User UUID',
-        type: String,
-    })
-    @ApiOkResponse({
-        description: 'Successfully retrieved current XP',
-        type: ResponseDto<{ userId: string; currentXp: number }>,
-    })
-    async getCurrentXp(@Param('userId') userId: string): Promise<ResponseDto<{ userId: string; currentXp: number }>> {
-        try {
-            const currentXp = await this.xpRecordsService.getCurrentXp(userId);
-            const data = { userId, currentXp };
-            return { status: HttpStatus.OK, message: 'Current XP retrieved successfully', data: data };
-        } catch (error) {
-            return {
-                status: HttpStatus.BAD_REQUEST, message: 'Error retrieving current XP', error: stringify({
-                    message: error.message,
-                    stack: error.stack,
-                    details: error.response || error,
-                })
-            };
-        }
+  @Get('user/:userId/current')
+  @ApiOperation({
+    summary: 'Get current XP for user',
+    description: 'Get current XP value for a specific user.',
+  })
+  @ApiParam({
+    name: 'userId',
+    description: 'User UUID',
+    type: String,
+  })
+  @ApiOkResponse({
+    description: 'Successfully retrieved current XP',
+    type: ResponseDto<{ userId: string; currentXp: number }>,
+  })
+  async getCurrentXp(
+    @Param('userId') userId: string,
+  ): Promise<ResponseDto<{ userId: string; currentXp: number }>> {
+    try {
+      const currentXp = await this.xpRecordsService.getCurrentXp(userId);
+      const data = { userId, currentXp };
+      return {
+        status: HttpStatus.OK,
+        message: 'Current XP retrieved successfully',
+        data: data,
+      };
+    } catch (error) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Error retrieving current XP',
+        error: stringify({
+          message: error.message,
+          stack: error.stack,
+          details: error.response || error,
+        }),
+      };
     }
+  }
 
-    /*
+  /*
     @Patch('user/:userId')
     @ApiOperation({
         summary: 'Update XP record by user ID',

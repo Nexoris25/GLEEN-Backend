@@ -1,4 +1,9 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { DailyLoginRecord } from '../models/daily-login-record.model';
 import { Observable } from 'rxjs';
@@ -45,7 +50,9 @@ export class DailyLoginInterceptor implements NestInterceptor {
             console.error('Error updating last login date', err);
           });
           if (user.status === UserStatusEnum.SUSPENDED) {
-            throw new Error('Your account is suspended. Please contact support.');
+            throw new Error(
+              'Your account is suspended. Please contact support.',
+            );
           }
         }
       });

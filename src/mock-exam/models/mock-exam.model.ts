@@ -35,7 +35,6 @@ export class MockExams extends Model {
   })
   title!: string;
 
-
   @ApiProperty()
   @Column({
     type: DataType.STRING,
@@ -62,13 +61,13 @@ export class MockExams extends Model {
     type: DataType.STRING,
     allowNull: true,
   })
-  avatar: string
+  avatar: string;
 
   @ApiProperty()
-  @Default("PENDING")
+  @Default('PENDING')
   @Column({
     type: DataType.ENUM('PENDING', 'APPROVED', 'REJECTED'),
-    allowNull: false
+    allowNull: false,
   })
   status: string;
 
@@ -76,17 +75,17 @@ export class MockExams extends Model {
   @ForeignKey(() => MockTypes)
   @Column({
     type: DataType.UUID,
-    allowNull: false
+    allowNull: false,
   })
-  mockTypeId: string
+  mockTypeId: string;
 
   @ApiProperty()
   @ForeignKey(() => Subject)
   @Column({
     type: DataType.UUID,
-    allowNull: false
+    allowNull: false,
   })
-  subjectId: string
+  subjectId: string;
 
   @ApiProperty()
   @ForeignKey(() => User)
@@ -94,15 +93,13 @@ export class MockExams extends Model {
     type: DataType.UUID,
     allowNull: true,
   })
-  userId?: string
+  userId?: string;
 
-  @BelongsTo(()=> MockTypes, "mockTypeId")
-  mockType: MockTypes
-
+  @BelongsTo(() => MockTypes, 'mockTypeId')
+  mockType: MockTypes;
 
   @BeforeCreate
   static async setUserId(instance: MockExams, options: { [key: string]: any }) {
-
     // Retrieve the authenticated user ID
     const authUserId = options.userId;
     if (!authUserId) {
@@ -110,5 +107,4 @@ export class MockExams extends Model {
     }
     instance.userId = authUserId;
   }
-
 }

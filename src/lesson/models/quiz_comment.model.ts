@@ -16,7 +16,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { Lesson } from './lesson.model';
 import { Quizzes } from './quiz.model';
 
-
 @Table({
   tableName: 'quiz_comments',
   timestamps: true,
@@ -69,7 +68,6 @@ export class QuizComment extends Model {
 
   @BeforeCreate
   static async setUserId(instance: Lesson, options: { [key: string]: any }) {
-
     // Retrieve the authenticated user ID
     const authUserId = options.userId;
     if (!authUserId) {

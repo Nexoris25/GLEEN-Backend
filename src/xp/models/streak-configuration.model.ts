@@ -22,15 +22,21 @@ export class StreakConfiguration extends Model {
   @Column(DataType.UUID)
   id: string;
 
-  @ApiProperty({ description: 'Number of lessons required to trigger a streak count' })
+  @ApiProperty({
+    description: 'Number of lessons required to trigger a streak count',
+  })
   @Column(DataType.INTEGER)
   streakCountTrigger: number;
 
-  @ApiProperty({ description: 'Start of the time window for streak (e.g., 00:00)' })
+  @ApiProperty({
+    description: 'Start of the time window for streak (e.g., 00:00)',
+  })
   @Column(DataType.STRING)
   timeWindowStart: string;
 
-  @ApiProperty({ description: 'End of the time window for streak (e.g., 23:59)' })
+  @ApiProperty({
+    description: 'End of the time window for streak (e.g., 23:59)',
+  })
   @Column(DataType.STRING)
   timeWindowEnd: string;
 
@@ -38,7 +44,9 @@ export class StreakConfiguration extends Model {
   @Column(DataType.INTEGER)
   graceDaysPerWeek: number;
 
-  @ApiProperty({ description: 'Streak freeze rule (e.g., 1 in 7 complete days)' })
+  @ApiProperty({
+    description: 'Streak freeze rule (e.g., 1 in 7 complete days)',
+  })
   @Column(DataType.STRING)
   streakFreezeRule: string;
 

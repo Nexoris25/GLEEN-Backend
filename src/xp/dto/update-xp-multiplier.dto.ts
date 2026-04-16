@@ -45,9 +45,10 @@ export class UpdateXpMultiplierDto {
   @IsOptional()
   details?: string;
 
-  @ApiPropertyOptional({ description: 'Enable/disable multiplier (defaults to true)' })
+  @ApiPropertyOptional({
+    description: 'Enable/disable multiplier (defaults to true)',
+  })
   @IsBoolean()
   @IsOptional()
   enabled?: boolean;
 }
-

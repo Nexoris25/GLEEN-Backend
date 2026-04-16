@@ -14,7 +14,6 @@ import {
 import { RoleEnum } from 'src/shared-types/RoleEnum';
 import { Transform } from 'class-transformer';
 
-
 export class CreateUserDto {
   @ApiPropertyOptional()
   @IsString()

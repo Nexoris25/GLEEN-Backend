@@ -31,7 +31,7 @@ import { XpModule } from 'src/xp/xp.module';
       MockExamComment,
       MockQuestions,
       StudentsMockAnswers,
-      MockExamRecord
+      MockExamRecord,
     ]),
     forwardRef(() => XpModule),
   ],
@@ -40,21 +40,21 @@ import { XpModule } from 'src/xp/xp.module';
     MockExamsService,
     MockQuestionsService,
     StudentsMockAnswersService,
-    MockExamRecordService
+    MockExamRecordService,
   ],
   controllers: [
     MockExamController,
     MockTypeController,
     MockQuestionController,
     StudentMockAnswerController,
-    MockExamRecordController
+    MockExamRecordController,
   ],
   exports: [
     MockTypesService,
     MockExamsService,
     MockQuestionsService,
     StudentsMockAnswersService,
-    MockExamRecordService
+    MockExamRecordService,
   ],
 })
-export class MockExamModule { }
+export class MockExamModule {}

@@ -10,6 +10,6 @@ import { Subject } from 'src/subject/models/subject.model';
   imports: [SequelizeModule.forFeature([Room, ClassEntity, Subject])],
   providers: [RoomsService],
   controllers: [RoomsController],
-  exports: [RoomsService], 
+  exports: [RoomsService],
 })
 export class RoomsModule {}

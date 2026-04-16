@@ -7,28 +7,16 @@ import { StateController } from './controllers/state.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { StateExistsConstraint } from '../common/validators/IsStateExists';
 
-
 @Module({
   imports: [
-     JwtModule.register({
-          secret: process.env.JWT_SECRET_KEY,
-          signOptions: { expiresIn: process.env.JWT_EXPIRATION_TIME || '30d' },
-        }),
-    SequelizeModule.forFeature([
-      State, 
-      City
-    ]),
+    JwtModule.register({
+      secret: process.env.JWT_SECRET_KEY,
+      signOptions: { expiresIn: process.env.JWT_EXPIRATION_TIME || '30d' },
+    }),
+    SequelizeModule.forFeature([State, City]),
   ],
-  providers: [
-    StatesService,
-    StateExistsConstraint, 
-  ],
-  controllers: [
-    StateController,
-  ],
-  exports: [
-    StatesService,
-    StateExistsConstraint, 
-  ],
+  providers: [StatesService, StateExistsConstraint],
+  controllers: [StateController],
+  exports: [StatesService, StateExistsConstraint],
 })
 export class StatesModule {}

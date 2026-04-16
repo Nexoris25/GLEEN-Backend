@@ -16,7 +16,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Ukwa West',
     'Umuahia North',
     'Umuahia South',
-    'Umu Nneochi'
+    'Umu Nneochi',
   ],
   Adamawa: [
     'Demsa',
@@ -39,7 +39,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Song',
     'Toungo',
     'Yola North',
-    'Yola South'
+    'Yola South',
   ],
   'Akwa Ibom': [
     'Abak',
@@ -72,7 +72,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Ukanafun',
     'Uruan',
     'Urue Offong/Oruko',
-    'Uyo'
+    'Uyo',
   ],
   Anambra: [
     'Aguata',
@@ -95,7 +95,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Onitsha South',
     'Orumba North',
     'Orumba South',
-    'Oyi'
+    'Oyi',
   ],
   Bauchi: [
     'Alkaleri',
@@ -116,7 +116,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Tafawa Balewa',
     'Toro',
     'Warji',
-    'Zaki'
+    'Zaki',
   ],
   Bayelsa: [
     'Brass',
@@ -126,7 +126,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Ogbia',
     'Sagbama',
     'Southern Ijaw',
-    'Yenagoa'
+    'Yenagoa',
   ],
   Benue: [
     'Ado',
@@ -151,7 +151,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Tarka',
     'Ukum',
     'Ushongo',
-    'Vandeikya'
+    'Vandeikya',
   ],
   Borno: [
     'Abadam',
@@ -180,7 +180,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Monguno',
     'Ngala',
     'Nganzai',
-    'Shani'
+    'Shani',
   ],
   'Cross River': [
     'Abi',
@@ -200,7 +200,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Odukpani',
     'Ogoja',
     'Yakuur',
-    'Yala'
+    'Yala',
   ],
   Delta: [
     'Aniocha North',
@@ -227,7 +227,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Uvwie',
     'Warri North',
     'Warri South',
-    'Warri South West'
+    'Warri South West',
   ],
   Ebonyi: [
     'Abakaliki',
@@ -242,7 +242,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Izzi',
     'Ohaozara',
     'Ohaukwu',
-    'Onicha'
+    'Onicha',
   ],
   Enugu: [
     'Aninri',
@@ -261,7 +261,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Oji River',
     'Udenu',
     'Udi',
-    'Uzo Uwani'
+    'Uzo Uwani',
   ],
   Edo: [
     'Akoko Edo',
@@ -281,7 +281,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Ovia South West',
     'Owan East',
     'Owan West',
-    'Uhunmwonde'
+    'Uhunmwonde',
   ],
   Ekiti: [
     'Ado Ekiti',
@@ -299,7 +299,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Irepodun/Ifelodun',
     'Ise/Orun',
     'Moba',
-    'Oye'
+    'Oye',
   ],
   'FCT-Abuja': [
     'Abaji',
@@ -307,7 +307,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Bwari',
     'Gwagwalada',
     'Kuje',
-    'Kwali'
+    'Kwali',
   ],
   Gombe: [
     'Akko',
@@ -320,7 +320,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Kwami',
     'Nafada/Bajoga',
     'Shongom',
-    'Yamaltu/Deba'
+    'Yamaltu/Deba',
   ],
   Imo: [
     'Aboh Mbaise',
@@ -349,7 +349,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Owerri Municipal',
     'Owerri North',
     'Owerri West',
-    'Unuimo'
+    'Unuimo',
   ],
   Jigawa: [
     'Auyo',
@@ -378,7 +378,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Roni',
     'Sule Tankarkar',
     'Taura',
-    'Yankwashi'
+    'Yankwashi',
   ],
   Kaduna: [
     'Birnin Gwari',
@@ -403,7 +403,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Sanga',
     'Soba',
     'Zangon Kataf',
-    'Zaria'
+    'Zaria',
   ],
   Kano: [
     'Albasu',
@@ -449,7 +449,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Tudun Wada',
     'Ungogo',
     'Warawa',
-    'Wudil'
+    'Wudil',
   ],
   Katsina: [
     'Bakori',
@@ -485,7 +485,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Sabuwa',
     'Safana',
     'Sandamu',
-    'Zango'
+    'Zango',
   ],
   Kebbi: [
     'Aleiro',
@@ -508,7 +508,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Suru',
     'Wasagu/Danko',
     'Yauri',
-    'Zuru'
+    'Zuru',
   ],
   Kogi: [
     'Adavi',
@@ -531,7 +531,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Olamaboro',
     'Omala',
     'Yagba East',
-    'Yagba West'
+    'Yagba West',
   ],
   Kwara: [
     'Asa',
@@ -549,7 +549,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Offa',
     'Oke Ero',
     'Oyun',
-    'Pategi'
+    'Pategi',
   ],
   Lagos: [
     'Agege',
@@ -571,7 +571,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Ojo',
     'Oshodi Isolo',
     'Shomolu',
-    'Surulere'
+    'Surulere',
   ],
   Nasarawa: [
     'Awe',
@@ -585,7 +585,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Nasarawa Egon',
     'Obi',
     'Toto',
-    'Wamba'
+    'Wamba',
   ],
   Niger: [
     'Agaie',
@@ -612,7 +612,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Shiroro',
     'Suleja',
     'Tafa',
-    'Wushishi'
+    'Wushishi',
   ],
   Ogun: [
     'Abeokuta North',
@@ -634,7 +634,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Remo North',
     'Sagamu',
     'Yewa North',
-    'Yewa South'
+    'Yewa South',
   ],
   Ondo: [
     'Akoko North East',
@@ -654,7 +654,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Ondo East',
     'Ondo West',
     'Ose',
-    'Owo'
+    'Owo',
   ],
   Osun: [
     'Atakunmosa East',
@@ -686,7 +686,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Olorunda',
     'Oriade',
     'Orolu',
-    'Osogbo'
+    'Osogbo',
   ],
   Oyo: [
     'Akinyele',
@@ -721,7 +721,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Oyo West',
     'Saki East',
     'Saki West',
-    'Surulere'
+    'Surulere',
   ],
   Plateau: [
     'Barkin Ladi',
@@ -740,7 +740,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Qua’an Pan',
     'Riyom',
     'Shendam',
-    'Wase'
+    'Wase',
   ],
   Rivers: [
     'Abua/Odual',
@@ -765,7 +765,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Opobo/Nkoro',
     'Oyigbo',
     'Port Harcourt',
-    'Tai'
+    'Tai',
   ],
   Sokoto: [
     'Binji',
@@ -790,7 +790,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Tureta',
     'Wamako',
     'Wurno',
-    'Yabo'
+    'Yabo',
   ],
   Taraba: [
     'Ardo Kola',
@@ -808,7 +808,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Ussa',
     'Wukari',
     'Yorro',
-    'Zing'
+    'Zing',
   ],
   Yobe: [
     'Bursari',
@@ -826,7 +826,7 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Potiskum',
     'Tarmuwa',
     'Yunusari',
-    'Yusufari'
+    'Yusufari',
   ],
   Zamfara: [
     'Anka',
@@ -843,6 +843,6 @@ export const LGAS_BY_STATE: Record<string, string[]> = {
     'Shinkafi',
     'Talata Mafara',
     'Tsafe',
-    'Zurmi'
-  ]
+    'Zurmi',
+  ],
 };

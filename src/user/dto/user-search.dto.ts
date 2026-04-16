@@ -53,7 +53,10 @@ export class UserSearchDto {
   @IsString()
   role?: RoleEnum;
 
-  @ApiPropertyOptional({ enum: UserStatusEnum, description: 'Filter by user status' })
+  @ApiPropertyOptional({
+    enum: UserStatusEnum,
+    description: 'Filter by user status',
+  })
   @IsOptional()
   @IsString()
   status?: UserStatusEnum;

@@ -31,7 +31,6 @@ export class LgaService {
     return lga;
   }
 
-  
   // --------------------
   // Find LGAs by state
   // --------------------
@@ -59,7 +58,6 @@ export class LgaService {
       },
     };
   }
-
 
   // --------------------
   // Find all LGAs (with pagination)

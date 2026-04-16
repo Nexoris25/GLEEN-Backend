@@ -1,5 +1,14 @@
 // user-subject.model.ts
-import { Table, Column, Model, ForeignKey, DataType, Default, IsUUID, PrimaryKey } from 'sequelize-typescript';
+import {
+  Table,
+  Column,
+  Model,
+  ForeignKey,
+  DataType,
+  Default,
+  IsUUID,
+  PrimaryKey,
+} from 'sequelize-typescript';
 import { State } from './state.model';
 import { ApiProperty } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
@@ -22,7 +31,7 @@ export class City extends Model<City> {
   @ForeignKey(() => State)
   @Column({
     type: DataType.UUID,
-    allowNull: false
+    allowNull: false,
   })
   stateId: string;
 }

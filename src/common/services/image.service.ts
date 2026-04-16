@@ -18,11 +18,11 @@ import { Injectable } from '@nestjs/common';
 import sharp from 'sharp';
 
 export interface ImageInfo {
-  buffer: Buffer;       // Original image buffer (unchanged)
-  width: number;        // Original width
-  height: number;       // Original height
-  size: number;         // Original file size in bytes
-  format: string;       // Image format (jpeg, png, etc.)
+  buffer: Buffer; // Original image buffer (unchanged)
+  width: number; // Original width
+  height: number; // Original height
+  size: number; // Original file size in bytes
+  format: string; // Image format (jpeg, png, etc.)
 }
 
 @Injectable()
@@ -32,10 +32,10 @@ export class ImageService {
     const metadata = await sharp(file.buffer).metadata();
 
     return {
-      buffer: file.buffer,              // Original image
+      buffer: file.buffer, // Original image
       width: metadata.width ?? 0,
       height: metadata.height ?? 0,
-      size: file.size,                  // Original size in bytes
+      size: file.size, // Original size in bytes
       format: metadata.format ?? 'unknown',
     };
   }

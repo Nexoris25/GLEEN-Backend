@@ -19,10 +19,7 @@ import { UserModule } from 'src/user/user.module';
       secret: process.env.JWT_SECRET_KEY,
       signOptions: { expiresIn: process.env.JWT_EXPIRATION_TIME || '30d' },
     }),
-    SequelizeModule.forFeature([
-      Subscription,
-      SubscriptionTransaction,
-    ]),
+    SequelizeModule.forFeature([Subscription, SubscriptionTransaction]),
     forwardRef(() => AuthModule),
     forwardRef(() => UserModule),
     forwardRef(() => MailModule),
@@ -35,12 +32,7 @@ import { UserModule } from 'src/user/user.module';
       useClass: SubscriptionStatusInterceptor,
     },
   ],
-  controllers: [
-    SubscriptionController,
-    SubscriptionTransactionController,
-  ],
-  exports: [
-    SubscriptionService,
-  ],
+  controllers: [SubscriptionController, SubscriptionTransactionController],
+  exports: [SubscriptionService],
 })
-export class SubscriptionModule { }
+export class SubscriptionModule {}

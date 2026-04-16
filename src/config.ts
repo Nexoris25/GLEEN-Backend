@@ -41,7 +41,7 @@ const dbConfig = {
       connectTimeout: 10000,
       timeout: 10000,
     },
-     logging: console.log,
+    logging: console.log,
   },
   production: {
     username: process.env.PROD_DB_USERNAME,
@@ -86,4 +86,3 @@ switch (process.env.NODE_ENV) {
 }
 
 export default config;
-

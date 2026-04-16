@@ -9,11 +9,7 @@ import { User } from 'src/user/models/user.model';
 
 @Module({
   imports: [
-    SequelizeModule.forFeature([
-      TutorMessage,
-      NotificationTracking,
-      User,
-    ]),
+    SequelizeModule.forFeature([TutorMessage, NotificationTracking, User]),
   ],
   controllers: [TutorMessageController],
   providers: [TutorMessageService],

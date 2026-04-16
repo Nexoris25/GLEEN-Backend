@@ -23,6 +23,7 @@ import { Op } from 'sequelize';
 import { PasswordResetOtp } from '../models/password-reset-otp.model';
 import { EmailVerificationOtp } from '../models/email-verification-otp.model';
 import { InjectModel } from '@nestjs/sequelize';
+import { RoleEnum } from 'src/shared-types/RoleEnum';
 
 dotenv.config();
 
@@ -98,7 +99,7 @@ export class AuthService {
       throw new BadRequestException('Email address not verified yet.');
     }
 
-    const token = await this.generateJwtToken(user);
+    const token = this.generateJwtToken(user);
     return { user, token, expiresIn: this.getJwtExpUnix(token) };
   }
 
@@ -152,9 +153,12 @@ export class AuthService {
         }
       }
 
-      if (createUserDto.role === 'SUPER_ADMIN') {
+      if (
+        createUserDto.role === RoleEnum.SUPER_ADMIN ||
+        createUserDto.role === RoleEnum.ADMIN
+      ) {
         throw new BadRequestException(
-          'Cannot assign SUPER_ADMIN role during registration',
+          'Cannot assign ADMIN/SUPER_ADMIN role during registration',
         );
       }
 
@@ -210,7 +214,11 @@ export class AuthService {
     }
   }
 
-  async verifyEmail(token: string): Promise<void> {
+  async verifyEmail(token: string): Promise<{
+    user: User;
+    token: string;
+    expiresIn: number;
+  }> {
     try {
       const decodedToken: any = jwt.verify(
         token,
@@ -218,7 +226,10 @@ export class AuthService {
       );
       const userId = decodedToken.sub;
       await this.userService.verifyEmail(userId);
-    } catch (error) {
+      const user = await this.userService.findOneById(userId);
+      const jwtToken = this.generateJwtToken(user);
+      return { user, token: jwtToken, expiresIn: this.getJwtExpUnix(jwtToken) };
+    } catch {
       throw new BadRequestException('Invalid or expired verification token');
     }
   }
@@ -246,7 +257,7 @@ export class AuthService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    const resetToken = await this.generateResetPasswordToken(user.id);
+    const resetToken = this.generateResetPasswordToken(user.id);
     await this.sendResetPasswordEmail(user.email, resetToken);
   }
 
@@ -263,7 +274,7 @@ export class AuthService {
 
       const userId = decodedToken.sub;
       await this.userService.updatePassword(userId, newPassword);
-    } catch (error) {
+    } catch {
       throw new BadRequestException('Invalid or expired reset password token');
     }
   }
@@ -285,12 +296,45 @@ export class AuthService {
     await this.userService.updatePassword(userId, newPassword);
   }
 
-  private async generateJwtToken(user: User): Promise<string> {
+  private generateJwtToken(user: User): string {
     const payload = { username: user.username, sub: user.id, role: user.role };
     const secretKey = process.env.JWT_SECRET_KEY || 'default-secret-key';
     return jwt.sign(payload, secretKey, {
       expiresIn: process.env.JWT_EXPIRATION_TIME || '30d',
     });
+  }
+
+  private async generateUniqueUsernameFromEmail(
+    email: string,
+  ): Promise<string> {
+    const base = email
+      .split('@')[0]
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 20);
+
+    const safeBase = base || 'user';
+    const candidates = [
+      safeBase,
+      `${safeBase}_${Math.random().toString(36).slice(2, 6)}`,
+      `${safeBase}_${Math.random().toString(36).slice(2, 8)}`,
+      `${safeBase}_${Date.now().toString(36).slice(-6)}`,
+    ];
+
+    for (const username of candidates) {
+      const exists = await this.userService.findByUsername(username);
+      if (!exists) return username;
+    }
+
+    for (let i = 0; i < 10; i++) {
+      const username = `${safeBase}_${Math.random().toString(36).slice(2, 10)}`;
+      const exists = await this.userService.findByUsername(username);
+      if (!exists) return username;
+    }
+
+    throw new BadRequestException('Unable to generate a unique username');
   }
 
   private getJwtExpUnix(token: string): number {
@@ -299,7 +343,7 @@ export class AuthService {
     return expUnix;
   }
 
-  private async generateResetPasswordToken(userId: string): Promise<string> {
+  private generateResetPasswordToken(userId: string): string {
     const secretKey =
       process.env.RESET_PASSWORD_SECRET || 'default-reset-password-secret';
     return jwt.sign({ sub: userId }, secretKey, {
@@ -307,7 +351,7 @@ export class AuthService {
     });
   }
 
-  async generateEmailVerificationToken(userId: string): Promise<string> {
+  generateEmailVerificationToken(userId: string): string {
     const secretKey =
       process.env.EMAIL_VERIFICATION_SECRET || 'default-reset-password-secret';
     return jwt.sign({ sub: userId }, secretKey, { expiresIn: '1h' });
@@ -324,9 +368,30 @@ export class AuthService {
     }
     const data = Object.assign(existingUser, updateUserDto);
     const updateUserData = Object.fromEntries(
-      Object.entries(data).filter(([_, value]) => value !== undefined),
+      Object.entries(data).filter(([, value]) => value !== undefined),
     );
     return this.userService.update(id, updateUserData as any, userId);
+  }
+
+  async registerLite(dto: {
+    email: string;
+    password: string;
+    referral?: string;
+    role: RoleEnum;
+  }): Promise<User> {
+    const username = await this.generateUniqueUsernameFromEmail(dto.email);
+    return this.userService.create(
+      {
+        email: dto.email,
+        password: dto.password,
+        referral: dto.referral,
+        role: dto.role,
+        username,
+      } as any,
+      undefined,
+      null,
+      { sendVerificationEmail: false },
+    );
   }
 
   verifyTwoFactorToken(secret: string, token: string): boolean {
@@ -376,7 +441,7 @@ export class AuthService {
       } as any);
     }
 
-    const token = await this.generateJwtToken(user);
+    const token = this.generateJwtToken(user);
     return { user, token, expiresIn: this.getJwtExpUnix(token) };
   }
 
@@ -430,7 +495,7 @@ export class AuthService {
       } as any);
     }
 
-    const token = await this.generateJwtToken(user);
+    const token = this.generateJwtToken(user);
     return { user, token, expiresIn: this.getJwtExpUnix(token) };
   }
 
@@ -465,7 +530,10 @@ export class AuthService {
    * Verifies the OTP for email verification.
    * Marks the OTP as used and sets the user's email as verified if successful.
    */
-  async verifyEmailOtp(email: string, otp: string): Promise<boolean> {
+  async verifyEmailOtp(
+    email: string,
+    otp: string,
+  ): Promise<{ token: string; expiresIn: number }> {
     // Find OTP record
     const otpRecord = await this.emailVerificationOtpModel.findOne({
       where: {
@@ -483,13 +551,13 @@ export class AuthService {
     // Mark OTP as used
     await otpRecord.update({ verified: true });
     await this.userService.verifyEmailV1(email);
-    // Mark user's email as verified
-    // await this.userModel.update(
-    //   { isEmailVerified: true },
-    //   { where: { email } },
-    // );
+    const user = await this.userService.findOneByEmail(email);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
 
-    return true;
+    const token = this.generateJwtToken(user);
+    return { token, expiresIn: this.getJwtExpUnix(token) };
   }
 
   /**

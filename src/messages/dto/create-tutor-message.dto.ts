@@ -12,7 +12,11 @@ import {
   Validate,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ValidatorConstraint, ValidatorConstraintInterface, ValidationArguments } from 'class-validator';
+import {
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+  ValidationArguments,
+} from 'class-validator';
 
 // ----------------------------
 // Custom Validator: Ensure at least one recipient field exists
@@ -34,9 +38,6 @@ export class HasRecipientConstraint implements ValidatorConstraintInterface {
     return 'You must provide at least one recipient: studentId, sendToAll, stateId, subjectId, or classIds';
   }
 }
-
-
-
 
 export class CreateTutorMessageDto {
   @ApiProperty({
@@ -63,7 +64,7 @@ export class CreateTutorMessageDto {
   sendToAll: boolean;
 
   /* -------------------- STATE -------------------- */
-@ApiPropertyOptional({
+  @ApiPropertyOptional({
     example: 'a3b1c7d2-9b0f-4e92-8a2c-0f4a2b8c7d11',
     format: 'uuid',
     description: 'State ID (references state.id)',
@@ -107,9 +108,9 @@ export class CreateTutorMessageDto {
   @IsUUID('4', { each: true })
   classIds?: string[];
 
-    // ----------------------------
+  // ----------------------------
   // Apply custom validator
   // ----------------------------
   @Validate(HasRecipientConstraint)
-  dummyField?: any; 
+  dummyField?: any;
 }

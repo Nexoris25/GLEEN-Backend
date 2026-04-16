@@ -8,10 +8,10 @@ import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
-     JwtModule.register({
-          secret: process.env.JWT_SECRET_KEY,
-          signOptions: { expiresIn: process.env.JWT_EXPIRATION_TIME || '30d' },
-        }),
+    JwtModule.register({
+      secret: process.env.JWT_SECRET_KEY,
+      signOptions: { expiresIn: process.env.JWT_EXPIRATION_TIME || '30d' },
+    }),
     SequelizeModule.forFeature([Faq]),
     forwardRef(() => AuthModule),
   ],

@@ -1,7 +1,5 @@
 import { Module, OnModuleInit } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import config from './config';
 import { Sequelize } from 'sequelize-typescript';
 import { JwtModule } from '@nestjs/jwt';
@@ -142,9 +140,17 @@ import { CountriesModule } from './countries/countries.module';
         LessonTopic,
         QuizRecord,
         // Classes & Rooms (new)
-        ClassEntity, ClassEnrollment, Room, ClassRecording,
+        ClassEntity,
+        ClassEnrollment,
+        Room,
+        ClassRecording,
         // Mock Exams
-        MockTypes, MockExams, MockQuestions, StudentsMockAnswers, MockExamComment, MockExamRecord,
+        MockTypes,
+        MockExams,
+        MockQuestions,
+        StudentsMockAnswers,
+        MockExamComment,
+        MockExamRecord,
         // States
         State,
         City,
@@ -210,8 +216,8 @@ import { CountriesModule } from './countries/countries.module';
     TutorMessageModule,
     UploadModule,
   ],
-  controllers: [AppController],
-  providers: [AppService, StateExistsConstraint],
+  controllers: [],
+  providers: [StateExistsConstraint],
 })
 export class AppModule implements OnModuleInit {
   constructor(private sequelize: Sequelize) {}

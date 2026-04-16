@@ -44,6 +44,6 @@ export class XpLog extends Model {
   detail: string;
 
   @ApiProperty({ type: () => User })
-  @BelongsTo(() =>  User, 'userId')
+  @BelongsTo(() => User, 'userId')
   user: User;
 }

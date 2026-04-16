@@ -20,14 +20,10 @@ import { Room } from 'src/rooms/models/room.model';
     ]),
     UserModule, // for user/tutor validation
   ],
-  controllers: [
-    ClassesController
-  ],
-  providers: [
-    ClassesService
-  ],
+  controllers: [ClassesController],
+  providers: [ClassesService],
   exports: [
-    ClassesService,  // export the service for other modules
+    ClassesService, // export the service for other modules
   ],
 })
 export class ClassesModule {}

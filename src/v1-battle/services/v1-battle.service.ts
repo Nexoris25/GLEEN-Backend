@@ -17,9 +17,15 @@ export class V1BattleService {
     private readonly v1BattleModel: typeof V1Battle,
   ) {}
 
-  async create(createDto: CreateV1BattleDto, userId: string): Promise<V1Battle> {
+  async create(
+    createDto: CreateV1BattleDto,
+    userId: string,
+  ): Promise<V1Battle> {
     try {
-      return await this.v1BattleModel.create({ ...createDto, userId }, { isNewRecord: true, userId });
+      return await this.v1BattleModel.create(
+        { ...createDto, userId },
+        { isNewRecord: true, userId },
+      );
     } catch (error) {
       throw new BadRequestException({
         message: 'Error creating battle',
@@ -32,7 +38,9 @@ export class V1BattleService {
     }
   }
 
-  async findAll(searchDto?: SearchV1BattleDto): Promise<{rows: V1Battle[], count: number}> {
+  async findAll(
+    searchDto?: SearchV1BattleDto,
+  ): Promise<{ rows: V1Battle[]; count: number }> {
     try {
       const where: any = {};
       if (searchDto) {
@@ -41,9 +49,14 @@ export class V1BattleService {
         if (searchDto.quizId) where.quizId = searchDto.quizId;
         if (searchDto.userId) where.userId = searchDto.userId;
         if (searchDto.winnerUserId) where.winnerUserId = searchDto.winnerUserId;
-        if (searchDto.opponentUserId) where.opponentUserId = searchDto.opponentUserId;
+        if (searchDto.opponentUserId)
+          where.opponentUserId = searchDto.opponentUserId;
       }
-      return await this.v1BattleModel.findAndCountAll({ where, limit: searchDto?.limit, offset: searchDto?.offset });
+      return await this.v1BattleModel.findAndCountAll({
+        where,
+        limit: searchDto?.limit,
+        offset: searchDto?.offset,
+      });
     } catch (error) {
       throw new BadRequestException({
         message: 'Error fetching battles',

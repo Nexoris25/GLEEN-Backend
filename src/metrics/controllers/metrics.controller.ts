@@ -1,5 +1,11 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { MetricsService } from '../services/metrics.service';
 import { MetricsResponseDto } from '../dto/metrics-response.dto';
 import { JwtAuthGuard } from 'src/auth/GuardsDecorMiddleware/jwt-auth.guard';
@@ -17,7 +23,6 @@ export class MetricsController {
   @ApiResponse({ status: 200, type: MetricsResponseDto })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'SUPER_ADMIN')
-
   @Get()
   async getMetrics() {
     return this.metricsService.getMetrics();

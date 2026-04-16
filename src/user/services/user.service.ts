@@ -262,6 +262,7 @@ export class UserService {
     createUserDto: CreateUserDto,
     avatar?: Express.Multer.File,
     x = null,
+    options?: { sendVerificationEmail?: boolean },
   ): Promise<User> {
     const { email, password, stateId, ...rest } = createUserDto;
     const existingUser = await this.userModel.findOne({ where: { email } });
@@ -324,9 +325,10 @@ export class UserService {
       }
 
       if (newUser) {
-        const verificationToken = await this.generateEmailVerificationToken(
-          newUser.id,
-        );
+        if (options?.sendVerificationEmail !== false) {
+          const verificationToken = await this.generateEmailVerificationToken(
+            newUser.id,
+          );
         /*
 if (newUser.referral) {
 const upline: User = await this.findOneByUsername(newUser.referral);
@@ -339,10 +341,11 @@ detail: `xp bonus for referring ${newUser.username}`,
 });
 }
 */
-        await this.emailService.sendVerificationEmail({
-          userEmail: email,
-          link: `${process.env.FRONTEND_URL}/activate?token=${verificationToken}`,
-        });
+          await this.emailService.sendVerificationEmail({
+            userEmail: email,
+            link: `${process.env.FRONTEND_URL}/activate?token=${verificationToken}`,
+          });
+        }
       }
       return newUser ? newUser : null;
     } catch (error) {

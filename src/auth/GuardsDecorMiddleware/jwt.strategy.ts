@@ -18,9 +18,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: any) {
     // payload MUST match how you signed the token
     return {
-      id: payload.sub,       // 🔥 REQUIRED
+      id: payload.sub, // 🔥 REQUIRED
       email: payload.email,
-      role: payload.role,   // optional
+      role: payload.role, // optional
     };
   }
 }

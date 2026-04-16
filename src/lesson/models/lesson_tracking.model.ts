@@ -68,10 +68,7 @@ export class LessonTracking extends Model {
   user: User;
 
   @BeforeCreate
-  static setUserId(
-    instance: LessonTracking,
-    options: { userId?: string },
-  ) {
+  static setUserId(instance: LessonTracking, options: { userId?: string }) {
     if (options?.userId) {
       instance.userId = options.userId;
     }

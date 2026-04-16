@@ -7,6 +7,9 @@ export class CreateUserGroupDto {
   @ApiProperty()
   groupId: string;
 
-  @ApiProperty({ enum: ['ACCEPTED', 'DECLINED', 'PENDING'], default: 'PENDING' })
+  @ApiProperty({
+    enum: ['ACCEPTED', 'DECLINED', 'PENDING'],
+    default: 'PENDING',
+  })
   status?: string;
 }

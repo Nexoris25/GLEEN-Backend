@@ -1,11 +1,26 @@
-import { Table, Column, Model, DataType, PrimaryKey, Default, IsUUID, ForeignKey, Unique, BeforeCreate } from 'sequelize-typescript';
+import {
+  Table,
+  Column,
+  Model,
+  DataType,
+  PrimaryKey,
+  Default,
+  IsUUID,
+  ForeignKey,
+  Unique,
+  BeforeCreate,
+} from 'sequelize-typescript';
 import { ApiProperty } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from 'src/user/models/user.model';
 
 @Table({ tableName: 'notification_settings', timestamps: true })
 export class NotificationSettings extends Model<NotificationSettings> {
-  @ApiProperty({ description: 'Unique identifier for the notification settings', type: String, format: 'uuid' })
+  @ApiProperty({
+    description: 'Unique identifier for the notification settings',
+    type: String,
+    format: 'uuid',
+  })
   @Default(() => uuidv4())
   @IsUUID(4)
   @PrimaryKey
@@ -41,22 +56,32 @@ export class NotificationSettings extends Model<NotificationSettings> {
   @Column({ type: DataType.BOOLEAN })
   soundNotification: boolean;
 
-  @ApiProperty({ description: 'Creation timestamp', type: String, format: 'date-time' })
+  @ApiProperty({
+    description: 'Creation timestamp',
+    type: String,
+    format: 'date-time',
+  })
   @Column({ type: DataType.DATE, defaultValue: DataType.NOW })
   createdAt: Date;
 
-  @ApiProperty({ description: 'Last update timestamp', type: String, format: 'date-time' })
+  @ApiProperty({
+    description: 'Last update timestamp',
+    type: String,
+    format: 'date-time',
+  })
   @Column({ type: DataType.DATE, defaultValue: DataType.NOW })
   updatedAt: Date;
 
   @BeforeCreate
-  static async setUserId(instance: NotificationSettings, options: { [key: string]: any }) {
-
+  static async setUserId(
+    instance: NotificationSettings,
+    options: { [key: string]: any },
+  ) {
     // Retrieve the authenticated user ID
     const authUserId = options.userId;
     if (!authUserId) {
-        throw new Error('Authenticated user ID is not available');
-      }
-      instance.userId = authUserId;
+      throw new Error('Authenticated user ID is not available');
     }
+    instance.userId = authUserId;
+  }
 }

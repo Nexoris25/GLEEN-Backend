@@ -1,5 +1,13 @@
 // user-goal.model.ts
-import { Table, Column, Model, ForeignKey, DataType, Unique, BelongsTo } from 'sequelize-typescript';
+import {
+  Table,
+  Column,
+  Model,
+  ForeignKey,
+  DataType,
+  Unique,
+  BelongsTo,
+} from 'sequelize-typescript';
 import { Goal } from './goal.model';
 import { User } from 'src/user/models/user.model';
 
@@ -9,7 +17,7 @@ export class UserGoal extends Model<UserGoal> {
   @Unique('user_goal_unique')
   @Column({
     type: DataType.UUID,
-    allowNull: false
+    allowNull: false,
   })
   userId: string;
 
@@ -17,7 +25,7 @@ export class UserGoal extends Model<UserGoal> {
   @Unique('user_goal_unique')
   @Column({
     type: DataType.UUID,
-    allowNull: false
+    allowNull: false,
   })
   goalId: string;
 }

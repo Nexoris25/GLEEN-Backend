@@ -27,4 +27,3 @@ export class StudentGrowthResponseDto {
   @ApiProperty({ type: [StudentGrowthPointDto] })
   points: StudentGrowthPointDto[];
 }
-

@@ -1,8 +1,15 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op } from 'sequelize';
 import { ComplaintComment } from '../models/complaint-comment.model';
-import { CreateComplaintCommentDto, UpdateComplaintCommentDto } from '../dto/complaint-comment.dto';
+import {
+  CreateComplaintCommentDto,
+  UpdateComplaintCommentDto,
+} from '../dto/complaint-comment.dto';
 
 @Injectable()
 export class ComplaintCommentService {
@@ -13,17 +20,20 @@ export class ComplaintCommentService {
 
   async create(dto: CreateComplaintCommentDto, userId: string) {
     try {
-      const comment = await this.commentModel.create(
-        { ...dto },
-        { userId } as any
-      );
+      const comment = await this.commentModel.create({ ...dto }, {
+        userId,
+      } as any);
       return comment;
     } catch (error) {
-      throw new InternalServerErrorException(error.message || 'Failed to create comment');
+      throw new InternalServerErrorException(
+        error.message || 'Failed to create comment',
+      );
     }
   }
 
-  async findAll(query: any): Promise<{ data: ComplaintComment[]; total: number }> {
+  async findAll(
+    query: any,
+  ): Promise<{ data: ComplaintComment[]; total: number }> {
     try {
       const { complaintId, userId, search, limit = 10, offset = 0 } = query;
 
@@ -43,7 +53,9 @@ export class ComplaintCommentService {
 
       return { data: rows, total: count };
     } catch (error) {
-      throw new InternalServerErrorException(error.message || 'Failed to fetch comments');
+      throw new InternalServerErrorException(
+        error.message || 'Failed to fetch comments',
+      );
     }
   }
 
@@ -53,17 +65,24 @@ export class ComplaintCommentService {
       if (!comment) throw new NotFoundException('Comment not found');
       return comment;
     } catch (error) {
-      throw new InternalServerErrorException(error.message || 'Error fetching comment');
+      throw new InternalServerErrorException(
+        error.message || 'Error fetching comment',
+      );
     }
   }
 
-  async update(id: string, dto: UpdateComplaintCommentDto): Promise<ComplaintComment> {
+  async update(
+    id: string,
+    dto: UpdateComplaintCommentDto,
+  ): Promise<ComplaintComment> {
     try {
       const comment = await this.findOne(id);
       await comment.update(dto);
       return comment;
     } catch (error) {
-      throw new InternalServerErrorException(error.message || 'Failed to update comment');
+      throw new InternalServerErrorException(
+        error.message || 'Failed to update comment',
+      );
     }
   }
 
@@ -73,7 +92,9 @@ export class ComplaintCommentService {
       await comment.destroy();
       return { message: 'Comment deleted successfully' };
     } catch (error) {
-      throw new InternalServerErrorException(error.message || 'Failed to delete comment');
+      throw new InternalServerErrorException(
+        error.message || 'Failed to delete comment',
+      );
     }
   }
 }

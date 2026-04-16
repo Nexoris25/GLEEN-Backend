@@ -89,9 +89,9 @@ export class LessonTopicController {
         status: HttpStatus.INTERNAL_SERVER_ERROR,
         message: 'Error bulk creating lesson topics',
         error: stringify({
-          message: (error as any)?.message,
-          stack: (error as any)?.stack,
-          details: (error as any)?.response || error,
+          message: error?.message,
+          stack: error?.stack,
+          details: error?.response || error,
         }),
       };
     }

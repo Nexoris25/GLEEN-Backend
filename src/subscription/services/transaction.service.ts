@@ -29,7 +29,7 @@ export class TransactionService {
     }
 
     // Optional: shape response
-    return transactions.map(txn => ({
+    return transactions.map((txn) => ({
       id: txn.id,
       status: txn.status,
       amount: txn.amount,

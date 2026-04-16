@@ -5,7 +5,7 @@ import { IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 export class CreateXpLogDto {
   @ApiProperty({
     description: 'User ID who earned the XP',
-    example: '123e4567-e89b-12d3-a456-426614174000'
+    example: '123e4567-e89b-12d3-a456-426614174000',
   })
   @IsUUID('4')
   userId: string;
@@ -13,7 +13,7 @@ export class CreateXpLogDto {
   @ApiProperty({
     description: 'Amount of XP earned',
     example: 50,
-    minimum: 0
+    minimum: 0,
   })
   @IsNumber()
   @Min(0)
@@ -24,20 +24,20 @@ export class CreateXpLogDto {
     example: 'lesson_completion',
     examples: [
       'lesson_completion',
-      'quiz_completion', 
+      'quiz_completion',
       'mock_exam',
       'v1_battle',
       'referral',
       'daily_login',
-      'achievement'
-    ]
+      'achievement',
+    ],
   })
   @IsString()
   xpType: string;
 
   @ApiProperty({
     description: 'Detailed description of how XP was earned',
-    example: 'Completed Algebra Basics lesson (45 minutes)'
+    example: 'Completed Algebra Basics lesson (45 minutes)',
   })
   @IsString()
   detail: string;
@@ -47,7 +47,7 @@ export class UpdateXpLogDto {
   @ApiPropertyOptional({
     description: 'Amount of XP earned',
     example: 50,
-    minimum: 0
+    minimum: 0,
   })
   @IsNumber()
   @Min(0)
@@ -61,11 +61,11 @@ export class UpdateXpLogDto {
       'lesson_completion',
       'quiz_completion',
       'mock_exam',
-      'v1_battle', 
+      'v1_battle',
       'referral',
       'daily_login',
-      'achievement'
-    ]
+      'achievement',
+    ],
   })
   @IsString()
   @IsOptional()
@@ -73,7 +73,7 @@ export class UpdateXpLogDto {
 
   @ApiPropertyOptional({
     description: 'Detailed description of how XP was earned',
-    example: 'Completed Algebra Basics lesson (45 minutes)'
+    example: 'Completed Algebra Basics lesson (45 minutes)',
   })
   @IsString()
   @IsOptional()
@@ -83,7 +83,7 @@ export class UpdateXpLogDto {
 export class XpLogQueryDto {
   @ApiPropertyOptional({
     description: 'Filter by XP type',
-    example: 'lesson_completion'
+    example: 'lesson_completion',
   })
   @IsString()
   @IsOptional()
@@ -91,7 +91,7 @@ export class XpLogQueryDto {
 
   @ApiPropertyOptional({
     description: 'Filter by date range (start date)',
-    example: '2024-01-01T00:00:00.000Z'
+    example: '2024-01-01T00:00:00.000Z',
   })
   @IsString()
   @IsOptional()
@@ -99,7 +99,7 @@ export class XpLogQueryDto {
 
   @ApiPropertyOptional({
     description: 'Filter by date range (end date)',
-    example: '2024-01-31T23:59:59.999Z'
+    example: '2024-01-31T23:59:59.999Z',
   })
   @IsString()
   @IsOptional()
@@ -108,7 +108,7 @@ export class XpLogQueryDto {
   @ApiPropertyOptional({
     description: 'Page number for pagination',
     example: 1,
-    minimum: 1
+    minimum: 1,
   })
   @IsNumber()
   @Min(1)
@@ -119,7 +119,7 @@ export class XpLogQueryDto {
   @ApiPropertyOptional({
     description: 'Number of items per page',
     example: 10,
-    minimum: 1
+    minimum: 1,
   })
   @IsNumber()
   @Min(1)
@@ -132,7 +132,7 @@ export class LeaderboardQueryDto {
   @ApiPropertyOptional({
     description: 'Number of top users to return',
     example: 10,
-    minimum: 1
+    minimum: 1,
   })
   @IsNumber()
   @Min(1)

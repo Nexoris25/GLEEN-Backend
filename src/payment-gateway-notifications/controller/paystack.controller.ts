@@ -56,11 +56,11 @@ export class PaystackController {
       },
     },
   })
-  @ApiResponse({ status: 400, description: 'Invalid input or failed initialization' })
-  async initialize(
-    @Body() dto: InitializePaymentDto,
-    @Req() req,
-  ) {
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid input or failed initialization',
+  })
+  async initialize(@Body() dto: InitializePaymentDto, @Req() req) {
     const { subscriptionId, plan } = dto;
 
     if (!subscriptionId || !plan) {
@@ -69,7 +69,7 @@ export class PaystackController {
     // ✅ Call PaystackService directly
     const result = await this.paystackService.initializeTransaction(
       req.user.email,
-      plan as SubscriptionPlanEnum,
+      plan,
       req.user.id,
       subscriptionId,
     );
@@ -88,7 +88,10 @@ export class PaystackController {
     description: 'Verifies payment status using the transaction reference.',
   })
   @ApiResponse({ status: 200, description: 'Payment verified' })
-  @ApiResponse({ status: 400, description: 'Invalid reference or payment failed' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid reference or payment failed',
+  })
   async verify(@Body() body: VerifyTransactionDto) {
     const data = await this.paystackService.verifyTransaction(body.reference);
     return { status: 'success', data };
@@ -101,10 +104,7 @@ export class PaystackController {
   @HttpCode(HttpStatus.OK)
   @ApiExcludeEndpoint()
   @ApiConsumes('application/json')
-  async webhook(
-    @Req() req: RawBodyRequest<Request>,
-    @Res() res,
-  ) {
+  async webhook(@Req() req: RawBodyRequest<Request>, @Res() res) {
     try {
       const signature = req.headers['x-paystack-signature'] as string;
       const secret = process.env.PAYSTACK_SECRET_KEY;
@@ -125,7 +125,9 @@ export class PaystackController {
       return res.status(HttpStatus.OK).send('Webhook received');
     } catch (error) {
       console.error('Paystack webhook error:', error);
-      return res.status(HttpStatus.BAD_REQUEST).send('Webhook processing failed');
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .send('Webhook processing failed');
     }
   }
 }

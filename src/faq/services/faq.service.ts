@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Faq } from '../models/faq.model';
 import { CreateFaqDto } from '../dto/create-faq.dto';
@@ -13,7 +17,10 @@ export class FaqService {
     try {
       return await this.faqModel.create(createDto);
     } catch (err) {
-      throw new BadRequestException({ message: 'Error creating FAQ', details: stringify(err) });
+      throw new BadRequestException({
+        message: 'Error creating FAQ',
+        details: stringify(err),
+      });
     }
   }
 
@@ -32,7 +39,10 @@ export class FaqService {
     try {
       return await faq.update(updateDto as any);
     } catch (err) {
-      throw new BadRequestException({ message: 'Error updating FAQ', details: stringify(err) });
+      throw new BadRequestException({
+        message: 'Error updating FAQ',
+        details: stringify(err),
+      });
     }
   }
 

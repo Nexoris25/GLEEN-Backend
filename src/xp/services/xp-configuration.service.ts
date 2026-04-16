@@ -228,8 +228,8 @@ export class XpConfigurationService {
       multiplierValue !== 1 &&
       Boolean(startAt) &&
       Boolean(endAt) &&
-      now >= (startAt as Date) &&
-      now < (endAt as Date);
+      now >= startAt &&
+      now < endAt;
 
     return {
       enabled,

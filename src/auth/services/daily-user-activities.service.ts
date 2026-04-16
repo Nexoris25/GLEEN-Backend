@@ -18,13 +18,19 @@ export class DailyUserActivitiesService {
   ): Promise<{ data: DailyUserActivities[]; count: number }> {
     const where: any = {};
     if (startDate && endDate) {
-      where.activityDay = { [Op.between]: [new Date(startDate), new Date(endDate)] };
+      where.activityDay = {
+        [Op.between]: [new Date(startDate), new Date(endDate)],
+      };
     } else if (startDate) {
       where.activityDay = { [Op.gte]: new Date(startDate) };
     } else if (endDate) {
       where.activityDay = { [Op.lte]: new Date(endDate) };
     }
-    const { rows, count } = await this.activitiesModel.findAndCountAll({ where, offset, limit });
+    const { rows, count } = await this.activitiesModel.findAndCountAll({
+      where,
+      offset,
+      limit,
+    });
     return { data: rows, count };
   }
 
@@ -37,13 +43,19 @@ export class DailyUserActivitiesService {
   ): Promise<{ data: DailyUserActivities[]; count: number }> {
     const where: any = { userId };
     if (startDate && endDate) {
-      where.activityDay = { [Op.between]: [new Date(startDate), new Date(endDate)] };
+      where.activityDay = {
+        [Op.between]: [new Date(startDate), new Date(endDate)],
+      };
     } else if (startDate) {
       where.activityDay = { [Op.gte]: new Date(startDate) };
     } else if (endDate) {
       where.activityDay = { [Op.lte]: new Date(endDate) };
     }
-    const { rows, count } = await this.activitiesModel.findAndCountAll({ where, offset, limit });
+    const { rows, count } = await this.activitiesModel.findAndCountAll({
+      where,
+      offset,
+      limit,
+    });
     return { data: rows, count };
   }
 }

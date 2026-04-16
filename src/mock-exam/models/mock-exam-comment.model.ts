@@ -15,7 +15,6 @@ import { User } from 'src/user/models/user.model';
 import { v4 as uuidv4 } from 'uuid';
 import { MockExams } from './mock-exam.model';
 
-
 @Table({
   tableName: 'mock_exam_comments',
   timestamps: true,
@@ -67,8 +66,10 @@ export class MockExamComment extends Model {
   user: User;
 
   @BeforeCreate
-  static async setUserId(instance: MockExamComment, options: { [key: string]: any }) {
-
+  static async setUserId(
+    instance: MockExamComment,
+    options: { [key: string]: any },
+  ) {
     // Retrieve the authenticated user ID
     const authUserId = options.userId;
     if (!authUserId) {

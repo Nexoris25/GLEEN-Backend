@@ -20,12 +20,18 @@ export class GroupChatsService {
     private readonly userGroupModel: typeof UserGroup,
   ) {}
 
-  async create(createGroupChatDto: CreateGroupChatDto, userId: string): Promise<GroupChat> {
+  async create(
+    createGroupChatDto: CreateGroupChatDto,
+    userId: string,
+  ): Promise<GroupChat> {
     try {
-      const chat = await this.groupChatModel.create({
-        ...createGroupChatDto,
-        userId,
-      }, { userId } as CreateOptions<GroupChat>);
+      const chat = await this.groupChatModel.create(
+        {
+          ...createGroupChatDto,
+          userId,
+        },
+        { userId } as CreateOptions<GroupChat>,
+      );
       return chat;
     } catch (error) {
       throw new BadRequestException({
@@ -39,10 +45,18 @@ export class GroupChatsService {
     }
   }
 
-  async findAll(groupId?: string, offset?: number, limit?: number): Promise<{rows: GroupChat[], count: number}> {
+  async findAll(
+    groupId?: string,
+    offset?: number,
+    limit?: number,
+  ): Promise<{ rows: GroupChat[]; count: number }> {
     try {
       const where = groupId ? { groupId } : undefined;
-      return await this.groupChatModel.findAndCountAll({ where, offset, limit });
+      return await this.groupChatModel.findAndCountAll({
+        where,
+        offset,
+        limit,
+      });
     } catch (error) {
       throw new BadRequestException({
         message: 'Error fetching group chats',
@@ -74,7 +88,10 @@ export class GroupChatsService {
     }
   }
 
-  async update(id: string, updateGroupChatDto: UpdateGroupChatDto): Promise<GroupChat> {
+  async update(
+    id: string,
+    updateGroupChatDto: UpdateGroupChatDto,
+  ): Promise<GroupChat> {
     try {
       const chat = await this.findOne(id);
       return await chat.update(updateGroupChatDto);

@@ -13,18 +13,22 @@ export class LeaderboardRankRewardService {
   ) {}
 
   async findAll(): Promise<LeaderboardRankReward[]> {
-    let rewards = await this.rankRewardRepository.findAll({ order: [['order', 'ASC']] });
+    let rewards = await this.rankRewardRepository.findAll({
+      order: [['order', 'ASC']],
+    });
     if (rewards.length === 0) {
       rewards = await this.initializeDefaultRewards();
     }
     return rewards;
   }
 
-  async updateAll(updateDto: BulkUpdateRankRewardsDto): Promise<LeaderboardRankReward[]> {
+  async updateAll(
+    updateDto: BulkUpdateRankRewardsDto,
+  ): Promise<LeaderboardRankReward[]> {
     return await this.sequelize.transaction(async (t) => {
       // Clear existing rewards and recreate to maintain the new list exactly
       await this.rankRewardRepository.destroy({ where: {}, transaction: t });
-      
+
       const rewardsToCreate = updateDto.rewards.map((r, index) => ({
         rank: r.rank,
         xpReward: r.xpReward,
@@ -32,11 +36,13 @@ export class LeaderboardRankRewardService {
         order: index,
       }));
 
-      await this.rankRewardRepository.bulkCreate(rewardsToCreate, { transaction: t });
-      
-      return await this.rankRewardRepository.findAll({ 
+      await this.rankRewardRepository.bulkCreate(rewardsToCreate, {
+        transaction: t,
+      });
+
+      return await this.rankRewardRepository.findAll({
         order: [['order', 'ASC']],
-        transaction: t 
+        transaction: t,
       });
     });
   }

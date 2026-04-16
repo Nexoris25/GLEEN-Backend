@@ -1,5 +1,16 @@
 // user-goal.model.ts
-import { Table, Column, Model, ForeignKey, DataType, Unique, BelongsTo, Default, IsUUID, PrimaryKey } from 'sequelize-typescript';
+import {
+  Table,
+  Column,
+  Model,
+  ForeignKey,
+  DataType,
+  Unique,
+  BelongsTo,
+  Default,
+  IsUUID,
+  PrimaryKey,
+} from 'sequelize-typescript';
 import { User } from 'src/user/models/user.model';
 import { Group } from './group.model';
 import { v4 as uuidv4 } from 'uuid';
@@ -18,7 +29,7 @@ export class UserGroup extends Model<UserGroup> {
   @Unique('user_group_unique')
   @Column({
     type: DataType.UUID,
-    allowNull: false
+    allowNull: false,
   })
   userId: string;
 
@@ -27,14 +38,14 @@ export class UserGroup extends Model<UserGroup> {
   @Unique('user_group_unique')
   @Column({
     type: DataType.UUID,
-    allowNull: false
+    allowNull: false,
   })
   groupId: string;
 
   @ApiProperty({ enum: ['ACCEPTED', 'DECLINED', 'PENDING'] })
   @Default('PENDING')
   @Column({
-    type: DataType.ENUM('ACCEPTED', 'DECLINED', 'PENDING')
+    type: DataType.ENUM('ACCEPTED', 'DECLINED', 'PENDING'),
   })
   status: string;
 
@@ -43,5 +54,4 @@ export class UserGroup extends Model<UserGroup> {
 
   @BelongsTo(() => Group, 'groupId')
   group: Group;
-
 }

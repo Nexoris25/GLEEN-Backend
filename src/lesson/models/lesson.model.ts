@@ -20,7 +20,6 @@ import { LessonTracking } from './lesson_tracking.model';
 import { Subject } from 'src/subject/models/subject.model';
 import { LessonTopic } from './lesson_topic.model';
 
-
 @Table({
   tableName: 'lessons',
   timestamps: true,
@@ -41,7 +40,6 @@ export class Lesson extends Model {
   })
   subjectId: string;
 
-
   @ApiHideProperty()
   @ForeignKey(() => User)
   @Column({
@@ -54,7 +52,7 @@ export class Lesson extends Model {
   @Column({
     type: DataType.STRING,
     allowNull: false,
-    unique: true, 
+    unique: true,
   })
   title: string;
 
@@ -87,10 +85,10 @@ export class Lesson extends Model {
   avatarOrCover: string;
 
   @ApiProperty()
-  @Default("PENDING")
+  @Default('PENDING')
   @Column({
     type: DataType.ENUM('PENDING', 'APPROVED', 'REJECTED'),
-    allowNull: false
+    allowNull: false,
   })
   status: string;
 
@@ -122,12 +120,8 @@ export class Lesson extends Model {
   @HasMany(() => LessonTopic, { foreignKey: 'lessonId' })
   topics: LessonTopic[];
 
-
-
-
   @BeforeCreate
   static async setUserId(instance: Lesson, options: { [key: string]: any }) {
-
     // Retrieve the authenticated user ID
     const authUserId = options.userId;
     if (!authUserId) {

@@ -1,7 +1,16 @@
-//write quiz model 
+//write quiz model
 // with id, lessonId, question, options, correctAnswer, createdAt, updatedAt
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { BeforeCreate, BelongsTo, Column, DataType, ForeignKey, HasMany, Model, Table } from 'sequelize-typescript';
+import {
+  BeforeCreate,
+  BelongsTo,
+  Column,
+  DataType,
+  ForeignKey,
+  HasMany,
+  Model,
+  Table,
+} from 'sequelize-typescript';
 import { v4 as uuidv4 } from 'uuid';
 import { IsUUID, PrimaryKey, Default } from 'sequelize-typescript';
 import { User } from 'src/user/models/user.model';
@@ -32,15 +41,15 @@ export class QuizQuestions extends Model {
   @ApiProperty()
   @Column({
     type: DataType.ENUM('MULTIPLE_CHOICE', 'TRUE_FALSE', 'THEORY'),
-    allowNull: false
+    allowNull: false,
   })
   type: string;
 
   @ApiProperty()
-  @Default("PENDING")
+  @Default('PENDING')
   @Column({
     type: DataType.ENUM('PENDING', 'APPROVED', 'REJECTED'),
-    allowNull: false
+    allowNull: false,
   })
   status: string;
 
@@ -72,8 +81,10 @@ export class QuizQuestions extends Model {
   studentsQuizAnswers: StudentsQuizAnswers[];
 
   @BeforeCreate
-  static async setUserId(instance: QuizQuestions, options: { [key: string]: any }) {
-
+  static async setUserId(
+    instance: QuizQuestions,
+    options: { [key: string]: any },
+  ) {
     // Retrieve the authenticated user ID
     const authUserId = options.userId || instance.userId;
     if (!authUserId) {

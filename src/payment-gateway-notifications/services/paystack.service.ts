@@ -4,8 +4,7 @@ import Paystack from 'paystack';
 import { InjectModel } from '@nestjs/sequelize';
 import { SubscriptionTransaction } from '../../subscription/models/subscription-transaction.model';
 import { Subscription } from '../../subscription/models/Subscription.model';
-import { SubscriptionPlanEnum } from '../../shared-types/subscription-plan.enum'; 
-
+import { SubscriptionPlanEnum } from '../../shared-types/subscription-plan.enum';
 
 @Injectable()
 export class PaystackService {
@@ -18,13 +17,15 @@ export class PaystackService {
 
     @InjectModel(Subscription)
     private readonly subscriptionModel: typeof Subscription,
-    ) {
+  ) {
     const secretKey =
-      this.configService.get<string>('PAYSTACK_SECRET_KEY') || process.env.PAYSTACK_SECRET_KEY;
-
+      this.configService.get<string>('PAYSTACK_SECRET_KEY') ||
+      process.env.PAYSTACK_SECRET_KEY;
 
     if (!secretKey) {
-      throw new Error('PAYSTACK_SECRET_KEY is missing in environment variables');
+      throw new Error(
+        'PAYSTACK_SECRET_KEY is missing in environment variables',
+      );
     }
 
     // ✅ Paystack is a function — DO NOT use "new"
@@ -35,62 +36,62 @@ export class PaystackService {
   // 1️⃣ Initialize Transaction & Save PENDING in DB
   // -----------------------
   async initializeTransaction(
-  email: string,
-  plan: SubscriptionPlanEnum, 
-  userId: string,
-  subscriptionId: string,
-) {
-  // 1️⃣ Fetch subscription
-  const subscription = await this.subscriptionModel.findByPk(subscriptionId);
-  if (!subscription) {
-    throw new BadRequestException(
-      `Subscription with ID "${subscriptionId}" does not exist`,
-    );
-  }
-
-  // 2️⃣ Determine amount based on plan
-   let amount: number = subscription.amount ?? 0; // ✅ use nullish coalescing
- if (plan === SubscriptionPlanEnum.YEARLY) { amount = (amount*12)-amount; } 
-const now = new Date();
-const monthsToAdd = plan === SubscriptionPlanEnum.YEARLY ? 12 : 1;
-const expiryDate = new Date(now);
-expiryDate.setMonth(expiryDate.getMonth() + monthsToAdd);
-
-  try {
-    // 3️⃣ Initialize Paystack transaction
-    const response = await this.paystack.transaction.initialize({
-      email,
-      amount: Math.round(amount * 100), // convert to kobo
-      metadata: { subscriptionId, userId, plan },
-    });
-
-    if (!response.status) {
-      throw new Error(response.message || 'Initialization failed');
+    email: string,
+    plan: SubscriptionPlanEnum,
+    userId: string,
+    subscriptionId: string,
+  ) {
+    // 1️⃣ Fetch subscription
+    const subscription = await this.subscriptionModel.findByPk(subscriptionId);
+    if (!subscription) {
+      throw new BadRequestException(
+        `Subscription with ID "${subscriptionId}" does not exist`,
+      );
     }
 
-    // 4️⃣ Save transaction to DB as PENDING
-    await this.transactionModel.create({
-      userId,
-      subscriptionId,
-      amount,
-      plan,                      
-      status: 'PENDING',
-      reference: response.data.reference,
-      expiryDate: expiryDate,
-    });
+    // 2️⃣ Determine amount based on plan
+    let amount: number = subscription.amount ?? 0; // ✅ use nullish coalescing
+    if (plan === SubscriptionPlanEnum.YEARLY) {
+      amount = amount * 12 - amount;
+    }
+    const now = new Date();
+    const monthsToAdd = plan === SubscriptionPlanEnum.YEARLY ? 12 : 1;
+    const expiryDate = new Date(now);
+    expiryDate.setMonth(expiryDate.getMonth() + monthsToAdd);
 
-    return response.data; // { authorization_url, access_code, reference }
-  } catch (error: any) {
-    console.error('Paystack initialize error:', error);
-    throw new BadRequestException(
-      error.message || 'Failed to initialize Paystack transaction',
-    );
+    try {
+      // 3️⃣ Initialize Paystack transaction
+      const response = await this.paystack.transaction.initialize({
+        email,
+        amount: Math.round(amount * 100), // convert to kobo
+        metadata: { subscriptionId, userId, plan },
+      });
+
+      if (!response.status) {
+        throw new Error(response.message || 'Initialization failed');
+      }
+
+      // 4️⃣ Save transaction to DB as PENDING
+      await this.transactionModel.create({
+        userId,
+        subscriptionId,
+        amount,
+        plan,
+        status: 'PENDING',
+        reference: response.data.reference,
+        expiryDate: expiryDate,
+      });
+
+      return response.data; // { authorization_url, access_code, reference }
+    } catch (error: any) {
+      console.error('Paystack initialize error:', error);
+      throw new BadRequestException(
+        error.message || 'Failed to initialize Paystack transaction',
+      );
+    }
   }
-}
 
-
-
-// -----------------------
+  // -----------------------
   // Process Paystack webhook
   // -----------------------
   async processWebhook(payload: any) {
@@ -129,8 +130,6 @@ expiryDate.setMonth(expiryDate.getMonth() + monthsToAdd);
     return { message: 'Transaction updated' };
   }
 
-
-
   // -----------------------
   // 2️⃣ Verify Transaction
   // -----------------------
@@ -149,8 +148,8 @@ expiryDate.setMonth(expiryDate.getMonth() + monthsToAdd);
           response.data.status === 'success'
             ? 'PAID'
             : response.data.status === 'failed'
-            ? 'FAILED'
-            : txn.status; // leave as PENDING for other statuses
+              ? 'FAILED'
+              : txn.status; // leave as PENDING for other statuses
         await txn.save();
       }
 

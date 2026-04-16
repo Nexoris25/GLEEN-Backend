@@ -20,6 +20,7 @@ import { User } from '../models/user.model';
 import { JwtAuthGuard } from '../../auth/GuardsDecorMiddleware/jwt-auth.guard';
 import { UserService } from '../services/user.service';
 import { UpdateUserDto } from '../dto/update-user.dto';
+import { UpdateMyProfileDto } from '../dto/update-my-profile.dto';
 import {
   ApiResponse,
   ApiTags,
@@ -50,6 +51,64 @@ import { FileInterceptor } from '@nestjs/platform-express';
 @Controller('')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @Patch('user/profile')
+  @ApiOperation({ summary: 'Update my profile' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        picUrl: { type: 'string' },
+        name: { type: 'string' },
+        gender: { type: 'string', example: 'MALE' },
+        country: { type: 'string' },
+        state: { type: 'string', format: 'uuid' },
+        localGovernment: { type: 'string', format: 'uuid' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Profile updated successfully',
+    type: UserResponseDto,
+  })
+  async updateMyProfile(
+    @Body(new ValidationPipe()) dto: UpdateMyProfileDto,
+    @UserId() userId: string,
+  ): Promise<{ status: number; message: string; data?: User; error?: any }> {
+    try {
+      const updateUserDto: UpdateUserDto = {
+        fullName: dto.name,
+        gender: dto.gender,
+        country: dto.country,
+        stateId: dto.state,
+        lga: dto.localGovernment,
+        avatar: dto.picUrl,
+      };
+
+      const updatedUser = await this.userService.update(
+        userId,
+        updateUserDto,
+        userId,
+      );
+
+      return {
+        status: HttpStatus.OK,
+        message: 'Profile updated successfully',
+        data: updatedUser,
+      };
+    } catch (error) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Error updating profile',
+        error: stringify({
+          message: (error as Error)?.message || 'Unknown error',
+          stack: (error as Error)?.stack,
+          details: error?.response || error,
+        }),
+      };
+    }
+  }
 
   @Get('user/all')
   //@Roles('TUTOR', 'SUPER_ADMIN', 'ADMIN') // Class-level roles

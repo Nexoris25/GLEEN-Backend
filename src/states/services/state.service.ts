@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { CreateOptions, Op } from 'sequelize';
-import stringify from "safe-stable-stringify";
+import stringify from 'safe-stable-stringify';
 import { State } from '../models/state.model';
 import { City } from '../models/city.model';
 import { CreateStateDto } from '../dto/create-state.dto';
@@ -22,7 +22,10 @@ export class StatesService {
 
   async create(createStateDto: CreateStateDto, userId: string): Promise<State> {
     try {
-      return await this.stateModel.create(createStateDto as any, { userId } as CreateOptions<any>);
+      return await this.stateModel.create(
+        createStateDto as any,
+        { userId } as CreateOptions<any>,
+      );
     } catch (error) {
       throw new BadRequestException({
         message: 'Error creating state',
@@ -35,25 +38,23 @@ export class StatesService {
     }
   }
 
-  
   async findAll(page = 1, limit = 10) {
-  const offset = (page - 1) * limit;
-  const { rows, count } = await this.stateModel.findAndCountAll({
-    order: [['title', 'ASC']],
-    limit,
-    offset,
-  });
+    const offset = (page - 1) * limit;
+    const { rows, count } = await this.stateModel.findAndCountAll({
+      order: [['title', 'ASC']],
+      limit,
+      offset,
+    });
 
-  return {
-    data: rows,
-    meta: {
-      total: count,
-      page,
-      lastPage: Math.ceil(count / limit),
-    },
-  };
-}
-
+    return {
+      data: rows,
+      meta: {
+        total: count,
+        page,
+        lastPage: Math.ceil(count / limit),
+      },
+    };
+  }
 
   async findOne(id: string): Promise<State> {
     try {
@@ -124,7 +125,9 @@ export class StatesService {
   async createManyCities(stateId: string, titles: string[]) {
     try {
       const records = titles.map((title) => ({ title, stateId }));
-      return await this.cityModel.bulkCreate(records, { ignoreDuplicates: true });
+      return await this.cityModel.bulkCreate(records, {
+        ignoreDuplicates: true,
+      });
     } catch (error) {
       throw new BadRequestException({
         message: 'Error linking multiple states to user',

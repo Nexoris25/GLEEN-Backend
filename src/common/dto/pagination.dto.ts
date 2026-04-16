@@ -3,7 +3,10 @@ import { IsOptional, IsInt, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class PaginationDto {
-  @ApiPropertyOptional({ example: 10, description: 'Number of items to return' })
+  @ApiPropertyOptional({
+    example: 10,
+    description: 'Number of items to return',
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()

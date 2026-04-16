@@ -28,7 +28,7 @@ export class LgaExistsConstraint implements ValidatorConstraintInterface {
 }
 
 export function IsLgaExists(validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       target: object.constructor,
       propertyName,

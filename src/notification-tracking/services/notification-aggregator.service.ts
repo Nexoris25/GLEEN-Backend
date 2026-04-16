@@ -9,11 +9,11 @@ import { Op } from 'sequelize';
 
 @Injectable()
 export class NotificationAggregatorService {
-  constructor(
-    private readonly readService: NotificationReadService,
-  ) {}
+  constructor(private readonly readService: NotificationReadService) {}
 
-  async getUserNotifications(userId: string): Promise<AggregatedNotificationDto[]> {
+  async getUserNotifications(
+    userId: string,
+  ): Promise<AggregatedNotificationDto[]> {
     const notifications: AggregatedNotificationDto[] = [];
 
     /**
@@ -55,22 +55,22 @@ export class NotificationAggregatorService {
      * TUTOR MESSAGES
      * ----------------------------
      */
-   const tutorMessages = await TutorMessage.findAll({
-  where: {
-    [Op.or]: [
-      { sendToAll: true }, // messages sent to all students
-    ],
-  },
-  include: [
-    {
-      association: 'recipients',
-      where: { userId },
-      required: false, // include even if no recipient row exists
-    },
-  ],
-  order: [['createdAt', 'DESC']],
-  limit: 50,
-});
+    const tutorMessages = await TutorMessage.findAll({
+      where: {
+        [Op.or]: [
+          { sendToAll: true }, // messages sent to all students
+        ],
+      },
+      include: [
+        {
+          association: 'recipients',
+          where: { userId },
+          required: false, // include even if no recipient row exists
+        },
+      ],
+      order: [['createdAt', 'DESC']],
+      limit: 50,
+    });
 
     for (const msg of tutorMessages) {
       const read = await this.readService.hasRead(

@@ -7,7 +7,10 @@ export class MetricsResponseDto {
   @ApiProperty({ example: 45, description: 'Total number of active classes' })
   totalClasses: number;
 
-  @ApiProperty({ example: 350, description: 'Total enrollments across all classes' })
+  @ApiProperty({
+    example: 350,
+    description: 'Total enrollments across all classes',
+  })
   totalEnrollments: number;
 
   @ApiProperty({ example: 80, description: 'Total rooms created' })

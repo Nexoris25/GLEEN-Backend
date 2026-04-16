@@ -502,10 +502,7 @@ export class LessonService {
     }
   }
 
-  async update(
-    id: string,
-    updateLessonDto: UpdateLessonDto,
-  ): Promise<Lesson> {
+  async update(id: string, updateLessonDto: UpdateLessonDto): Promise<Lesson> {
     try {
       const lesson = await this.findOne(id);
 

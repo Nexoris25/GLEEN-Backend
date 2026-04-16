@@ -26,15 +26,15 @@ export class UpdateUserDto {
   @IsOptional()
   guardianEmail?: string;
 
-    @ApiPropertyOptional()
+  @ApiPropertyOptional()
   @IsOptional()
   @IsEnum(RoleEnum, { message: 'Invalid role' })
   role?: RoleEnum;
 
-      @ApiPropertyOptional()
-    @IsOptional()
-    @IsString()
-    systemAvatar?: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  systemAvatar?: string;
 
   @ApiPropertyOptional({ required: false })
   @IsString()
@@ -60,27 +60,25 @@ export class UpdateUserDto {
   @IsOptional()
   country?: string;
 
-@ApiPropertyOptional({
-  required: false,
-  description: 'State ID (must exist)',
-})
-@IsOptional()
-@Transform(({ value }) => (value === '' ? undefined : value))
-@IsUUID()
-@IsStateExists()
-stateId?: string;
+  @ApiPropertyOptional({
+    required: false,
+    description: 'State ID (must exist)',
+  })
+  @IsOptional()
+  @Transform(({ value }) => (value === '' ? undefined : value))
+  @IsUUID()
+  @IsStateExists()
+  stateId?: string;
 
-
-@ApiPropertyOptional({
-  required: false,
-  description: 'LGA ID (must exist)',
-})
-@IsOptional()
-@Transform(({ value }) => (value === '' ? undefined : value))
-@IsUUID()
-@IsLgaExists()
-lga?: string;
-
+  @ApiPropertyOptional({
+    required: false,
+    description: 'LGA ID (must exist)',
+  })
+  @IsOptional()
+  @Transform(({ value }) => (value === '' ? undefined : value))
+  @IsUUID()
+  @IsLgaExists()
+  lga?: string;
 
   @ApiPropertyOptional({
     required: false,

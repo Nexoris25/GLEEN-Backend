@@ -9,7 +9,6 @@ import { JwtModule } from '@nestjs/jwt';
 import { XpModule } from 'src/xp/xp.module';
 import { BunnyService } from 'src/common/services/bunny.service';
 
-
 import { State } from 'src/states/models/state.model';
 import { Lga } from 'src/states/models/lga.model';
 import { StateExistsConstraint } from 'src/common/validators/IsStateExists';
@@ -21,20 +20,18 @@ import { LgaExistsConstraint } from 'src/common/validators/is-lga-exists.validat
       secret: process.env.JWT_SECRET_KEY,
       signOptions: { expiresIn: process.env.JWT_EXPIRATION_TIME || '30d' },
     }),
-    SequelizeModule.forFeature([
-      User, State, Lga
-    ]),
+    SequelizeModule.forFeature([User, State, Lga]),
     forwardRef(() => AuthModule),
     forwardRef(() => MailModule),
     forwardRef(() => XpModule),
   ],
   providers: [
-    UserService, BunnyService, StateExistsConstraint, 
+    UserService,
+    BunnyService,
+    StateExistsConstraint,
     LgaExistsConstraint,
   ],
-  controllers: [
-    UserController,
-  ],
+  controllers: [UserController],
   exports: [
     SequelizeModule,
     UserService,
@@ -42,4 +39,4 @@ import { LgaExistsConstraint } from 'src/common/validators/is-lga-exists.validat
     LgaExistsConstraint,
   ],
 })
-export class UserModule { }
+export class UserModule {}

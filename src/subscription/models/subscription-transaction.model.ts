@@ -20,7 +20,6 @@ import { SubscriptionPlanEnum } from 'src/shared-types/subscription-plan.enum';
   timestamps: true,
 })
 export class SubscriptionTransaction extends Model<SubscriptionTransaction> {
-
   @ApiProperty({ description: 'Transaction ID (UUID)' })
   @IsUUID(4)
   @PrimaryKey
@@ -39,7 +38,6 @@ export class SubscriptionTransaction extends Model<SubscriptionTransaction> {
     allowNull: false,
   })
   status!: 'PAID' | 'PENDING' | 'FAILED' | 'CANCELLED' | 'REFUNDED';
-
 
   @ApiProperty({
     description: 'Subscription plan type',
@@ -64,7 +62,6 @@ export class SubscriptionTransaction extends Model<SubscriptionTransaction> {
   })
   userId: string;
 
-  
   @ApiProperty({
     description: 'When this subscription transaction / access expires',
     example: '2025-06-15T23:59:59.999Z',
@@ -72,8 +69,8 @@ export class SubscriptionTransaction extends Model<SubscriptionTransaction> {
   })
   @Column({
     type: DataType.DATE,
-    allowNull: true,        
-    defaultValue: null,    
+    allowNull: true,
+    defaultValue: null,
   })
   expiryDate: Date | null;
 

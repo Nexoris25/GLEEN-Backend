@@ -25,14 +25,13 @@ export class TutorMessageController {
 
   @Post()
   @Roles('TUTOR')
-  @ApiOperation({ summary: 'Tutor sends message to students. only one option used (studentId / sendToAll / stateId /subjectId / classIds' })
-  create(
-    @Body() dto: CreateTutorMessageDto,
-    @UserId() tutorId: string,
-  ) {
+  @ApiOperation({
+    summary:
+      'Tutor sends message to students. only one option used (studentId / sendToAll / stateId /subjectId / classIds',
+  })
+  create(@Body() dto: CreateTutorMessageDto, @UserId() tutorId: string) {
     return this.service.create(dto, tutorId);
   }
-
 
   /*
   @Get('student')

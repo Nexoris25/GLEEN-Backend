@@ -74,7 +74,7 @@ export class XpConfigurationController {
         error: stringify({
           message: (error as Error)?.message || 'Unknown error',
           stack: (error as Error)?.stack,
-          details: (error as any)?.response || error,
+          details: error?.response || error,
         }),
       };
     }
@@ -109,7 +109,7 @@ export class XpConfigurationController {
         error: stringify({
           message: (error as Error)?.message || 'Unknown error',
           stack: (error as Error)?.stack,
-          details: (error as any)?.response || error,
+          details: error?.response || error,
         }),
       };
     }
@@ -139,7 +139,7 @@ export class XpConfigurationController {
         error: stringify({
           message: (error as Error)?.message || 'Unknown error',
           stack: (error as Error)?.stack,
-          details: (error as any)?.response || error,
+          details: error?.response || error,
         }),
       };
     }
@@ -169,7 +169,7 @@ export class XpConfigurationController {
         error: stringify({
           message: (error as Error)?.message || 'Unknown error',
           stack: (error as Error)?.stack,
-          details: (error as any)?.response || error,
+          details: error?.response || error,
         }),
       };
     }
@@ -205,7 +205,7 @@ export class XpConfigurationController {
         error: stringify({
           message: (error as Error)?.message || 'Unknown error',
           stack: (error as Error)?.stack,
-          details: (error as any)?.response || error,
+          details: error?.response || error,
         }),
       };
     }
@@ -241,7 +241,7 @@ export class XpConfigurationController {
         error: stringify({
           message: (error as Error)?.message || 'Unknown error',
           stack: (error as Error)?.stack,
-          details: (error as any)?.response || error,
+          details: error?.response || error,
         }),
       };
     }
@@ -282,7 +282,7 @@ export class XpConfigurationController {
         error: stringify({
           message: (error as Error)?.message || 'Unknown error',
           stack: (error as Error)?.stack,
-          details: (error as any)?.response || error,
+          details: error?.response || error,
         }),
       };
     }
@@ -312,7 +312,7 @@ export class XpConfigurationController {
         error: stringify({
           message: (error as Error)?.message || 'Unknown error',
           stack: (error as Error)?.stack,
-          details: (error as any)?.response || error,
+          details: error?.response || error,
         }),
       };
     }
@@ -346,7 +346,7 @@ export class XpConfigurationController {
         error: stringify({
           message: (error as Error)?.message || 'Unknown error',
           stack: (error as Error)?.stack,
-          details: (error as any)?.response || error,
+          details: error?.response || error,
         }),
       };
     }
@@ -375,7 +375,7 @@ export class XpConfigurationController {
         error: stringify({
           message: (error as Error)?.message || 'Unknown error',
           stack: (error as Error)?.stack,
-          details: (error as any)?.response || error,
+          details: error?.response || error,
         }),
       };
     }
@@ -409,7 +409,7 @@ export class XpConfigurationController {
         error: stringify({
           message: (error as Error)?.message || 'Unknown error',
           stack: (error as Error)?.stack,
-          details: (error as any)?.response || error,
+          details: error?.response || error,
         }),
       };
     }
@@ -447,7 +447,7 @@ export class XpConfigurationController {
         error: stringify({
           message: (error as Error)?.message || 'Unknown error',
           stack: (error as Error)?.stack,
-          details: (error as any)?.response || error,
+          details: error?.response || error,
         }),
       };
     }
@@ -483,7 +483,7 @@ export class XpConfigurationController {
         error: stringify({
           message: (error as Error)?.message || 'Unknown error',
           stack: (error as Error)?.stack,
-          details: (error as any)?.response || error,
+          details: error?.response || error,
         }),
       };
     }
@@ -517,7 +517,7 @@ export class XpConfigurationController {
         error: stringify({
           message: (error as Error)?.message || 'Unknown error',
           stack: (error as Error)?.stack,
-          details: (error as any)?.response || error,
+          details: error?.response || error,
         }),
       };
     }
@@ -601,7 +601,7 @@ export class XpConfigurationController {
         error: stringify({
           message: (error as Error)?.message || 'Unknown error',
           stack: (error as Error)?.stack,
-          details: (error as any)?.response || error,
+          details: error?.response || error,
         }),
       };
     }
@@ -640,7 +640,7 @@ export class XpConfigurationController {
         error: stringify({
           message: (error as Error)?.message || 'Unknown error',
           stack: (error as Error)?.stack,
-          details: (error as any)?.response || error,
+          details: error?.response || error,
         }),
       };
     }

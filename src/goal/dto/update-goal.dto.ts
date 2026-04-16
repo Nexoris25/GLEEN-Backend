@@ -12,12 +12,18 @@ export class UpdateGoalDto {
   @IsString()
   description?: string;
 
-  @ApiProperty({ example: 'https://example.com/new-avatar.png', required: false })
+  @ApiProperty({
+    example: 'https://example.com/new-avatar.png',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   avatar?: string;
 
-  @ApiProperty({ example: 'b8d2e4d8-94a2-4d8a-8c90-9c7c12345678', required: false })
+  @ApiProperty({
+    example: 'b8d2e4d8-94a2-4d8a-8c90-9c7c12345678',
+    required: false,
+  })
   @IsOptional()
   @IsUUID()
   userId?: string;

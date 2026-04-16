@@ -4,24 +4,25 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 export const setupSwagger = (app: INestApplication<any>) => {
   const options = new DocumentBuilder()
     .setTitle('Nexoris Gleen Backend API')
-    .setDescription(`Nexoris Gleen Backend API
+    .setDescription(
+      `Nexoris Gleen Backend API
 
 ---
 (Your long description unchanged)
----`)
+---`,
+    )
     .setVersion('1.0')
 
     // 🔒 JWT Bearer Authentication (LOCK ICON)
-.addBearerAuth(
-  {
-    type: 'http',
-    scheme: 'bearer',
-    bearerFormat: 'JWT',
-    in: 'header',
-  },
-  'bearer',   // 👈 IMPORTANT NAME
-)
-
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        in: 'header',
+      },
+      'bearer', // 👈 IMPORTANT NAME
+    )
 
     .build();
 

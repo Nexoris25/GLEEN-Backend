@@ -12,17 +12,18 @@ import { join } from 'path';
 import * as bodyParser from 'body-parser';
 import { UserIdInterceptor } from './auth/GuardsDecorMiddleware/userId-interceptor.middleware';
 import { JwtService } from '@nestjs/jwt';
-import { UserIdMiddleware } from './auth/GuardsDecorMiddleware/user-id.middleware';import { useContainer } from 'class-validator';   // ← must import from 'class-validator'
+import { UserIdMiddleware } from './auth/GuardsDecorMiddleware/user-id.middleware';
+import { useContainer } from 'class-validator'; // ← must import from 'class-validator'
 
-dotenv.config(); 
+dotenv.config();
 
 async function bootstrap() {
   // In bootstrap() — place this right after NestFactory.create(...)
-const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-  logger: ['error', 'warn', 'log', 'fatal', 'debug', 'verbose'],
-  rawBody: true,  // ← Add this line (NestJS 9+ style)
-});
-useContainer(app.select(AppModule), { fallbackOnErrors: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    logger: ['error', 'warn', 'log', 'fatal', 'debug', 'verbose'],
+    rawBody: true, // ← Add this line (NestJS 9+ style)
+  });
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
   const secretKey = process.env.JWT_SECRET_KEY || 'default-secret-key';
   const jwtService = new JwtService({ secret: secretKey });
   app.use(new UserIdMiddleware(jwtService).use);
@@ -36,11 +37,13 @@ useContainer(app.select(AppModule), { fallbackOnErrors: true });
   });
 
   // Enable global validation
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    transform: true,
-    forbidNonWhitelisted: true,
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
   app.use(bodyParser.json({ limit: '5mb' }));
   app.use(bodyParser.urlencoded({ limit: '5mb', extended: true }));
 
@@ -65,7 +68,6 @@ useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
   // Setup Swagger
   setupSwagger(app);
-
 
   // Synchronize Sequelize models
   const sequelize = app.get(Sequelize);

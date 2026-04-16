@@ -1,4 +1,12 @@
-import { Table, Column, Model, DataType, PrimaryKey, Default, IsUUID } from 'sequelize-typescript';
+import {
+  Table,
+  Column,
+  Model,
+  DataType,
+  PrimaryKey,
+  Default,
+  IsUUID,
+} from 'sequelize-typescript';
 import { v4 as uuidv4 } from 'uuid';
 
 @Table({ tableName: 'email_verification_otps', timestamps: true })

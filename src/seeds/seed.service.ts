@@ -17,7 +17,6 @@ import { SUBSCRIPTIONS } from './subscriptions.seed';
 
 import { XpConfiguration } from '../xp/models/xp-configuration.model';
 
-
 @Injectable()
 export class SeedService implements OnModuleInit {
   private readonly logger = new Logger(SeedService.name);
@@ -35,8 +34,8 @@ export class SeedService implements OnModuleInit {
     const adminUser = await this.seedAdminUser();
     await this.seedStates(adminUser.id);
     await this.seedLgas();
-  await this.seedSubscriptions();
-   await this.seedXpConfig();
+    await this.seedSubscriptions();
+    await this.seedXpConfig();
   }
 
   // --------------------
@@ -53,22 +52,21 @@ export class SeedService implements OnModuleInit {
   }
 
   // --------------------
-// Subscriptions
-// --------------------
-private async seedSubscriptions() {
-  for (const subscription of SUBSCRIPTIONS) {
-    await this.subscriptionModel.findOrCreate({
-      where: {
-        name: subscription.name,
-        range: subscription.range,
-      },
-      defaults: subscription,
-    });
+  // Subscriptions
+  // --------------------
+  private async seedSubscriptions() {
+    for (const subscription of SUBSCRIPTIONS) {
+      await this.subscriptionModel.findOrCreate({
+        where: {
+          name: subscription.name,
+          range: subscription.range,
+        },
+        defaults: subscription,
+      });
+    }
+
+    this.logger.log('✅ Subscriptions seeded');
   }
-
-  this.logger.log('✅ Subscriptions seeded');
-}
-
 
   // --------------------
   // Admin User
@@ -140,9 +138,7 @@ private async seedSubscriptions() {
       attributes: ['id', 'title'],
     });
 
-    const stateMap = new Map(
-      states.map((state) => [state.title, state.id]),
-    );
+    const stateMap = new Map(states.map((state) => [state.title, state.id]));
 
     for (const [stateTitle, lgas] of Object.entries(LGAS_BY_STATE)) {
       const stateId = stateMap.get(stateTitle);
@@ -169,10 +165,10 @@ private async seedSubscriptions() {
     this.logger.log('✅ LGAs seeded');
   }
 
- // --------------------
+  // --------------------
   // XP Defaults
   // --------------------
-async seedXpConfig() {
+  async seedXpConfig() {
     try {
       const exists = await XpConfiguration.count();
       if (exists === 0) {
@@ -218,5 +214,4 @@ async seedXpConfig() {
       console.error('❌ Error seeding XpConfiguration:', error);
     }
   }
-
 }

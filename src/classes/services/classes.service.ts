@@ -159,7 +159,7 @@ export class ClassesService {
           });
           finalRoomId = newDbRoom.id;
         } catch (error) {
-          const axiosError = error as any;
+          const axiosError = error;
           const dailyData = axiosError.response?.data || {};
           throw new BadRequestException(
             `Failed to create room on Daily.co: ${dailyData.error || axiosError.message}`,
@@ -653,7 +653,9 @@ export class ClassesService {
 
       const recordings = await this.recordingModel.findAll({
         where,
-        include: [{ model: Subject, as: 'subject', attributes: ['id', 'title'] }],
+        include: [
+          { model: Subject, as: 'subject', attributes: ['id', 'title'] },
+        ],
         order: [['createdAt', 'DESC']],
       });
 

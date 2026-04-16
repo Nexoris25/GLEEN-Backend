@@ -45,14 +45,14 @@ export class Goal extends Model {
     type: DataType.STRING,
     allowNull: true,
   })
-  avatar: string
+  avatar: string;
 
   @ApiProperty()
   @Column({
     type: DataType.UUID,
     allowNull: true,
   })
-  userId?:string
+  userId?: string;
 
   @ApiProperty()
   @BelongsToMany(() => User, () => UserGoal, 'goalId', 'userId')
@@ -60,7 +60,6 @@ export class Goal extends Model {
 
   @BeforeCreate
   static async setUserId(instance: Goal, options: { [key: string]: any }) {
-  
     // Retrieve the authenticated user ID
     const authUserId = options.userId;
     if (!authUserId) {
@@ -68,5 +67,4 @@ export class Goal extends Model {
     }
     instance.userId = authUserId;
   }
-
 }

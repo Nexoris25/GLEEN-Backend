@@ -10,23 +10,14 @@ import { BunnyService } from 'src/common/services/bunny-all.service';
 
 @Module({
   imports: [
-     JwtModule.register({
-          secret: process.env.JWT_SECRET_KEY,
-          signOptions: { expiresIn: process.env.JWT_EXPIRATION_TIME || '30d' },
-        }),
-    SequelizeModule.forFeature([
-      Subject,
-      UserSubject, User
-    ]),
+    JwtModule.register({
+      secret: process.env.JWT_SECRET_KEY,
+      signOptions: { expiresIn: process.env.JWT_EXPIRATION_TIME || '30d' },
+    }),
+    SequelizeModule.forFeature([Subject, UserSubject, User]),
   ],
-  providers: [
-    SubjectService, BunnyService, 
-  ],
-  controllers: [
-    SubjectController,
-  ],
-  exports: [
-    SubjectService,
-  ],
+  providers: [SubjectService, BunnyService],
+  controllers: [SubjectController],
+  exports: [SubjectService],
 })
 export class SubjectModule {}

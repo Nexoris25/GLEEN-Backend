@@ -4,7 +4,6 @@ import { InjectModel } from '@nestjs/sequelize';
 import { NotificationTracking } from '../models/notification-recipient.model';
 import { NotificationEntityType } from 'src/shared-types/FileTypeEnum';
 
-
 import { AggregatedNotificationDto } from '../dto/aggregated-notification.dto';
 import { V1Battle } from 'src/v1-battle/models/v1-battle.model';
 import { TutorMessage } from 'src/messages/models/tutor-message.model';
@@ -60,23 +59,22 @@ export class NotificationReadService {
     );
   }
 
-
   /**
- * Create a notification for a user
- * Defaults to unread (read: false)
- */
-async createNotification(
-  userId: string,
-  entityType: NotificationEntityType,
-  entityId: string,
-): Promise<NotificationTracking> {
-  return this.recipientModel.create({
-    userId,
-    entityType,
-    entityId,
-    read: false,  // default to unread
-  });
-}
+   * Create a notification for a user
+   * Defaults to unread (read: false)
+   */
+  async createNotification(
+    userId: string,
+    entityType: NotificationEntityType,
+    entityId: string,
+  ): Promise<NotificationTracking> {
+    return this.recipientModel.create({
+      userId,
+      entityType,
+      entityId,
+      read: false, // default to unread
+    });
+  }
 
   /**
    * Get all unread notifications for a user (optional helper)
@@ -102,7 +100,4 @@ async createNotification(
       },
     });
   }
-
-
-  
 }

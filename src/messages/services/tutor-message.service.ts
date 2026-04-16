@@ -12,13 +12,11 @@ import { v4 as uuidv4 } from 'uuid';
 export class TutorMessageService {
   constructor(
     @InjectModel(TutorMessage) private messageModel: typeof TutorMessage,
-    @InjectModel(NotificationTracking) private recipientModel: typeof NotificationTracking,
+    @InjectModel(NotificationTracking)
+    private recipientModel: typeof NotificationTracking,
     @InjectModel(User) private userModel: typeof User,
   ) {}
 
-
-  
-  
   async create(dto: CreateTutorMessageDto, tutorId: string) {
     // ----------------------------
     // 1. Validate that at least one target exists
@@ -60,9 +58,9 @@ export class TutorMessageService {
     // ----------------------------
     const recipientRows = students.map((student) => ({
       id: uuidv4(),
-      entityType: 'TUTOR_MESSAGE',   // Required column in notification_tracking
-      entityId: message.id,           // Link to the message
-      userId: student.id,             // Student receiving
+      entityType: 'TUTOR_MESSAGE', // Required column in notification_tracking
+      entityId: message.id, // Link to the message
+      userId: student.id, // Student receiving
       read: false,
       readAt: null,
       createdAt: new Date(),
@@ -73,7 +71,7 @@ export class TutorMessageService {
 
     return message;
   }
-  
+
   private async resolveRecipients(dto: CreateTutorMessageDto) {
     // Start with all students
     const where: any = { role: 'USER' };
@@ -89,7 +87,7 @@ export class TutorMessageService {
 
     return this.userModel.findAll({ where });
   }
-  
+
   async getStudentMessages(studentId: string) {
     return this.recipientModel.findAll({
       where: { studentId },

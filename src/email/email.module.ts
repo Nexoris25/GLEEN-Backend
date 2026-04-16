@@ -30,7 +30,8 @@ if (!existsSync(templatesPath)) {
         transport: {
           host: process.env.EMAIL_HOST ?? config.get('EMAIL_HOST'),
           port: Number(process.env.EMAIL_PORT ?? config.get('EMAIL_PORT')),
-          secure: (process.env.EMAIL_SECURE ?? config.get('EMAIL_SECURE')) === 'true',
+          secure:
+            (process.env.EMAIL_SECURE ?? config.get('EMAIL_SECURE')) === 'true',
           auth: {
             user: process.env.EMAIL_USER ?? config.get('EMAIL_USER'),
             pass: process.env.EMAIL_PASSWORD ?? config.get('EMAIL_PASSWORD'),

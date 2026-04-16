@@ -9,20 +9,23 @@ import { CreateGoalDto } from '../dto/create-goal.dto';
 import { UpdateGoalDto } from '../dto/update-goal.dto';
 import { Goal } from '../models/goal.model';
 import { UserGoal } from '../models/user-goal.model';
-import stringify from "safe-stable-stringify";
+import stringify from 'safe-stable-stringify';
 
 @Injectable()
 export class GoalsService {
   constructor(
     @InjectModel(Goal)
     private goalModel: typeof Goal,
-        @InjectModel(UserGoal)
-        private readonly userGoalModel: typeof UserGoal,
+    @InjectModel(UserGoal)
+    private readonly userGoalModel: typeof UserGoal,
   ) {}
 
   async create(createGoalDto: CreateGoalDto, userId: string): Promise<Goal> {
     try {
-      return await this.goalModel.create(createGoalDto as any, { userId } as CreateOptions<any>);
+      return await this.goalModel.create(
+        createGoalDto as any,
+        { userId } as CreateOptions<any>,
+      );
     } catch (error) {
       throw new BadRequestException({
         message: 'Error creating goal',
@@ -108,7 +111,6 @@ export class GoalsService {
     }
   }
 
-
   async linkOne(userId: string, goalId: string) {
     try {
       return await this.userGoalModel.create({ userId, goalId });
@@ -127,7 +129,9 @@ export class GoalsService {
   async linkMany(userId: string, goalIds: string[]) {
     try {
       const records = goalIds.map((goalId) => ({ userId, goalId }));
-      return await this.userGoalModel.bulkCreate(records, { ignoreDuplicates: true });
+      return await this.userGoalModel.bulkCreate(records, {
+        ignoreDuplicates: true,
+      });
     } catch (error) {
       throw new BadRequestException({
         message: 'Error linking multiple goals to user',
@@ -157,7 +161,9 @@ export class GoalsService {
 
   async unlinkMany(userId: string, goalIds: string[]) {
     try {
-      return await this.userGoalModel.destroy({ where: { userId, goalId: goalIds } });
+      return await this.userGoalModel.destroy({
+        where: { userId, goalId: goalIds },
+      });
     } catch (error) {
       throw new BadRequestException({
         message: 'Error unlinking multiple goals from user',

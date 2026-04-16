@@ -4,6 +4,6 @@ import { BunnyService } from '../services/bunny.service';
 
 @Module({
   providers: [BunnyService],
-  exports: [BunnyService], 
+  exports: [BunnyService],
 })
 export class BunnyModule {}
