@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import stringify from 'safe-stable-stringify';
-import { Op } from 'sequelize';
+import { Op, literal } from 'sequelize';
 import { Quizzes } from '../models/quiz.model';
 import { CreateQuizDto } from '../dto/create-quiz.dto';
 import { SearchQuizDto } from '../dto/search-quiz.dto';
@@ -107,6 +107,16 @@ export class QuizzesService {
       }
       return await this.quizzesModel.findAndCountAll({
         where: whereOptions,
+        attributes: {
+          include: [
+            [
+              literal(
+                '(SELECT COUNT(*) FROM "quiz_questions" AS "qq" WHERE "qq"."quizId" = "Quizzes"."id")',
+              ),
+              'questionCount',
+            ],
+          ],
+        },
         limit,
         offset,
       });
@@ -124,7 +134,18 @@ export class QuizzesService {
 
   async findById(id: string): Promise<Quizzes | null> {
     try {
-      return await this.quizzesModel.findByPk(id);
+      return await this.quizzesModel.findByPk(id, {
+        attributes: {
+          include: [
+            [
+              literal(
+                '(SELECT COUNT(*) FROM "quiz_questions" AS "qq" WHERE "qq"."quizId" = "Quizzes"."id")',
+              ),
+              'questionCount',
+            ],
+          ],
+        },
+      });
     } catch (error) {
       throw new BadRequestException({
         message: 'Error fetching quiz by ID:',

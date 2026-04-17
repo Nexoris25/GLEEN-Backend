@@ -1,4 +1,4 @@
-import { ApiProperty, ApiHideProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   BeforeCreate,
   BelongsToMany,
@@ -95,6 +95,10 @@ export class Quizzes extends Model {
   @HasMany(() => QuizQuestions, { foreignKey: 'quizId' })
   quizQuestions: QuizQuestions[];
 
+  @ApiPropertyOptional({ description: 'Number of questions in the quiz' })
+  @Column(DataType.VIRTUAL)
+  questionCount?: number;
+
   @ApiProperty()
   @BelongsToMany(
     () => StudentsQuizAnswers,
@@ -105,7 +109,7 @@ export class Quizzes extends Model {
   studentsQuizAnswers: StudentsQuizAnswers[];
 
   @BeforeCreate
-  static async setUserId(instance: Quizzes, options: { [key: string]: any }) {
+  static setUserId(instance: Quizzes, options: { [key: string]: any }) {
     // Retrieve the authenticated user ID
     const authUserId = options.userId;
     if (!authUserId) {
