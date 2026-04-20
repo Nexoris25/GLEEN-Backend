@@ -14,7 +14,6 @@ import {
   UploadedFile,
   UseInterceptors,
   Patch,
-  Req,
 } from '@nestjs/common';
 import { User } from '../models/user.model';
 import { JwtAuthGuard } from '../../auth/GuardsDecorMiddleware/jwt-auth.guard';
@@ -41,7 +40,6 @@ import { UserId } from 'src/auth/GuardsDecorMiddleware/userIdDecorator.guard';
 import { CreateUserDto } from '../dto/create-user.dto';
 import stringify from 'safe-stable-stringify';
 // import { AdminOnly } from 'src/auth/GuardsDecorMiddleware/AdminOnlyDecorator.guard';
-import { Roles } from 'src/auth/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/GuardsDecorMiddleware/roles.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 
@@ -77,14 +75,14 @@ export class UserController {
     @UserId() userId: string,
   ): Promise<{ status: number; message: string; data?: User; error?: any }> {
     try {
-      const updateUserDto: UpdateUserDto = {
-        fullName: dto.name,
-        gender: dto.gender,
-        country: dto.country,
-        stateId: dto.state,
-        lga: dto.localGovernment,
-        avatar: dto.picUrl,
-      };
+      const updateUserDto: UpdateUserDto = {};
+      if (dto.name !== undefined) updateUserDto.fullName = dto.name;
+      if (dto.gender !== undefined) updateUserDto.gender = dto.gender;
+      if (dto.country !== undefined) updateUserDto.country = dto.country;
+      if (dto.state !== undefined) updateUserDto.stateId = dto.state;
+      if (dto.localGovernment !== undefined)
+        updateUserDto.lga = dto.localGovernment;
+      if (dto.picUrl !== undefined) updateUserDto.avatar = dto.picUrl;
 
       const updatedUser = await this.userService.update(
         userId,

@@ -329,7 +329,7 @@ export class UserService {
           const verificationToken = await this.generateEmailVerificationToken(
             newUser.id,
           );
-        /*
+          /*
 if (newUser.referral) {
 const upline: User = await this.findOneByUsername(newUser.referral);
 const xpConfig: XpConfiguration = await this.xpLogService.getXpConfig();
@@ -417,7 +417,7 @@ detail: `xp bonus for referring ${newUser.username}`,
     }
 
     try {
-      await this.userModel.update(updatedUserData, { where: { id } });
+      await user.update(updatedUserData);
       return await this.findOneById(id);
     } catch (error) {
       throw new BadRequestException({
