@@ -20,6 +20,7 @@ import { JwtAuthGuard } from '../../auth/GuardsDecorMiddleware/jwt-auth.guard';
 import { UserService } from '../services/user.service';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { UpdateMyProfileDto } from '../dto/update-my-profile.dto';
+import { LinkSubjectsGoalsDto } from '../dto/link-subjects-goals.dto';
 import {
   ApiResponse,
   ApiTags,
@@ -49,6 +50,42 @@ import { FileInterceptor } from '@nestjs/platform-express';
 @Controller('')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @Patch('user/links')
+  @ApiOperation({ summary: 'Link subjects and goals to my profile' })
+  @ApiBody({ type: LinkSubjectsGoalsDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Subjects and goals linked successfully',
+    type: UserResponseDto,
+  })
+  async linkSubjectsAndGoals(
+    @Body(new ValidationPipe()) dto: LinkSubjectsGoalsDto,
+    @UserId() userId: string,
+  ): Promise<{ status: number; message: string; data?: User; error?: any }> {
+    try {
+      const user = await this.userService.linkSubjectsAndGoals(
+        userId,
+        dto.subjects,
+        dto.goals,
+      );
+      return {
+        status: HttpStatus.OK,
+        message: 'Subjects and goals linked successfully',
+        data: user,
+      };
+    } catch (error) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Error linking subjects and goals',
+        error: stringify({
+          message: (error as Error)?.message || 'Unknown error',
+          stack: (error as Error)?.stack,
+          details: (error as any)?.response || error,
+        }),
+      };
+    }
+  }
 
   @Patch('user/profile')
   @ApiOperation({ summary: 'Update my profile' })

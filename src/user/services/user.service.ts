@@ -17,9 +17,10 @@ import { UserStatusEnum } from '../../shared-types/UserStatusEnum';
 import { RoleEnum } from '../../shared-types/RoleEnum';
 import stringify from 'safe-stable-stringify';
 import { XpLogService } from 'src/xp/services/xp-log.service';
-import { XpConfiguration } from 'src/xp/models/xp-configuration.model';
 import { Express } from 'express';
 import { BunnyService } from 'src/common/services/bunny.service';
+import { Subject } from 'src/subject/models/subject.model';
+import { Goal } from 'src/goal/models/goal.model';
 
 @Injectable()
 export class UserService {
@@ -68,7 +69,7 @@ export class UserService {
     }
     await this.userModel.update(
       { isEmailVerified: true },
-      { where: { email: email } },
+      { where: { email: { [Op.iLike]: email } } },
     );
   }
 
@@ -156,14 +157,14 @@ export class UserService {
     }
   }
 
-  async comparePasswords(
+  comparePasswords(
     plainPassword: string,
     hashedPassword: string,
   ): Promise<boolean> {
     return bcrypt.compare(plainPassword, hashedPassword);
   }
 
-  async hashPassword(password: string): Promise<string> {
+  hashPassword(password: string): Promise<string> {
     const saltRounds = 10;
     return bcrypt.hash(password, saltRounds);
   }
@@ -182,6 +183,7 @@ export class UserService {
   async findOneByUsernameMiddleware(username: string): Promise<User> {
     const user = await this.userModel.findOne({
       where: { username },
+      attributes: { exclude: ['password'] },
       include: [{ association: 'goals' }, { association: 'subjects' }],
     });
     if (!user) {
@@ -191,16 +193,23 @@ export class UserService {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.userModel.findOne({ where: { email } });
+    return this.userModel.findOne({
+      where: { email: { [Op.iLike]: email } },
+      attributes: { exclude: ['password'] },
+    });
   }
 
   async findByUsername(username: string): Promise<User | null> {
-    return this.userModel.findOne({ where: { username } });
+    return this.userModel.findOne({
+      where: { username },
+      attributes: { exclude: ['password'] },
+    });
   }
 
   async findOneByEmail(email: string): Promise<User> {
     const user = await this.userModel.findOne({
-      where: { email },
+      where: { email: { [Op.iLike]: email } },
+      attributes: { exclude: ['password'] },
       include: [{ association: 'goals' }, { association: 'subjects' }],
     });
     if (!user) {
@@ -211,7 +220,8 @@ export class UserService {
 
   async findOneByEmailReg(email: string): Promise<User> {
     const user = await this.userModel.findOne({
-      where: { email },
+      where: { email: { [Op.iLike]: email } },
+      attributes: { exclude: ['password'] },
       include: [{ association: 'goals' }, { association: 'subjects' }],
     });
     if (!user) {
@@ -222,6 +232,7 @@ export class UserService {
 
   async findOneById(id: string): Promise<User> {
     const user = await this.userModel.findByPk(id, {
+      attributes: { exclude: ['password'] },
       include: [{ association: 'goals' }, { association: 'subjects' }],
     });
     if (!user) {
@@ -234,6 +245,7 @@ export class UserService {
     const user = await this.userModel.findAll({
       order: [['createdAt', 'DESC']],
       where: { referral: referralUsername },
+      attributes: { exclude: ['password'] },
       include: [{ association: 'goals' }, { association: 'subjects' }],
     });
     if (!user || user.length === 0) {
@@ -242,7 +254,7 @@ export class UserService {
     return user;
   }
 
-  async generateEmailVerificationToken(userId: string): Promise<string> {
+  generateEmailVerificationToken(userId: string): string {
     const secretKey =
       process.env.EMAIL_VERIFICATION_SECRET || 'default-reset-password-secret';
     return jwt.sign({ sub: userId }, secretKey, { expiresIn: '1h' });
@@ -264,18 +276,22 @@ export class UserService {
     x = null,
     options?: { sendVerificationEmail?: boolean },
   ): Promise<User> {
-    const { email, password, stateId, ...rest } = createUserDto;
-    const existingUser = await this.userModel.findOne({ where: { email } });
+    const normalizedEmail = createUserDto.email?.trim().toLowerCase();
+    const { stateId, ...rest } = createUserDto;
+    const existingUser = await this.userModel.findOne({
+      where: { email: { [Op.iLike]: normalizedEmail } },
+    });
 
     if (existingUser) {
       throw new BadRequestException('Email is already taken');
     }
 
     // Generate a unique username from the email prefix
-    let username = createUserDto.username || email.split('@')[0];
+    const emailPrefix = normalizedEmail.split('@')[0];
+    let username = createUserDto.username || emailPrefix;
     let count = 1;
     while (await this.userModel.findOne({ where: { username } })) {
-      username = `${email.split('@')[0]}${count}`;
+      username = `${emailPrefix}${count}`;
       count++;
     }
 
@@ -304,7 +320,7 @@ export class UserService {
       let newUser: void | User;
       const payload = {
         ...rest,
-        email,
+        email: normalizedEmail,
         username,
         password: hashedPassword,
         ...(avatarUrl && { avatar: avatarUrl }),
@@ -342,7 +358,7 @@ detail: `xp bonus for referring ${newUser.username}`,
 }
 */
           await this.emailService.sendVerificationEmail({
-            userEmail: email,
+            userEmail: normalizedEmail,
             link: `${process.env.FRONTEND_URL}/activate?token=${verificationToken}`,
           });
         }
@@ -429,6 +445,48 @@ detail: `xp bonus for referring ${newUser.username}`,
         }),
       });
     }
+  }
+
+  async findOneByEmailForAuth(email: string): Promise<User | null> {
+    const normalizedEmail = email.trim();
+    return this.userModel.findOne({
+      where: { email: { [Op.iLike]: normalizedEmail } },
+    });
+  }
+
+  async linkSubjectsAndGoals(
+    userId: string,
+    subjectIds?: string[],
+    goalIds?: string[],
+  ): Promise<User> {
+    const user = await this.userModel.findByPk(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID '${userId}' not found`);
+    }
+
+    if (subjectIds) {
+      const subjects = await Subject.findAll({ where: { id: subjectIds } });
+      if (subjects.length !== subjectIds.length) {
+        const existingIds = new Set(subjects.map((s) => s.id));
+        const missing = subjectIds.filter((id) => !existingIds.has(id));
+        throw new BadRequestException(
+          `Invalid subjectIds: ${missing.join(', ')}`,
+        );
+      }
+      await (user as any).$set('subjects', subjectIds);
+    }
+
+    if (goalIds) {
+      const goals = await Goal.findAll({ where: { id: goalIds } });
+      if (goals.length !== goalIds.length) {
+        const existingIds = new Set(goals.map((g) => g.id));
+        const missing = goalIds.filter((id) => !existingIds.has(id));
+        throw new BadRequestException(`Invalid goalIds: ${missing.join(', ')}`);
+      }
+      await (user as any).$set('goals', goalIds);
+    }
+
+    return this.findOneById(userId);
   }
 
   async delete(id: string): Promise<User> {

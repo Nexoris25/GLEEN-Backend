@@ -43,7 +43,7 @@ export class AuthService {
   }
 
   async validateUser(email: string, password: string): Promise<User> {
-    const user = await this.userService.findOneByEmail(email);
+    const user = await this.userService.findOneByEmailForAuth(email);
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
@@ -55,6 +55,14 @@ export class AuthService {
       throw new UnauthorizedException('Invalid password');
     }
     return user;
+  }
+
+  private sanitizeUser(user: User) {
+    const plain = typeof (user as any)?.toJSON === 'function' ? (user as any).toJSON() : user;
+    if (plain && typeof plain === 'object' && 'password' in plain) {
+      delete (plain as any).password;
+    }
+    return plain;
   }
 
   async validateIsAdmin(userId: string): Promise<boolean> {
@@ -100,7 +108,11 @@ export class AuthService {
     }
 
     const token = this.generateJwtToken(user);
-    return { user, token, expiresIn: this.getJwtExpUnix(token) };
+    return {
+      user: this.sanitizeUser(user),
+      token,
+      expiresIn: this.getJwtExpUnix(token),
+    };
   }
 
   /**
