@@ -62,7 +62,9 @@ export class LessonTopicService {
       for (const item of bulkDto.topics) {
         const topic = await this.lessonTopicModel.findByPk(item.id);
         if (!topic) {
-          throw new NotFoundException(`Lesson topic with ID ${item.id} not found`);
+          throw new NotFoundException(
+            `Lesson topic with ID ${item.id} not found`,
+          );
         }
 
         if (topic.lessonId !== lessonId) {

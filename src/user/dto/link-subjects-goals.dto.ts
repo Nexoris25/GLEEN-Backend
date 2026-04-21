@@ -22,4 +22,3 @@ export class LinkSubjectsGoalsDto {
   @IsUUID('4', { each: true })
   goals?: string[];
 }
-

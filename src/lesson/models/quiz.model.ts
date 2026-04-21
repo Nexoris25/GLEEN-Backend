@@ -47,7 +47,7 @@ export class Quizzes extends Model {
   })
   duration: number;
 
-  @ApiProperty()
+  @ApiProperty({ type: [String] })
   @Column({
     type: DataType.TEXT,
     allowNull: true,
@@ -66,8 +66,36 @@ export class Quizzes extends Model {
   @Column({
     type: DataType.TEXT,
     allowNull: true,
+    get() {
+      const raw = this.getDataValue('instructions') as unknown;
+      if (raw === null || raw === undefined) return [];
+      if (Array.isArray(raw)) return raw;
+      const str = String(raw).trim();
+      if (!str) return [];
+      try {
+        const parsed = JSON.parse(str) as unknown;
+        if (Array.isArray(parsed)) {
+          return parsed.map((v) => String(v));
+        }
+      } catch {}
+      return str
+        .split(/\r?\n/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+    },
+    set(value: unknown) {
+      if (value === null || value === undefined) {
+        this.setDataValue('instructions', null);
+        return;
+      }
+      if (Array.isArray(value)) {
+        this.setDataValue('instructions', JSON.stringify(value));
+        return;
+      }
+      this.setDataValue('instructions', String(value));
+    },
   })
-  instructions?: string;
+  instructions?: string[];
 
   @ApiProperty()
   @Column({

@@ -342,7 +342,7 @@ export class UserService {
 
       if (newUser) {
         if (options?.sendVerificationEmail !== false) {
-          const verificationToken = await this.generateEmailVerificationToken(
+          const verificationToken = this.generateEmailVerificationToken(
             newUser.id,
           );
           /*

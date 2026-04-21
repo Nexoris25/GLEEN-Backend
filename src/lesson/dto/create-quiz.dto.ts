@@ -1,11 +1,12 @@
 //write quiz questions dto
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsArray,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
-  IsInt,
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -28,10 +29,11 @@ export class CreateQuizDto {
   @IsString()
   description?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ type: [String] })
   @IsOptional()
-  @IsString()
-  instructions?: string;
+  @IsArray()
+  @IsString({ each: true })
+  instructions?: string[];
 
   @ApiProperty()
   @IsNotEmpty()

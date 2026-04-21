@@ -33,7 +33,6 @@ import { Subject } from '../models/subject.model';
 import {
   ResponseDto,
   SubjectArrayResponseDto,
-  SubjectResponseDto,
   UserSubjectArrayResponseDto,
   UserSubjectResponseDto,
 } from 'src/shared-types/response.dto';
@@ -95,7 +94,7 @@ return this.subjectService.findById(id);
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Soft delete a subject by ID' })
+  @ApiOperation({ summary: 'Delete a subject by ID' })
   @ApiParam({ name: 'id', type: String, format: 'uuid' })
   @ApiResponse({
     status: 204,

@@ -5,7 +5,10 @@ import {
   CreateBulkQuizQuestionDto,
   CreateQuizQuestionDto,
 } from '../dto/create-quiz-question.dto';
-import { UpdateQuizQuestionDto } from '../dto/update-quiz-question.dto';
+import {
+  UpdateBulkQuizQuestionDto,
+  UpdateQuizQuestionDto,
+} from '../dto/update-quiz-question.dto';
 import { SearchQuizQuestionDto } from '../dto/search-quiz-question.dto';
 import stringify from 'safe-stable-stringify';
 import { Op } from 'sequelize';
@@ -56,6 +59,51 @@ export class QuizQuestionsService {
     } catch (error) {
       throw new BadRequestException({
         message: 'Error creating quiz questions in bulk:',
+        details: stringify({
+          message: error.message,
+          stack: error.stack,
+          details: error.response || error,
+        }),
+      });
+    }
+  }
+
+  async updateBulk(
+    updateBulkDto: UpdateBulkQuizQuestionDto,
+    quizId: string,
+  ): Promise<QuizQuestions[]> {
+    try {
+      const ids = updateBulkDto.questions.map((q) => q.id);
+
+      const existingQuestions = await this.quizQuestionsModel.findAll({
+        where: { id: { [Op.in]: ids }, quizId },
+      });
+
+      if (existingQuestions.length !== ids.length) {
+        throw new Error(
+          'One or more quiz questions were not found for the provided quizId',
+        );
+      }
+
+      const byId = new Map(existingQuestions.map((q) => [q.id, q]));
+
+      const updatedQuestions = await Promise.all(
+        updateBulkDto.questions.map(async ({ id, ...payload }) => {
+          const question = byId.get(id);
+          if (!question) {
+            throw new Error(
+              'One or more quiz questions were not found for the provided quizId',
+            );
+          }
+          await question.update(payload);
+          return question;
+        }),
+      );
+
+      return updatedQuestions;
+    } catch (error) {
+      throw new BadRequestException({
+        message: 'Error updating quiz questions in bulk:',
         details: stringify({
           message: error.message,
           stack: error.stack,

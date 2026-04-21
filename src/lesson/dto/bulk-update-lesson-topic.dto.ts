@@ -85,4 +85,3 @@ export class BulkUpdateLessonTopicDto {
   @Type(() => BulkUpdateLessonTopicItemDto)
   topics: BulkUpdateLessonTopicItemDto[];
 }
-

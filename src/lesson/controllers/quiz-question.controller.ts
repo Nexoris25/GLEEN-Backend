@@ -4,10 +4,10 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Put,
   Query,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import { QuizQuestionsService } from '../services/quiz-question.service';
@@ -15,7 +15,10 @@ import {
   CreateBulkQuizQuestionDto,
   CreateQuizQuestionDto,
 } from '../dto/create-quiz-question.dto';
-import { UpdateQuizQuestionDto } from '../dto/update-quiz-question.dto';
+import {
+  UpdateBulkQuizQuestionDto,
+  UpdateQuizQuestionDto,
+} from '../dto/update-quiz-question.dto';
 import {
   QuizQuestionsArrayResponseDto,
   QuizQuestionsResponseCountDto,
@@ -76,6 +79,47 @@ export class QuizQuestionController {
       return {
         status: 500,
         message: 'Error creating quiz questions',
+        error: stringify({
+          message: error.message,
+          stack: error.stack,
+          details: error.response || error,
+        }),
+      };
+    }
+  }
+
+  @Patch('bulk/:quizId')
+  @ApiOperation({ summary: 'Update multiple quiz questions' })
+  @ApiParam({ name: 'quizId', description: 'Quiz ID' })
+  @ApiBody({ type: UpdateBulkQuizQuestionDto })
+  @ApiResponse({
+    status: 200,
+    description: 'The quiz questions have been successfully updated.',
+    type: QuizQuestionsArrayResponseDto,
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Error updating quiz questions',
+    type: ResponseDto<null>,
+  })
+  async updateBulk(
+    @Param('quizId') quizId: string,
+    @Body() updateBulkDto: UpdateBulkQuizQuestionDto,
+  ): Promise<QuizQuestionsArrayResponseDto> {
+    try {
+      const questions = await this.quizQuestionsService.updateBulk(
+        updateBulkDto,
+        quizId,
+      );
+      return {
+        status: 200,
+        data: questions,
+        message: 'Quiz questions updated successfully',
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        message: 'Error updating quiz questions',
         error: stringify({
           message: error.message,
           stack: error.stack,

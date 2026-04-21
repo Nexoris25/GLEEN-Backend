@@ -7,10 +7,6 @@ import {
   Post,
   Put,
   Query,
-  Req,
-  UseInterceptors,
-  BadRequestException,
-  UploadedFile,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -28,7 +24,6 @@ import {
   ApiResponse,
   ApiTags,
   ApiBearerAuth,
-  ApiConsumes,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/GuardsDecorMiddleware/jwt-auth.guard';
 import { UserId } from 'src/auth/GuardsDecorMiddleware/userIdDecorator.guard';
@@ -39,8 +34,6 @@ import { SearchQuizDto } from '../dto/search-quiz.dto';
 import { UpdateQuizDto } from '../dto/udpdate-quiz.dto';
 import { CreateQuizCommentDto } from '../dto/create-quiz-comment.dto';
 import { UpdateQuizCommentDto } from '../dto/update-quiz-comment.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { ValidationPipe } from '@nestjs/common';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 
 @ApiTags('Quizzes')
@@ -53,39 +46,7 @@ export class QuizController {
   @Post()
   @ApiOperation({ summary: 'Create a new quiz' })
   @Roles('ADMIN', 'TUTOR')
-  @ApiConsumes('multipart/form-data')
-  @UseInterceptors(
-    FileInterceptor('avatar', {
-      limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
-      fileFilter: (_, file, cb) => {
-        if (!file.mimetype.startsWith('image/')) {
-          cb(new BadRequestException('Only image files are allowed'), false);
-        }
-        cb(null, true);
-      },
-    }),
-  )
-  /*
-@ApiBody({ type: CreateQuizDto }) 
-*/
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        title: { type: 'string' },
-        duration: {
-          type: 'number',
-          example: 30,
-          description: 'Duration in minutes',
-        },
-        description: { type: 'string' },
-        instructions: { type: 'string' },
-        subjectId: { type: 'string', format: 'uuid' },
-        avatar: { type: 'string', format: 'binary' }, // file upload
-      },
-      required: ['title', 'duration', 'subjectId'],
-    },
-  })
+  @ApiBody({ type: CreateQuizDto })
   @ApiResponse({
     status: 201,
     description: 'The quiz has been successfully created.',
@@ -99,10 +60,9 @@ export class QuizController {
   async create(
     @Body() createDto: CreateQuizDto,
     @UserId() userId: string,
-    @UploadedFile() avatar: Express.Multer.File,
   ): Promise<QuizzesResponseDto> {
     try {
-      const x = await this.quizzesService.create(createDto, userId, avatar);
+      const x = await this.quizzesService.create(createDto, userId);
       return {
         status: 201,
         data: x,
@@ -203,18 +163,6 @@ export class QuizController {
 
   @Put(':id')
   @ApiOperation({ summary: 'Update a quiz by ID' })
-  @ApiConsumes('multipart/form-data')
-  @UseInterceptors(
-    FileInterceptor('avatar', {
-      limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
-      fileFilter: (_, file, cb) => {
-        if (!file.mimetype.startsWith('image/')) {
-          cb(new BadRequestException('Only image files are allowed'), false);
-        }
-        cb(null, true);
-      },
-    }),
-  )
   @ApiResponse({
     status: 200,
     description: 'The quiz has been successfully updated.',
@@ -230,31 +178,13 @@ export class QuizController {
     description: 'Error updating quiz',
     type: ResponseDto<null>,
   })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        title: { type: 'string' },
-        duration: {
-          type: 'number',
-          example: 30,
-          description: 'Duration in minutes',
-        },
-        description: { type: 'string' },
-        instructions: { type: 'string' },
-        subjectId: { type: 'string', format: 'uuid' },
-        avatar: { type: 'string', format: 'binary' }, // file upload
-      },
-      required: ['title', 'duration', 'subjectId'],
-    },
-  })
+  @ApiBody({ type: UpdateQuizDto })
   async update(
     @Param('id') id: string,
     @Body() updateDto: UpdateQuizDto,
-    @UploadedFile() avatar: Express.Multer.File,
   ): Promise<QuizzesResponseDto> {
     try {
-      const x = await this.quizzesService.update(id, updateDto, avatar);
+      const x = await this.quizzesService.update(id, updateDto);
       if (!x) {
         return {
           status: 404,

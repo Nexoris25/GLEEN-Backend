@@ -53,8 +53,24 @@ export class SubjectService {
       }
     }
 
+    const title = dto.title?.trim();
+    const existingSubject = await this.subjectModel.findOne({
+      where: { title },
+      paranoid: false,
+    });
+
+    if (existingSubject) {
+      const deletedAt = (existingSubject as any).deletedAt as unknown;
+      if (deletedAt) {
+        await existingSubject.destroy({ force: true });
+      } else {
+        throw new ConflictException('A subject with this title already exists');
+      }
+    }
+
     const subjectData: Partial<Subject> = {
       ...dto,
+      title,
       userId: authUserId,
     };
 
@@ -62,10 +78,18 @@ export class SubjectService {
       return await this.subjectModel.create(subjectData);
     } catch (error) {
       if (error instanceof UniqueConstraintError) {
-        const field = error.errors[0]?.path || 'Unknown field';
-        throw new ConflictException(
-          `A subject with this ${field} already exists`,
-        );
+        const existing = await this.subjectModel.findOne({
+          where: { title },
+          paranoid: false,
+        });
+        if (existing) {
+          const deletedAt = (existing as any).deletedAt as unknown;
+          if (deletedAt) {
+            await existing.destroy({ force: true });
+            return await this.subjectModel.create(subjectData);
+          }
+        }
+        throw new ConflictException('A subject with this title already exists');
       }
       throw error;
     }
@@ -133,7 +157,8 @@ export class SubjectService {
         await this.bunnyService.deleteByUrl(subject.avatar);
       }
 
-      await subject.destroy(); // soft delete (paranoid: true)
+      await this.userSubjectModel.destroy({ where: { subjectId: id } });
+      await subject.destroy({ force: true });
     } catch (error) {
       console.log(error);
       if (

@@ -1,6 +1,7 @@
 //write quiz questions dto
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsArray,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -35,10 +36,11 @@ export class UpdateQuizDto {
   @IsString()
   status: string = 'PENDING';
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ type: [String] })
   @IsOptional()
-  @IsString()
-  instructions?: string;
+  @IsArray()
+  @IsString({ each: true })
+  instructions?: string[];
 
   @ApiPropertyOptional()
   @IsOptional()

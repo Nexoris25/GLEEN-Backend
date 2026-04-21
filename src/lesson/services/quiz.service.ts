@@ -13,23 +13,17 @@ import { UpdateQuizDto } from '../dto/udpdate-quiz.dto';
 import { CreateQuizCommentDto } from '../dto/create-quiz-comment.dto';
 import { QuizComment } from '../models/quiz_comment.model';
 import { UpdateQuizCommentDto } from '../dto/update-quiz-comment.dto';
-import { BunnyService } from 'src/common/services/bunny-all.service';
 
 @Injectable()
 export class QuizzesService {
   constructor(
     @InjectModel(Quizzes)
     private quizzesModel: typeof Quizzes,
-    private readonly bunnyService: BunnyService,
     @InjectModel(QuizComment)
     private quizCommentModel: typeof QuizComment,
   ) {}
 
-  async create(
-    createDto: CreateQuizDto,
-    userId: string,
-    avatar?: Express.Multer.File,
-  ): Promise<Quizzes> {
+  async create(createDto: CreateQuizDto, userId: string): Promise<Quizzes> {
     // 1️⃣ Check if a quiz with the same title already exists
     const existingQuiz = await this.quizzesModel.findOne({
       where: { title: createDto.title },
@@ -42,21 +36,11 @@ export class QuizzesService {
     }
 
     try {
-      let imageUrl: string | null = null;
-      if (avatar) {
-        imageUrl = await this.bunnyService.upload({
-          buffer: avatar.buffer,
-          mimeType: avatar.mimetype,
-          originalName: avatar.originalname,
-          directory: 'quiz',
-        });
-      }
-
       const quiz = await this.quizzesModel.create(
         {
           ...createDto,
           userId, // logged-in user
-          avatar: imageUrl, // or rename to avatar if that’s your column
+          avatar: createDto.avatar ?? null,
         } as Omit<Quizzes, 'id'>,
         {
           isNewRecord: true,
@@ -158,11 +142,7 @@ export class QuizzesService {
     }
   }
 
-  async update(
-    id: string,
-    updateDto: UpdateQuizDto,
-    avatar?: Express.Multer.File,
-  ): Promise<Quizzes | null> {
+  async update(id: string, updateDto: UpdateQuizDto): Promise<Quizzes | null> {
     try {
       const quiz = await this.quizzesModel.findByPk(id);
 
@@ -170,22 +150,8 @@ export class QuizzesService {
         throw new Error('Quiz not found');
       }
 
-      let imageUrl: string | null = null;
-
-      // Upload avatar only if sent
-      if (avatar) {
-        imageUrl = await this.bunnyService.upload({
-          buffer: avatar.buffer,
-          mimeType: avatar.mimetype,
-          originalName: avatar.originalname,
-          directory: 'quiz',
-        });
-      }
-
-      // Merge avatar into update payload if uploaded
       const returnURL = await quiz.update({
         ...updateDto,
-        ...(imageUrl && { avatar: imageUrl }),
       });
 
       return returnURL;

@@ -58,9 +58,12 @@ export class AuthService {
   }
 
   private sanitizeUser(user: User) {
-    const plain = typeof (user as any)?.toJSON === 'function' ? (user as any).toJSON() : user;
+    const plain =
+      typeof (user as any)?.toJSON === 'function'
+        ? (user as any).toJSON()
+        : user;
     if (plain && typeof plain === 'object' && 'password' in plain) {
-      delete (plain as any).password;
+      delete plain.password;
     }
     return plain;
   }
