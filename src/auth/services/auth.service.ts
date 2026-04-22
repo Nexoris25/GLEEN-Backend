@@ -580,6 +580,7 @@ export class AuthService {
    * Uses email as the identifier.
    */
   async generatePasswordResetOtp(email: string): Promise<string> {
+    const normalizedEmail = email.trim().toLowerCase();
     // Generate a 6-digit OTP
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
@@ -588,14 +589,14 @@ export class AuthService {
 
     // Save OTP to a new table (assumes PasswordResetOtp model exists)
     await this.passwordResetOtpModel.create({
-      email,
+      email: normalizedEmail,
       otp,
       expiresAt,
       used: false,
     });
 
     await this.emailService.sendPasswordResetOtp({
-      userEmail: email,
+      userEmail: normalizedEmail,
       otp,
     });
 
@@ -608,39 +609,52 @@ export class AuthService {
    */
 
   async verifyPasswordResetOtp(email: string, otp: string): Promise<boolean> {
-    // Find OTP record
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Find OTP record (case-insensitive email)
     const otpRecord = await this.passwordResetOtpModel.findOne({
       where: {
-        email,
+        email: { [Op.iLike]: normalizedEmail },
         otp,
-        used: false,
-        expiresAt: { [Op.gt]: new Date() },
       },
     });
 
     if (!otpRecord) {
-      throw new BadRequestException('Invalid or expired OTP');
+      throw new BadRequestException('Invalid OTP');
     }
 
-    // Mark OTP as used
-    // await otpRecord.update({ used: true });
+    if (otpRecord.used) {
+      throw new BadRequestException('OTP has already been used');
+    }
+
+    if (otpRecord.expiresAt <= new Date()) {
+      throw new BadRequestException('OTP has expired');
+    }
 
     return true;
   }
 
   async verifyPasswordResetOtpV1(email: string, otp: string): Promise<boolean> {
-    // Find OTP record
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Find OTP record (case-insensitive email)
     const otpRecord = await this.passwordResetOtpModel.findOne({
       where: {
-        email,
+        email: { [Op.iLike]: normalizedEmail },
         otp,
-        used: false,
-        expiresAt: { [Op.gt]: new Date() },
       },
     });
 
     if (!otpRecord) {
-      throw new BadRequestException('Invalid or expired OTP');
+      throw new BadRequestException('Invalid OTP');
+    }
+
+    if (otpRecord.used) {
+      throw new BadRequestException('OTP has already been used');
+    }
+
+    if (otpRecord.expiresAt <= new Date()) {
+      throw new BadRequestException('OTP has expired');
     }
 
     // Mark OTP as used
@@ -670,9 +684,10 @@ export class AuthService {
     otp: string,
     newPassword: string,
   ): Promise<void> {
+    const normalizedEmail = email.trim().toLowerCase();
     // Verify OTP
-    await this.verifyPasswordResetOtp(email, otp);
-    const user = await this.userService.findOneByEmail(email);
+    await this.verifyPasswordResetOtp(normalizedEmail, otp);
+    const user = await this.userService.findOneByEmail(normalizedEmail);
     if (!user) {
       throw new NotFoundException('User not found');
     }

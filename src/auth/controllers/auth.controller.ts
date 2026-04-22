@@ -641,20 +641,38 @@ export class AuthController {
     @Body('newPassword') newPassword: string,
   ) {
     try {
-      console.log(`${email}, ${otp}, ${newPassword}`);
-      await this.authService.resetPasswordWithOtp(email, otp, newPassword);
+      const normalizedEmail = email.trim().toLowerCase();
+      await this.authService.resetPasswordWithOtp(
+        normalizedEmail,
+        otp,
+        newPassword,
+      );
       return {
         status: HttpStatus.OK,
         message: 'Password changed successfully',
       };
     } catch (error) {
+      const rawMessage =
+        error?.response?.message ??
+        error?.message ??
+        'Failed to change password';
+      const message = Array.isArray(rawMessage)
+        ? rawMessage.join(', ')
+        : String(rawMessage);
+
+      const status = message.toLowerCase().includes('user not found')
+        ? HttpStatus.NOT_FOUND
+        : message.toLowerCase().includes('otp')
+          ? HttpStatus.BAD_REQUEST
+          : HttpStatus.INTERNAL_SERVER_ERROR;
+
       return {
-        status: HttpStatus.NOT_FOUND,
-        message: 'User not found',
+        status,
+        message,
         error: stringify({
-          message: error.message,
-          stack: error.stack,
-          details: error.response || error,
+          message,
+          stack: error?.stack,
+          details: error?.response || error,
         }),
       };
     }
