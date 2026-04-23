@@ -8,7 +8,7 @@ import * as bcrypt from 'bcrypt';
 import { InjectModel } from '@nestjs/sequelize';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
-import { User } from '../models/user.model';
+import { AdminWebPreferences, User } from '../models/user.model';
 import * as jwt from 'jsonwebtoken';
 import { Op, WhereOptions } from 'sequelize';
 import { UserSearchDto } from '../dto/user-search.dto';
@@ -501,6 +501,49 @@ detail: `xp bonus for referring ${newUser.username}`,
     } catch (error) {
       throw new BadRequestException({
         message: 'Error deleting the user',
+        details: stringify({
+          message: error.message,
+          stack: error.stack,
+          details: error.response || error,
+        }),
+      });
+    }
+  }
+
+  async getAdminWebPreferences(userId: string): Promise<AdminWebPreferences> {
+    const user = await this.userModel.findByPk(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID '${userId}' not found`);
+    }
+
+    const raw = (user as any).adminWebPreferences as
+      | Partial<AdminWebPreferences>
+      | undefined;
+
+    return {
+      theme_mode: raw?.theme_mode ?? 'light',
+      font_size: raw?.font_size ?? 'medium',
+      remember_me: raw?.remember_me ?? false,
+    };
+  }
+
+  async updateAdminWebPreferences(
+    userId: string,
+    preferences: AdminWebPreferences,
+  ): Promise<AdminWebPreferences> {
+    const user = await this.userModel.findByPk(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID '${userId}' not found`);
+    }
+
+    try {
+      await user.update({
+        adminWebPreferences: preferences,
+      } as any);
+      return await this.getAdminWebPreferences(userId);
+    } catch (error) {
+      throw new BadRequestException({
+        message: 'Error updating admin web preferences',
         details: stringify({
           message: error.message,
           stack: error.stack,

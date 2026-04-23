@@ -43,6 +43,8 @@ import stringify from 'safe-stable-stringify';
 // import { AdminOnly } from 'src/auth/GuardsDecorMiddleware/AdminOnlyDecorator.guard';
 import { RolesGuard } from 'src/auth/GuardsDecorMiddleware/roles.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { AdminWebPreferencesDto } from '../dto/admin-web-preferences.dto';
 
 @ApiBearerAuth()
 @ApiTags('User')
@@ -50,6 +52,69 @@ import { FileInterceptor } from '@nestjs/platform-express';
 @Controller('')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @Get('user/admin-web-preferences')
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiOperation({ summary: 'Get admin web preferences' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Admin web preferences retrieved successfully',
+  })
+  async getAdminWebPreferences(@UserId() userId: string) {
+    try {
+      const data = await this.userService.getAdminWebPreferences(userId);
+      return {
+        status: HttpStatus.OK,
+        message: 'Admin web preferences retrieved successfully',
+        data,
+      };
+    } catch (error) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Error retrieving admin web preferences',
+        error: stringify({
+          message: error?.message || 'Unknown error',
+          stack: error?.stack,
+          details: error?.response || error,
+        }),
+      };
+    }
+  }
+
+  @Put('user/admin-web-preferences')
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiOperation({ summary: 'Update admin web preferences' })
+  @ApiBody({ type: AdminWebPreferencesDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Admin web preferences updated successfully',
+  })
+  async updateAdminWebPreferences(
+    @Body(new ValidationPipe()) dto: AdminWebPreferencesDto,
+    @UserId() userId: string,
+  ) {
+    try {
+      const data = await this.userService.updateAdminWebPreferences(
+        userId,
+        dto,
+      );
+      return {
+        status: HttpStatus.OK,
+        message: 'Admin web preferences updated successfully',
+        data,
+      };
+    } catch (error) {
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Error updating admin web preferences',
+        error: stringify({
+          message: error?.message || 'Unknown error',
+          stack: error?.stack,
+          details: error?.response || error,
+        }),
+      };
+    }
+  }
 
   @Patch('user/links')
   @ApiOperation({ summary: 'Link subjects and goals to my profile' })

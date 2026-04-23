@@ -1,5 +1,4 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { State } from '../../states/models/state.model';
 import {
   BelongsTo,
   BelongsToMany,
@@ -12,7 +11,6 @@ import {
   Model,
   PrimaryKey,
   Table,
-  BeforeCreate,
 } from 'sequelize-typescript';
 import { v4 as uuidv4 } from 'uuid';
 import { Exclude } from 'class-transformer';
@@ -32,8 +30,11 @@ import { LessonTracking } from 'src/lesson/models/lesson_tracking.model';
 import { MockExamRecord } from 'src/mock-exam/models/mock-exam-record.model';
 import { XpRecords } from 'src/xp/models/xp-record.model';
 
-import * as bcrypt from 'bcrypt';
-import { randomBytes } from 'crypto';
+export type AdminWebPreferences = {
+  theme_mode: string;
+  font_size: string;
+  remember_me: boolean;
+};
 
 @Table({
   tableName: 'users',
@@ -238,6 +239,14 @@ export class User extends Model {
     allowNull: true,
   })
   avatar: string;
+
+  @ApiPropertyOptional()
+  @Column({
+    type: DataType.JSONB,
+    allowNull: false,
+    defaultValue: {},
+  })
+  adminWebPreferences: AdminWebPreferences;
 
   @ApiPropertyOptional()
   @Column({
