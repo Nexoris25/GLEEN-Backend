@@ -21,11 +21,19 @@ export class NotificationSettingsService {
     userId: string,
   ): Promise<NotificationSettings> {
     try {
-      const settings = await this.notificationSettingsModel.create(
+      const existing = await this.findByUserId(userId);
+
+      if (existing) {
+        return await existing.update({
+          ...createDto,
+          userId,
+        } as any);
+      }
+
+      return await this.notificationSettingsModel.create(
         { ...createDto, userId },
         { isNewRecord: true, userId },
       );
-      return settings;
     } catch (err) {
       throw new BadRequestException({
         message: 'Error creating notification settings',

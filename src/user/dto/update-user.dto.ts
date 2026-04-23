@@ -1,14 +1,5 @@
-import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { CreateUserDto } from './create-user.dto';
-import {
-  IsBoolean,
-  IsEmail,
-  IsEnum,
-  IsOptional,
-  IsString,
-  IsUUID,
-  MinLength,
-} from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { UserStatusEnum } from 'src/shared-types/UserStatusEnum';
 import { IsStateExists } from 'src/common/validators/IsStateExists';
 import { IsLgaExists } from 'src/common/validators/is-lga-exists.validator';
@@ -83,11 +74,11 @@ export class UpdateUserDto {
   @ApiPropertyOptional({
     required: false,
     type: 'string',
-    format: 'binary',
-    description: 'Avatar image',
+    description: 'Avatar URL',
   })
   @IsOptional()
-  avatar?: any;
+  @IsString()
+  avatar?: string;
 
   @ApiPropertyOptional({
     required: false,

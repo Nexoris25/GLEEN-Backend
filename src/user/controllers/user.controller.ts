@@ -370,48 +370,9 @@ export class UserController {
   }
 
   @Put('user/:id')
-  @ApiConsumes('multipart/form-data')
-  @UseInterceptors(
-    FileInterceptor('avatar', {
-      limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
-      fileFilter: (_, file, cb) => {
-        if (!file.mimetype.startsWith('image/')) {
-          cb(new BadRequestException('Only image files are allowed'), false);
-        }
-        cb(null, true);
-      },
-    }),
-  )
   @ApiOperation({ summary: 'Update user by ID' })
   @ApiParam({ name: 'id', description: 'User ID' })
-  @ApiBody({
-    description: 'Update user profile',
-    schema: {
-      type: 'object',
-      properties: {
-        referral: { type: 'string' },
-        guardianEmail: { type: 'string' },
-        fullName: { type: 'string' },
-        gender: { type: 'string', example: 'MALE' },
-        phone: { type: 'string' },
-        country: { type: 'string' },
-        stateId: { type: 'string', format: 'uuid' },
-        lga: { type: 'string', format: 'uuid' },
-        status: {
-          type: 'string',
-          enum: ['ACTIVE', 'INACTIVE', 'SUSPENDED'],
-        },
-        avatar: {
-          type: 'string',
-          format: 'binary',
-        },
-        systemAvatar: {
-          type: 'string',
-          description: 'Optional system avatar URL',
-        },
-      },
-    },
-  })
+  @ApiBody({ type: UpdateUserDto })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'User updated successfully',
@@ -432,14 +393,12 @@ export class UserController {
     @Param('id') id: string,
     @Body(new ValidationPipe()) updatedUserDto: UpdateUserDto,
     @UserId() userId: string,
-    @UploadedFile() avatar?: Express.Multer.File,
   ): Promise<{ status: number; message: string; data?: User; error?: any }> {
     try {
       const updatedUser = await this.userService.update(
         id,
         updatedUserDto,
         userId,
-        avatar,
       );
       if (!updatedUser) {
         return {

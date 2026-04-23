@@ -1,6 +1,6 @@
 import {
   Controller,
-  Post,
+  Put,
   Get,
   Patch,
   Delete,
@@ -16,7 +16,6 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
-  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { NotificationSettingsService } from '../services/notification-settings.service';
 import { CreateNotificationSettingsDto } from '../dto/create-notification-settings.dto';
@@ -33,19 +32,19 @@ export class NotificationSettingsController {
     private readonly notificationSettingsService: NotificationSettingsService,
   ) {}
 
-  @Post()
-  @ApiOperation({ summary: 'Create notification settings' })
+  @Put()
+  @ApiOperation({ summary: 'Create or update notification settings' })
   @ApiBody({ type: CreateNotificationSettingsDto })
   @ApiResponse({
-    status: 201,
-    description: 'Notification settings created',
+    status: 200,
+    description: 'Notification settings saved',
     type: NotificationSettings,
   })
   @ApiResponse({
     status: 400,
-    description: 'Error creating notification settings',
+    description: 'Error saving notification settings',
   })
-  async create(
+  async upsert(
     @Body() dto: CreateNotificationSettingsDto,
     @UserId() userId: string,
   ) {
@@ -55,14 +54,14 @@ export class NotificationSettingsController {
         userId,
       );
       return {
-        status: HttpStatus.CREATED,
-        message: 'Notification settings created successfully',
+        status: HttpStatus.OK,
+        message: 'Notification settings saved successfully',
         data: settings,
       };
     } catch (error) {
       return {
         status: HttpStatus.BAD_REQUEST,
-        message: 'Error creating notification settings',
+        message: 'Error saving notification settings',
         error: stringify({ message: error.message, ...error }),
       };
     }
