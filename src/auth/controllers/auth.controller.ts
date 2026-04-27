@@ -86,9 +86,9 @@ export class AuthController {
         status: HttpStatus.INTERNAL_SERVER_ERROR,
         message: 'Login failed',
         error: stringify({
-          message: error.message,
-          stack: error.stack,
-          details: error.response || error,
+          message: (error as any)?.message,
+          stack: (error as any)?.stack,
+          details: (error as any)?.response || error,
         }),
       };
     }

@@ -6,7 +6,8 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Op, UniqueConstraintError, literal } from 'sequelize';
+import { Op, QueryTypes, UniqueConstraintError, literal } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
 import { Subject } from '../models/subject.model';
 import { CreateSubjectDto } from '../dto/create-subject.dto';
 import { UpdateSubjectDto } from '../dto/update-subject.dto';
@@ -23,6 +24,7 @@ export class SubjectService {
   constructor(
     @InjectModel(Subject)
     private readonly subjectModel: typeof Subject,
+    private readonly sequelize: Sequelize,
     private readonly bunnyService: BunnyService,
     @InjectModel(User)
     private readonly userModel: typeof User,
@@ -153,19 +155,170 @@ export class SubjectService {
         throw new NotFoundException('Subject not found');
       }
 
-      if (subject.avatar) {
-        await this.bunnyService.deleteByUrl(subject.avatar);
-      }
+      const avatarUrl = subject.avatar;
 
-      await this.userSubjectModel.destroy({ where: { subjectId: id } });
-      await subject.destroy({ force: true });
+      await this.sequelize.transaction(async (transaction) => {
+        await this.sequelize.query(
+          `UPDATE "classes" SET "subjectId" = NULL WHERE "subjectId" = :subjectId`,
+          { replacements: { subjectId: id }, transaction },
+        );
+        await this.sequelize.query(
+          `UPDATE "v_one_battle" SET "subjectId" = NULL WHERE "subjectId" = :subjectId`,
+          { replacements: { subjectId: id }, transaction },
+        );
+
+        const lessonRows = await this.sequelize.query<{ id: string }>(
+          `SELECT "id" FROM "lessons" WHERE "subjectId" = :subjectId`,
+          {
+            replacements: { subjectId: id },
+            type: QueryTypes.SELECT,
+            transaction,
+          },
+        );
+        const lessonIds = lessonRows.map((r) => r.id);
+
+        if (lessonIds.length) {
+          await this.sequelize.query(
+            `DELETE FROM "lesson_topics" WHERE "lessonId" IN (:lessonIds)`,
+            { replacements: { lessonIds }, transaction },
+          );
+          await this.sequelize.query(
+            `DELETE FROM "lesson_comments" WHERE "lessonId" IN (:lessonIds)`,
+            { replacements: { lessonIds }, transaction },
+          );
+          await this.sequelize.query(
+            `DELETE FROM "lesson_trackings" WHERE "lessonId" IN (:lessonIds)`,
+            { replacements: { lessonIds }, transaction },
+          );
+          await this.sequelize.query(
+            `DELETE FROM "lessons" WHERE "id" IN (:lessonIds)`,
+            { replacements: { lessonIds }, transaction },
+          );
+        }
+
+        const quizRows = await this.sequelize.query<{ id: string }>(
+          `SELECT "id" FROM "quizzes" WHERE "subjectId" = :subjectId`,
+          {
+            replacements: { subjectId: id },
+            type: QueryTypes.SELECT,
+            transaction,
+          },
+        );
+        const quizIds = quizRows.map((r) => r.id);
+
+        if (quizIds.length) {
+          await this.sequelize.query(
+            `UPDATE "v_one_battle" SET "quizId" = NULL WHERE "quizId" IN (:quizIds)`,
+            { replacements: { quizIds }, transaction },
+          );
+
+          await this.sequelize.query(
+            `DELETE FROM "v_one_battle_question_answers"
+             WHERE "quizQuestionId" IN (
+               SELECT "id" FROM "quiz_questions" WHERE "quizId" IN (:quizIds)
+             )`,
+            { replacements: { quizIds }, transaction },
+          );
+
+          await this.sequelize.query(
+            `DELETE FROM "students_quiz_answers"
+             WHERE "quizQuestionId" IN (
+               SELECT "id" FROM "quiz_questions" WHERE "quizId" IN (:quizIds)
+             )
+             OR "quizRecordId" IN (
+               SELECT "id" FROM "quiz_records" WHERE "quizId" IN (:quizIds)
+             )`,
+            { replacements: { quizIds }, transaction },
+          );
+          await this.sequelize.query(
+            `DELETE FROM "quiz_records" WHERE "quizId" IN (:quizIds)`,
+            { replacements: { quizIds }, transaction },
+          );
+          await this.sequelize.query(
+            `DELETE FROM "quiz_comments" WHERE "quizId" IN (:quizIds)`,
+            { replacements: { quizIds }, transaction },
+          );
+          await this.sequelize.query(
+            `DELETE FROM "quiz_questions" WHERE "quizId" IN (:quizIds)`,
+            { replacements: { quizIds }, transaction },
+          );
+          await this.sequelize.query(
+            `DELETE FROM "quizzes" WHERE "id" IN (:quizIds)`,
+            { replacements: { quizIds }, transaction },
+          );
+        }
+
+        const mockExamRows = await this.sequelize.query<{ id: string }>(
+          `SELECT "id" FROM "mock_exams" WHERE "subjectId" = :subjectId`,
+          {
+            replacements: { subjectId: id },
+            type: QueryTypes.SELECT,
+            transaction,
+          },
+        );
+        const mockExamIds = mockExamRows.map((r) => r.id);
+
+        if (mockExamIds.length) {
+          await this.sequelize.query(
+            `DELETE FROM "students_mock_answers"
+             WHERE "mockQuestionId" IN (
+               SELECT "id" FROM "mock_questions" WHERE "mockExamId" IN (:mockExamIds)
+             )
+             OR "mockExamRecordId" IN (
+               SELECT "id" FROM "mock_exam_records" WHERE "mockExamId" IN (:mockExamIds)
+             )`,
+            { replacements: { mockExamIds }, transaction },
+          );
+          await this.sequelize.query(
+            `DELETE FROM "mock_exam_records" WHERE "mockExamId" IN (:mockExamIds)`,
+            { replacements: { mockExamIds }, transaction },
+          );
+          await this.sequelize.query(
+            `DELETE FROM "mock_exam_comments" WHERE "mockExamId" IN (:mockExamIds)`,
+            { replacements: { mockExamIds }, transaction },
+          );
+          await this.sequelize.query(
+            `DELETE FROM "mock_questions" WHERE "mockExamId" IN (:mockExamIds)`,
+            { replacements: { mockExamIds }, transaction },
+          );
+          await this.sequelize.query(
+            `DELETE FROM "mock_exams" WHERE "id" IN (:mockExamIds)`,
+            { replacements: { mockExamIds }, transaction },
+          );
+        }
+
+        await this.sequelize.query(
+          `DELETE FROM "class_recordings" WHERE "subjectId" = :subjectId`,
+          { replacements: { subjectId: id }, transaction },
+        );
+
+        await this.userSubjectModel.destroy({
+          where: { subjectId: id },
+          transaction,
+        });
+        await subject.destroy({ force: true, transaction });
+      });
+
+      if (avatarUrl) {
+        await this.bunnyService.deleteByUrl(avatarUrl);
+      }
     } catch (error) {
       console.log(error);
       if (
         error instanceof BadRequestException ||
-        error instanceof NotFoundException
+        error instanceof NotFoundException ||
+        error instanceof ConflictException
       ) {
         throw error;
+      }
+
+      const err = error;
+      const isFkViolation =
+        err?.name === 'SequelizeForeignKeyConstraintError' ||
+        err?.original?.code === '23503' ||
+        err?.parent?.code === '23503';
+      if (isFkViolation) {
+        throw new ConflictException('Cannot delete subject');
       }
 
       throw new InternalServerErrorException('Failed to delete subject');

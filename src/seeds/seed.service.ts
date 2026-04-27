@@ -84,6 +84,7 @@ export class SeedService implements OnModuleInit {
         defaultState = await this.stateModel.create(
           {
             title: 'Default State',
+            country: 'Nigeria',
             userId: null,
           },
           { hooks: false },
@@ -120,9 +121,15 @@ export class SeedService implements OnModuleInit {
         await this.stateModel.create(
           {
             title: state.title,
+            country: state.country,
             userId: adminUserId,
           },
           { hooks: false },
+        );
+      } else if (!exists.country || !String(exists.country).trim()) {
+        await exists.update(
+          { country: state.country },
+          { hooks: false, silent: true },
         );
       }
     }

@@ -1,36 +1,12 @@
+import { Controller, Get, Param, Query, HttpStatus } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  Query,
-  HttpStatus,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiQuery,
-  ApiResponse,
-  ApiBody,
-} from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/auth/GuardsDecorMiddleware/jwt-auth.guard';
-import { RolesGuard } from 'src/auth/GuardsDecorMiddleware/roles.guard';
-import { UserId } from 'src/auth/GuardsDecorMiddleware/userIdDecorator.guard';
-import {
-  CityArrayResponseDto,
-  CityResponseDto,
   ResponseDto,
   StateArrayResponseDto,
   StateResponseDto,
 } from 'src/shared-types/response.dto';
 import stringify from 'safe-stable-stringify';
 import { StatesService } from '../services/state.service';
-import { CreateStateDto } from '../dto/create-state.dto';
-import { UpdateStateDto } from '../dto/update-state.dto';
-import { Roles } from 'src/auth/decorators/roles.decorator';
 
 @ApiTags('States')
 @Controller('states')
@@ -82,6 +58,13 @@ details: error.response || error,
     example: 10,
     description: 'Number of items per page',
   })
+  @ApiQuery({
+    name: 'country',
+    required: false,
+    type: String,
+    example: 'Nigeria',
+    description: 'Filter by country name',
+  })
   @ApiResponse({
     status: 200,
     description: 'States retrieved successfully',
@@ -92,8 +75,12 @@ details: error.response || error,
     description: 'Error retrieving states',
     type: ResponseDto,
   })
-  async findAll(@Query('page') page = 1, @Query('limit') limit = 10) {
-    return this.stateService.findAll(page, limit);
+  async findAll(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query('country') country?: string,
+  ) {
+    return this.stateService.findAll(page, limit, country);
   }
 
   @Get(':id')

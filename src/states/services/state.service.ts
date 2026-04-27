@@ -38,9 +38,14 @@ export class StatesService {
     }
   }
 
-  async findAll(page = 1, limit = 10) {
+  async findAll(page = 1, limit = 10, country?: string) {
     const offset = (page - 1) * limit;
+    const where =
+      typeof country === 'string' && country.trim()
+        ? { country: { [Op.iLike]: `%${country.trim()}%` } }
+        : undefined;
     const { rows, count } = await this.stateModel.findAndCountAll({
+      where,
       order: [['title', 'ASC']],
       limit,
       offset,

@@ -21,6 +21,9 @@ export class State extends Model<State> {
   @Column({ type: DataType.STRING, allowNull: false })
   title: string;
 
+  @Column({ type: DataType.STRING, allowNull: true })
+  country: string;
+
   @Column({ type: DataType.UUID, allowNull: true })
   userId: string;
 
