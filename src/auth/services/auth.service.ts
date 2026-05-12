@@ -581,6 +581,10 @@ export class AuthService {
    */
   async generatePasswordResetOtp(email: string): Promise<string> {
     const normalizedEmail = email.trim().toLowerCase();
+    const user = await this.userService.findByEmail(normalizedEmail);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
     // Generate a 6-digit OTP
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
