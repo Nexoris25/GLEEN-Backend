@@ -512,35 +512,35 @@ export class UserService {
     };
   }
 
-  async backfillPersonalReferralCodes(): Promise<{
-    missingBefore: number;
-    updated: number;
-    missingAfter: number;
-  }> {
-    const missingWhere = {
-      [Op.or]: [{ personal_referral: null }, { personal_referral: '' }],
-    } as any;
+  // async backfillPersonalReferralCodes(): Promise<{
+  //   missingBefore: number;
+  //   updated: number;
+  //   missingAfter: number;
+  // }> {
+  //   const missingWhere = {
+  //     [Op.or]: [{ personal_referral: null }, { personal_referral: '' }],
+  //   } as any;
 
-    const missingBefore = await this.userModel.count({ where: missingWhere });
+  //   const missingBefore = await this.userModel.count({ where: missingWhere });
 
-    const [, metadata] = (await this.userModel.sequelize.query(
-      `
-        UPDATE "users"
-        SET "personal_referral" = upper(substr(replace("id"::text, '-', ''), 1, 16))
-        WHERE "personal_referral" IS NULL OR "personal_referral" = '';
-      `,
-    )) as any;
+  //   const [, metadata] = (await this.userModel.sequelize.query(
+  //     `
+  //       UPDATE "users"
+  //       SET "personal_referral" = upper(substr(replace("id"::text, '-', ''), 1, 16))
+  //       WHERE "personal_referral" IS NULL OR "personal_referral" = '';
+  //     `,
+  //   )) as any;
 
-    const updated =
-      Number(metadata?.rowCount) ||
-      Number(metadata?.affectedRows) ||
-      Number(metadata) ||
-      0;
+  //   const updated =
+  //     Number(metadata?.rowCount) ||
+  //     Number(metadata?.affectedRows) ||
+  //     Number(metadata) ||
+  //     0;
 
-    const missingAfter = await this.userModel.count({ where: missingWhere });
+  //   const missingAfter = await this.userModel.count({ where: missingWhere });
 
-    return { missingBefore, updated, missingAfter };
-  }
+  //   return { missingBefore, updated, missingAfter };
+  // }
 
   async create(
     createUserDto: CreateUserDto,
@@ -835,5 +835,132 @@ detail: `xp bonus for referring ${newUser.username}`,
         }),
       });
     }
+  }
+
+  async getPopularFeatures(params?: { offset?: number; limit?: number }) {
+    const offset = Math.max(params?.offset ?? 0, 0);
+    const limit = Math.min(params?.limit ?? 10, 500);
+
+    const sequelize = this.userModel.sequelize as any;
+
+    const baseCte = `
+      WITH combined AS (
+        SELECT
+          l.id::text AS id,
+          l.title AS title,
+          l.subtitle AS subtitle,
+          l.description AS description,
+          l."avatarOrCover" AS image,
+          l."subjectId"::text AS "subjectId",
+          s.title AS "subjectTitle",
+          CASE
+            WHEN EXISTS (
+              SELECT 1
+              FROM "lesson_topics" t
+              WHERE t."lessonId" = l.id AND t."topicType" = 'VIDEO'
+            )
+            THEN 'VIDEO_LESSON'
+            ELSE 'TEXT_LESSON'
+          END AS category,
+          COALESCE((
+            SELECT COUNT(DISTINCT lt."userId")
+            FROM "lesson_trackings" lt
+            WHERE lt."lessonId" = l.id
+          ), 0)::int AS popularity,
+          l."createdAt" AS created_at
+        FROM "lessons" l
+        JOIN "subjects" s ON s.id = l."subjectId"
+        WHERE l.status = 'APPROVED'
+
+        UNION ALL
+
+        SELECT
+          q.id::text AS id,
+          q.title AS title,
+          NULL::text AS subtitle,
+          q.description AS description,
+          q.avatar AS image,
+          q."subjectId"::text AS "subjectId",
+          s.title AS "subjectTitle",
+          'QUIZ' AS category,
+          COALESCE((
+            SELECT COUNT(DISTINCT qr."userId")
+            FROM "quiz_records" qr
+            WHERE qr."quizId" = q.id
+          ), 0)::int AS popularity,
+          q."createdAt" AS created_at
+        FROM "quizzes" q
+        JOIN "subjects" s ON s.id = q."subjectId"
+        WHERE q.status = 'APPROVED'
+
+        UNION ALL
+
+        SELECT
+          m.id::text AS id,
+          m.title AS title,
+          NULL::text AS subtitle,
+          m.description AS description,
+          m.avatar AS image,
+          m."subjectId"::text AS "subjectId",
+          s.title AS "subjectTitle",
+          'MOCK_EXAM' AS category,
+          COALESCE((
+            SELECT COUNT(DISTINCT mr."userId")
+            FROM "mock_exam_records" mr
+            WHERE mr."mockExamId" = m.id
+          ), 0)::int AS popularity,
+          m."createdAt" AS created_at
+        FROM "mock_exams" m
+        JOIN "subjects" s ON s.id = m."subjectId"
+        WHERE m.status = 'APPROVED'
+      )
+    `;
+
+    const [countRows] = (await sequelize.query(
+      `
+        ${baseCte}
+        SELECT COUNT(*)::int AS total
+        FROM combined;
+      `,
+    )) as unknown as [{ total: number }[], unknown];
+
+    const total = Number(countRows?.[0]?.total) || 0;
+
+    const [rows] = (await sequelize.query(
+      `
+        ${baseCte}
+        SELECT
+          id,
+          title,
+          subtitle,
+          description,
+          image,
+          "subjectId",
+          "subjectTitle",
+          category,
+          popularity
+        FROM combined
+        ORDER BY popularity DESC, created_at DESC
+        LIMIT :limit OFFSET :offset;
+      `,
+      { replacements: { limit, offset } },
+    )) as unknown as [any[], unknown];
+
+    const data = (rows || []).map((r) => ({
+      ...r,
+      popularity: Number(r.popularity) || 0,
+    }));
+
+    return {
+      data,
+      meta: {
+        totalItems: total,
+        limit,
+        offset,
+        currentCount: data.length,
+        hasNext: offset + limit < total,
+        hasPrevious: offset > 0,
+      },
+    };
   }
 }

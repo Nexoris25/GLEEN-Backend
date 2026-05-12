@@ -209,6 +209,58 @@ export class UserController {
     }
   }
 
+  @Get('user/popular-features')
+  @ApiOperation({
+    summary: 'Get popular features',
+    description:
+      'Returns a mixed list of popular quizzes, mock exams, video lessons, and text lessons, each with its category.',
+  })
+  @ApiQuery({
+    name: 'offset',
+    required: false,
+    type: Number,
+    description: 'Number of items to skip',
+    example: 0,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Maximum number of items to return',
+    example: 10,
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Popular features retrieved successfully',
+    type: ResponseDto,
+  })
+  async getPopularFeatures(
+    @Query('offset') offset?: string,
+    @Query('limit') limit?: string,
+  ) {
+    try {
+      const data = await this.userService.getPopularFeatures({
+        offset: offset ? Number(offset) : 0,
+        limit: limit ? Number(limit) : 10,
+      });
+      return {
+        status: HttpStatus.OK,
+        message: 'Popular features retrieved successfully',
+        data,
+      };
+    } catch (error) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Failed to retrieve popular features',
+        error: stringify({
+          message: error?.message || 'Unknown error',
+          stack: error?.stack,
+          details: error?.response || error,
+        }),
+      };
+    }
+  }
+
   @Patch('user/links')
   @ApiOperation({ summary: 'Link subjects and goals to my profile' })
   @ApiBody({ type: LinkSubjectsGoalsDto })
@@ -303,38 +355,38 @@ export class UserController {
     }
   }
 
-  @Post('admin/users/referrals/backfill-personal-referral')
-  @Roles('ADMIN', 'SUPER_ADMIN')
-  @ApiOperation({
-    summary: 'Backfill personal referral codes for existing users',
-    description:
-      'Generates personal_referral for any users where it is missing (NULL/empty).',
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Backfill completed',
-    type: ResponseDto,
-  })
-  async backfillPersonalReferralCodes() {
-    try {
-      const data = await this.userService.backfillPersonalReferralCodes();
-      return {
-        status: HttpStatus.OK,
-        message: 'Backfill completed',
-        data,
-      };
-    } catch (error) {
-      return {
-        status: HttpStatus.BAD_REQUEST,
-        message: 'Backfill failed',
-        error: stringify({
-          message: error?.message || 'Unknown error',
-          stack: error?.stack,
-          details: error?.response || error,
-        }),
-      };
-    }
-  }
+  // @Post('admin/users/referrals/backfill-personal-referral')
+  // @Roles('ADMIN', 'SUPER_ADMIN')
+  // @ApiOperation({
+  //   summary: 'Backfill personal referral codes for existing users',
+  //   description:
+  //     'Generates personal_referral for any users where it is missing (NULL/empty).',
+  // })
+  // @ApiResponse({
+  //   status: HttpStatus.OK,
+  //   description: 'Backfill completed',
+  //   type: ResponseDto,
+  // })
+  // async backfillPersonalReferralCodes() {
+  //   try {
+  //     const data = await this.userService.backfillPersonalReferralCodes();
+  //     return {
+  //       status: HttpStatus.OK,
+  //       message: 'Backfill completed',
+  //       data,
+  //     };
+  //   } catch (error) {
+  //     return {
+  //       status: HttpStatus.BAD_REQUEST,
+  //       message: 'Backfill failed',
+  //       error: stringify({
+  //         message: error?.message || 'Unknown error',
+  //         stack: error?.stack,
+  //         details: error?.response || error,
+  //       }),
+  //     };
+  //   }
+  // }
 
   @Get('user/all')
   //@Roles('TUTOR', 'SUPER_ADMIN', 'ADMIN') // Class-level roles
