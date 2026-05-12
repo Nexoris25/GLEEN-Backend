@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   BelongsTo,
   BelongsToMany,
+  BeforeValidate,
   Column,
   DataType,
   Default,
@@ -62,6 +63,31 @@ export class User extends Model {
     allowNull: true,
   })
   referral?: string;
+
+  @ApiProperty()
+  @Column({
+    type: DataType.STRING,
+    allowNull: true,
+    unique: true,
+  })
+  personal_referral?: string;
+
+  @BeforeValidate
+  static ensurePersonalReferral(instance: User) {
+    if (
+      instance.personal_referral &&
+      instance.personal_referral.trim() !== ''
+    ) {
+      return;
+    }
+    if (!instance.id) {
+      return;
+    }
+    instance.personal_referral = instance.id
+      .replace(/-/g, '')
+      .slice(0, 16)
+      .toUpperCase();
+  }
 
   @ApiProperty()
   @Column({

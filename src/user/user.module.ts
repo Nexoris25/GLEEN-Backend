@@ -8,6 +8,7 @@ import { MailModule } from '../email/email.module';
 import { JwtModule } from '@nestjs/jwt';
 import { XpModule } from 'src/xp/xp.module';
 import { BunnyService } from 'src/common/services/bunny.service';
+import { XpRecords } from 'src/xp/models/xp-record.model';
 
 import { State } from 'src/states/models/state.model';
 import { Lga } from 'src/states/models/lga.model';
@@ -20,7 +21,7 @@ import { LgaExistsConstraint } from 'src/common/validators/is-lga-exists.validat
       secret: process.env.JWT_SECRET_KEY,
       signOptions: { expiresIn: process.env.JWT_EXPIRATION_TIME || '30d' },
     }),
-    SequelizeModule.forFeature([User, State, Lga]),
+    SequelizeModule.forFeature([User, State, Lga, XpRecords]),
     forwardRef(() => AuthModule),
     forwardRef(() => MailModule),
     forwardRef(() => XpModule),

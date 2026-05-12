@@ -116,6 +116,99 @@ export class UserController {
     }
   }
 
+  @Get('user/referrals')
+  @ApiOperation({
+    summary: 'Get players referred by me',
+    description:
+      'Returns users who used your referral code (or legacy username referral), with join date, name, image, and total XP. Supports pagination via offset/limit.',
+  })
+  @ApiQuery({
+    name: 'offset',
+    required: false,
+    type: Number,
+    description: 'Pagination offset',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Number of items per page',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Referred players retrieved successfully',
+    type: ResponseDto,
+  })
+  async getMyReferredPlayers(
+    @UserId() userId: string,
+    @Query('offset') offset?: string,
+    @Query('limit') limit?: string,
+  ) {
+    try {
+      const parsedOffset =
+        offset === undefined ? undefined : Math.max(0, Number(offset) || 0);
+      const parsedLimit =
+        limit === undefined ? undefined : Math.max(1, Number(limit) || 10);
+
+      const result = await this.userService.getMyReferredPlayers({
+        userId,
+        offset: parsedOffset,
+        limit: parsedLimit,
+      });
+
+      return {
+        status: HttpStatus.OK,
+        message: 'Referred players retrieved successfully',
+        data: result.data,
+        meta: result.meta,
+      };
+    } catch (error) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Failed to retrieve referred players',
+        error: stringify({
+          message: error?.message || 'Unknown error',
+          stack: error?.stack,
+          details: error?.response || error,
+        }),
+      };
+    }
+  }
+
+  @Get('user/growth')
+  @ApiOperation({
+    summary: 'Get streak count and current week activity',
+    description:
+      'Returns streak_count (days) and current week totals for lessons_learnt, quizzes_done, and mock_exams_done.',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Growth data retrieved successfully',
+    type: ResponseDto,
+  })
+  async getMyGrowth(@UserId() userId: string) {
+    try {
+      const data =
+        await this.userService.getMyStreakAndCurrentWeekGrowth(userId);
+
+      return {
+        status: HttpStatus.OK,
+        message: 'Growth data retrieved successfully',
+        data,
+      };
+    } catch (error) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Failed to retrieve growth data',
+        error: stringify({
+          message: error?.message || 'Unknown error',
+          stack: error?.stack,
+          details: error?.response || error,
+        }),
+      };
+    }
+  }
+
   @Patch('user/links')
   @ApiOperation({ summary: 'Link subjects and goals to my profile' })
   @ApiBody({ type: LinkSubjectsGoalsDto })
@@ -204,6 +297,39 @@ export class UserController {
         error: stringify({
           message: (error as Error)?.message || 'Unknown error',
           stack: (error as Error)?.stack,
+          details: error?.response || error,
+        }),
+      };
+    }
+  }
+
+  @Post('admin/users/referrals/backfill-personal-referral')
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiOperation({
+    summary: 'Backfill personal referral codes for existing users',
+    description:
+      'Generates personal_referral for any users where it is missing (NULL/empty).',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Backfill completed',
+    type: ResponseDto,
+  })
+  async backfillPersonalReferralCodes() {
+    try {
+      const data = await this.userService.backfillPersonalReferralCodes();
+      return {
+        status: HttpStatus.OK,
+        message: 'Backfill completed',
+        data,
+      };
+    } catch (error) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Backfill failed',
+        error: stringify({
+          message: error?.message || 'Unknown error',
+          stack: error?.stack,
           details: error?.response || error,
         }),
       };

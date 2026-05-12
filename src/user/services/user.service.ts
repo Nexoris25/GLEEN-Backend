@@ -21,6 +21,7 @@ import { Express } from 'express';
 import { BunnyService } from 'src/common/services/bunny.service';
 import { Subject } from 'src/subject/models/subject.model';
 import { Goal } from 'src/goal/models/goal.model';
+import { XpRecords } from 'src/xp/models/xp-record.model';
 
 @Injectable()
 export class UserService {
@@ -29,6 +30,8 @@ export class UserService {
   constructor(
     @InjectModel(User)
     private readonly userModel: typeof User,
+    @InjectModel(XpRecords)
+    private readonly xpRecordsModel: typeof XpRecords,
     private readonly emailService: MailService,
     private readonly xpLogService: XpLogService,
     private readonly bunnyService: BunnyService,
@@ -206,6 +209,32 @@ export class UserService {
     });
   }
 
+  async findByPersonalReferral(personalReferral: string): Promise<User | null> {
+    return this.userModel.findOne({
+      where: { personal_referral: { [Op.iLike]: personalReferral } },
+      attributes: { exclude: ['password'] },
+    });
+  }
+
+  private async resolveReferrer(
+    referralIdentifier: string,
+  ): Promise<User | null> {
+    const normalized = referralIdentifier.trim();
+    if (!normalized) {
+      return null;
+    }
+
+    const byPersonalReferral = await this.findByPersonalReferral(normalized);
+    if (byPersonalReferral) {
+      return byPersonalReferral;
+    }
+
+    return this.userModel.findOne({
+      where: { username: { [Op.iLike]: normalized } },
+      attributes: { exclude: ['password'] },
+    });
+  }
+
   async findOneByEmail(email: string): Promise<User> {
     const user = await this.userModel.findOne({
       where: { email: { [Op.iLike]: email } },
@@ -242,9 +271,38 @@ export class UserService {
   }
 
   async findAllByReferralUsername(referralUsername: string) {
+    const identifier = referralUsername?.trim();
+    if (!identifier) {
+      return [];
+    }
+
+    const referrer = await this.userModel.findOne({
+      where: {
+        [Op.or]: [
+          { username: { [Op.iLike]: identifier } },
+          { personal_referral: { [Op.iLike]: identifier } },
+        ],
+      },
+      attributes: ['username', 'personal_referral'],
+    });
+
+    const possibleReferralValues = new Set<string>([identifier]);
+    if (referrer?.username) {
+      possibleReferralValues.add(referrer.username);
+    }
+    if (referrer?.personal_referral) {
+      possibleReferralValues.add(referrer.personal_referral);
+    }
+
+    const where = {
+      [Op.or]: Array.from(possibleReferralValues).map((value) => ({
+        referral: { [Op.iLike]: value },
+      })),
+    } as any;
+
     const user = await this.userModel.findAll({
       order: [['createdAt', 'DESC']],
-      where: { referral: referralUsername },
+      where,
       attributes: { exclude: ['password'] },
       include: [{ association: 'goals' }, { association: 'subjects' }],
     });
@@ -270,6 +328,220 @@ export class UserService {
     return password;
   }
 
+  async getMyStreakAndCurrentWeekGrowth(userId: string): Promise<{
+    streak_count: number;
+    lessons_learnt: number;
+    quizzes_done: number;
+    mock_exams_done: number;
+  }> {
+    const sequelize = this.userModel.sequelize as any;
+
+    type StreakRow = { current_streak: number };
+    const [streakRows] = (await sequelize.query(
+      `
+        SELECT "currentStreak"::int AS current_streak
+        FROM "user_streaks"
+        WHERE "userId" = :userId
+        LIMIT 1;
+      `,
+      { replacements: { userId } },
+    )) as unknown as [StreakRow[], unknown];
+
+    const streak_count = Number(streakRows?.[0]?.current_streak) || 0;
+
+    type GrowthRow = {
+      lessons_learnt: number;
+      quizzes_done: number;
+      mock_exams_done: number;
+    };
+    const [growthRows] = (await sequelize.query(
+      `
+        WITH bounds AS (
+          SELECT
+            date_trunc('week', now()) AS week_start_ts,
+            date_trunc('week', now()) + interval '7 days' AS week_end_ts,
+            date_trunc('week', now())::date AS week_start_date
+        )
+        SELECT
+          (
+            SELECT COUNT(*)::int
+            FROM "lesson_trackings" lt, bounds b
+            WHERE lt."userId" = :userId
+              AND lt."dateCompleted" IS NOT NULL
+              AND lt."dateCompleted" >= b.week_start_ts
+              AND lt."dateCompleted" < b.week_end_ts
+          ) AS lessons_learnt,
+          (
+            SELECT COUNT(*)::int
+            FROM "quiz_records" qr, bounds b
+            WHERE qr."userId" = :userId
+              AND (
+                (qr."weekStart" IS NOT NULL AND qr."weekStart"::date = b.week_start_date)
+                OR
+                (qr."weekStart" IS NULL AND qr."createdAt" >= b.week_start_ts AND qr."createdAt" < b.week_end_ts)
+              )
+          ) AS quizzes_done,
+          (
+            SELECT COUNT(*)::int
+            FROM "mock_exam_records" mr, bounds b
+            WHERE mr."userId" = :userId
+              AND (
+                (mr."weekStart" IS NOT NULL AND mr."weekStart"::date = b.week_start_date)
+                OR
+                (mr."weekStart" IS NULL AND mr."createdAt" >= b.week_start_ts AND mr."createdAt" < b.week_end_ts)
+              )
+          ) AS mock_exams_done;
+      `,
+      { replacements: { userId } },
+    )) as unknown as [GrowthRow[], unknown];
+
+    const row: GrowthRow | undefined = growthRows?.[0];
+
+    return {
+      streak_count,
+      lessons_learnt: Number(row?.lessons_learnt) || 0,
+      quizzes_done: Number(row?.quizzes_done) || 0,
+      mock_exams_done: Number(row?.mock_exams_done) || 0,
+    };
+  }
+
+  async getMyReferredPlayers(params?: {
+    userId: string;
+    offset?: number;
+    limit?: number;
+  }): Promise<{
+    data: {
+      id: string;
+      joinDate: Date;
+      name: string;
+      image: string | null;
+      totalXp: number;
+    }[];
+    meta: {
+      total: number;
+      offset: number;
+      limit: number;
+      currentCount: number;
+      hasNext: boolean;
+      hasPrevious: boolean;
+    };
+  }> {
+    const { userId, offset = 0, limit = 10 } = params || ({} as any);
+    const safeLimit = Math.min(Math.max(limit, 1), this.MAX_LIMIT);
+    const safeOffset = Math.max(offset, 0);
+
+    const owner = await this.userModel.findByPk(userId, {
+      attributes: ['id', 'username', 'personal_referral'],
+    });
+    if (!owner) {
+      throw new NotFoundException('User not found');
+    }
+
+    const referralToken =
+      typeof owner.personal_referral === 'string'
+        ? owner.personal_referral.trim()
+        : '';
+
+    if (!referralToken) {
+      return {
+        data: [],
+        meta: {
+          total: 0,
+          offset: safeOffset,
+          limit: safeLimit,
+          currentCount: 0,
+          hasNext: false,
+          hasPrevious: false,
+        },
+      };
+    }
+
+    const where = { referral: { [Op.iLike]: referralToken } } as any;
+
+    const { rows, count } = await this.userModel.findAndCountAll({
+      where,
+      attributes: [
+        'id',
+        'username',
+        'fullName',
+        'avatar',
+        'systemAvatar',
+        'createdAt',
+      ],
+      order: [['createdAt', 'DESC']],
+      limit: safeLimit,
+      offset: safeOffset,
+    });
+
+    const referredUserIds = rows.map((u) => u.id);
+    const xpRecords = referredUserIds.length
+      ? await this.xpRecordsModel.findAll({
+          where: { userId: { [Op.in]: referredUserIds } },
+          attributes: ['userId', 'currentXpValue'],
+          raw: true,
+        })
+      : [];
+
+    const xpByUserId = new Map<string, number>();
+    for (const record of xpRecords as any[]) {
+      xpByUserId.set(String(record.userId), Number(record.currentXpValue) || 0);
+    }
+
+    const data = rows.map((u) => ({
+      id: u.id,
+      joinDate: (u as any).createdAt,
+      name: (u as any).fullName || (u as any).username,
+      image: (u as any).avatar || (u as any).systemAvatar || null,
+      totalXp: xpByUserId.get(u.id) ?? 0,
+    }));
+
+    const currentCount = data.length;
+    const hasNext = safeOffset + safeLimit < count;
+    const hasPrevious = safeOffset > 0;
+
+    return {
+      data,
+      meta: {
+        total: count,
+        offset: safeOffset,
+        limit: safeLimit,
+        currentCount,
+        hasNext,
+        hasPrevious,
+      },
+    };
+  }
+
+  async backfillPersonalReferralCodes(): Promise<{
+    missingBefore: number;
+    updated: number;
+    missingAfter: number;
+  }> {
+    const missingWhere = {
+      [Op.or]: [{ personal_referral: null }, { personal_referral: '' }],
+    } as any;
+
+    const missingBefore = await this.userModel.count({ where: missingWhere });
+
+    const [, metadata] = (await this.userModel.sequelize.query(
+      `
+        UPDATE "users"
+        SET "personal_referral" = upper(substr(replace("id"::text, '-', ''), 1, 16))
+        WHERE "personal_referral" IS NULL OR "personal_referral" = '';
+      `,
+    )) as any;
+
+    const updated =
+      Number(metadata?.rowCount) ||
+      Number(metadata?.affectedRows) ||
+      Number(metadata) ||
+      0;
+
+    const missingAfter = await this.userModel.count({ where: missingWhere });
+
+    return { missingBefore, updated, missingAfter };
+  }
+
   async create(
     createUserDto: CreateUserDto,
     avatar?: Express.Multer.File,
@@ -277,13 +549,24 @@ export class UserService {
     options?: { sendVerificationEmail?: boolean },
   ): Promise<User> {
     const normalizedEmail = createUserDto.email?.trim().toLowerCase();
-    const { stateId, ...rest } = createUserDto;
+    const { stateId, referral, ...rest } = createUserDto;
     const existingUser = await this.userModel.findOne({
       where: { email: { [Op.iLike]: normalizedEmail } },
     });
 
     if (existingUser) {
       throw new BadRequestException('Email is already taken');
+    }
+
+    const referralIdentifier =
+      typeof referral === 'string' ? referral.trim() : '';
+    let referredBy: string | undefined;
+    if (referralIdentifier) {
+      const referrer = await this.resolveReferrer(referralIdentifier);
+      if (!referrer) {
+        throw new BadRequestException('Invalid referral');
+      }
+      referredBy = referrer.personal_referral || referrer.username;
     }
 
     // Generate a unique username from the email prefix
@@ -323,6 +606,7 @@ export class UserService {
         email: normalizedEmail,
         username,
         password: hashedPassword,
+        ...(referredBy && { referral: referredBy }),
         ...(avatarUrl && { avatar: avatarUrl }),
         ...(createUserDto.systemAvatar && {
           systemAvatar: createUserDto.systemAvatar,
