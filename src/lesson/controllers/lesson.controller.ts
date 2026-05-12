@@ -36,6 +36,7 @@ import { UpdateLessonCommentDto } from '../dto/update-lesson-comment.dto';
 import { CreateLessonCommentDto } from '../dto/create-lesson-comment.dto';
 import { CreateLessonTrackingDto } from '../dto/create-lesson-tracking.dto';
 import { LessonQueryDto } from '../dto/query.dto';
+import { BrowseLessonsQueryDto } from '../dto/query.dto';
 import { JwtAuthGuard } from 'src/auth/GuardsDecorMiddleware/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/GuardsDecorMiddleware/roles.guard';
 import stringify from 'safe-stable-stringify';
@@ -100,6 +101,69 @@ export class LessonController {
   })
   async getAllLessons(@Query() query: LessonQueryDto) {
     return this.lessonService.findAllWithDetails(query);
+  }
+
+  @Get('browse')
+  @ApiOperation({
+    summary: 'Browse all lessons',
+    description:
+      'Fetch all lessons (video + non-video), with optional subject filters and search. Supports pagination with offset/limit.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lessons retrieved successfully',
+    type: ResponseDto,
+  })
+  async browseLessons(
+    @Query(new ValidationPipe()) query: BrowseLessonsQueryDto,
+  ) {
+    try {
+      const data = await this.lessonService.browseAllLessons(query);
+      return {
+        status: 200,
+        message: 'Lessons retrieved successfully',
+        data,
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        message: 'Error retrieving lessons',
+        error: stringify({
+          message: error.message,
+          stack: error.stack,
+          details: error.response || error,
+        }),
+      };
+    }
+  }
+
+  @Get('browse/:id')
+  @ApiOperation({ summary: 'Get a single lesson by ID (browse)' })
+  @ApiParam({ name: 'id', description: 'Lesson ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Lesson retrieved successfully',
+    type: ResponseDto,
+  })
+  async browseLessonById(@Param('id') id: string) {
+    try {
+      const data = await this.lessonService.browseLessonById(id);
+      return {
+        status: 200,
+        message: 'Lesson retrieved successfully',
+        data,
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        message: 'Error retrieving lesson',
+        error: stringify({
+          message: error.message,
+          stack: error.stack,
+          details: error.response || error,
+        }),
+      };
+    }
   }
 
   // end new

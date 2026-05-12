@@ -17,6 +17,7 @@ import { CreateLessonCommentDto } from '../dto/create-lesson-comment.dto';
 //import { CreateLessonTrackingDto } from '../dto/create-lesson-tracking.dto';
 import { UpdateLessonTrackingDto } from '../dto/update-lesson-tracking.dto';
 import { UpdateLessonCommentDto } from '../dto/update-lesson-comment.dto';
+import type { BrowseLessonsQueryDto } from '../dto/query.dto';
 import { LessonQueryDto } from '../dto/query.dto';
 import stringify from 'safe-stable-stringify';
 import { Lesson } from '../models/lesson.model';
@@ -458,6 +459,117 @@ export class LessonService {
   }
 
   // end new
+
+  async browseAllLessons(query?: BrowseLessonsQueryDto) {
+    const limit = Math.min(query?.limit ?? 10, this.MAX_LIMIT);
+    const offset = query?.offset ?? 0;
+
+    const where: any = {};
+
+    const subjectIds =
+      typeof query?.subjects === 'string'
+        ? query.subjects
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [];
+    if (subjectIds.length > 0) {
+      where.subjectId = { [Op.in]: subjectIds };
+    }
+
+    const search = typeof query?.search === 'string' ? query.search.trim() : '';
+    if (search) {
+      where[Op.or] = [
+        { title: { [Op.iLike]: `%${search}%` } },
+        { subtitle: { [Op.iLike]: `%${search}%` } },
+        { description: { [Op.iLike]: `%${search}%` } },
+        { mainContent: { [Op.iLike]: `%${search}%` } },
+      ];
+    }
+
+    const result = await this.lessonModel.findAndCountAll({
+      where,
+      include: [
+        {
+          model: Subject,
+          attributes: ['id', 'title', 'tutorId'],
+        },
+        {
+          model: User,
+          attributes: ['id', 'fullName', 'email', 'avatar'],
+          required: false,
+        },
+        {
+          model: LessonTopic,
+          as: 'topics',
+          attributes: [],
+        },
+      ],
+      attributes: {
+        include: [
+          [fn('COUNT', col('topics.id')), 'totalTopics'],
+          [fn('SUM', col('topics.duration')), 'totalDuration'],
+        ],
+      },
+      group: ['Lesson.id', 'subject.id', 'user.id'],
+      order: [['createdAt', 'DESC']],
+      limit,
+      offset,
+      subQuery: false,
+    });
+
+    const total = Array.isArray(result.count)
+      ? result.count.reduce((sum, item) => sum + Number(item.count), 0)
+      : result.count;
+
+    return {
+      data: result.rows,
+      meta: {
+        totalItems: total,
+        limit,
+        offset,
+        currentCount: result.rows.length,
+        hasNext: offset + limit < total,
+        hasPrevious: offset > 0,
+      },
+    };
+  }
+
+  async browseLessonById(id: string) {
+    const result = await this.lessonModel.findAndCountAll({
+      where: { id },
+      include: [
+        {
+          model: Subject,
+          attributes: ['id', 'title', 'tutorId'],
+        },
+        {
+          model: User,
+          attributes: ['id', 'fullName', 'email', 'avatar'],
+          required: false,
+        },
+        {
+          model: LessonTopic,
+          as: 'topics',
+          attributes: [],
+        },
+      ],
+      attributes: {
+        include: [
+          [fn('COUNT', col('topics.id')), 'totalTopics'],
+          [fn('SUM', col('topics.duration')), 'totalDuration'],
+        ],
+      },
+      group: ['Lesson.id', 'subject.id', 'user.id'],
+      subQuery: false,
+    });
+
+    if (!result.rows.length) {
+      throw new NotFoundException(`Lesson with id ${id} not found`);
+    }
+
+    return result.rows[0];
+  }
 
   async findAll(
     searchDto: LessonSearchDto,

@@ -38,3 +38,35 @@ export class LessonQueryDto {
   @IsString()
   description?: string;
 }
+
+export class BrowseLessonsQueryDto {
+  @ApiPropertyOptional({ example: 0 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  offset?: number;
+
+  @ApiPropertyOptional({ example: 10 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  limit?: number;
+
+  @ApiPropertyOptional({
+    description: 'Filter by subject IDs (comma-separated UUIDs)',
+    example: 'uuid1,uuid2',
+  })
+  @IsOptional()
+  @IsString()
+  subjects?: string;
+
+  @ApiPropertyOptional({
+    description: 'Search lessons',
+    example: 'algebra',
+  })
+  @IsOptional()
+  @IsString()
+  search?: string;
+}
