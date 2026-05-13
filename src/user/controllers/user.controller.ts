@@ -691,25 +691,30 @@ export class UserController {
   ): Promise<{ status: number; message: string; data?: User; error?: any }> {
     try {
       const deletedUser = await this.userService.delete(id);
-      if (!deletedUser) {
-        return {
-          status: HttpStatus.NOT_FOUND,
-          message: 'User not found',
-        };
-      }
       return {
         status: HttpStatus.OK,
         message: 'User deleted successfully',
         data: deletedUser,
       };
     } catch (error) {
+      const err: any = error;
+      const status =
+        typeof err?.getStatus === 'function'
+          ? err.getStatus()
+          : err?.status || HttpStatus.INTERNAL_SERVER_ERROR;
+
+      const message =
+        err?.response?.message ||
+        err?.message ||
+        (status === HttpStatus.NOT_FOUND ? 'User not found' : 'Request failed');
+
       return {
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: 'Internal server error',
+        status,
+        message,
         error: stringify({
-          message: error.message,
-          stack: error.stack,
-          details: error.response || error,
+          message: err?.message,
+          stack: err?.stack,
+          details: err?.response || err,
         }),
       };
     }

@@ -780,15 +780,78 @@ detail: `xp bonus for referring ${newUser.username}`,
     }
 
     try {
-      await userToRemove.destroy();
+      const sequelize = this.userModel.sequelize as any;
+
+      const [blockRows] = (await sequelize.query(
+        `
+          SELECT
+            (SELECT COUNT(*)::int FROM "subjects" WHERE "userId" = :userId) AS subjects_created,
+            (SELECT COUNT(*)::int FROM "lessons" WHERE "userId" = :userId) AS lessons_created
+        `,
+        { replacements: { userId: id } },
+      )) as unknown as [
+        { subjects_created: number; lessons_created: number }[],
+        unknown,
+      ];
+
+      const subjectsCreated = Number(blockRows?.[0]?.subjects_created) || 0;
+      const lessonsCreated = Number(blockRows?.[0]?.lessons_created) || 0;
+
+      if (subjectsCreated > 0 || lessonsCreated > 0) {
+        throw new BadRequestException({
+          message: 'Cannot delete user',
+          details: stringify({
+            subjectsCreated,
+            lessonsCreated,
+            reason:
+              'User is referenced as the creator of one or more records (subjects/lessons). Remove or reassign those records first.',
+          }),
+        });
+      }
+
+      await sequelize.transaction(async (transaction: any) => {
+        await sequelize.query(
+          `UPDATE "subjects" SET "tutorId" = NULL WHERE "tutorId" = :userId`,
+          { replacements: { userId: id }, transaction },
+        );
+        await sequelize.query(
+          `UPDATE "quizzes" SET "userId" = NULL WHERE "userId" = :userId`,
+          { replacements: { userId: id }, transaction },
+        );
+        await sequelize.query(
+          `UPDATE "mock_exams" SET "userId" = NULL WHERE "userId" = :userId`,
+          { replacements: { userId: id }, transaction },
+        );
+
+        await userToRemove.destroy({ transaction });
+      });
+
       return userToRemove;
     } catch (error) {
+      const err = error as any;
+      const isFkViolation =
+        err?.name === 'SequelizeForeignKeyConstraintError' ||
+        err?.original?.code === '23503' ||
+        err?.parent?.code === '23503';
+
+      if (isFkViolation) {
+        throw new BadRequestException({
+          message: 'Cannot delete user',
+          details: stringify({
+            reason:
+              'User is still referenced by other records. Remove or reassign those records first.',
+            constraint: err?.original?.constraint || err?.parent?.constraint,
+            table: err?.original?.table || err?.parent?.table,
+          }),
+        });
+      }
+
       throw new BadRequestException({
         message: 'Error deleting the user',
         details: stringify({
-          message: error.message,
-          stack: error.stack,
-          details: error.response || error,
+          message: err?.message,
+          stack: err?.stack,
+          details: err?.response || err,
         }),
       });
     }
