@@ -509,6 +509,18 @@ export class LessonService {
         include: [
           [fn('COUNT', col('topics.id')), 'totalTopics'],
           [fn('SUM', col('topics.duration')), 'totalDuration'],
+          [
+            literal(`CASE
+              WHEN EXISTS (
+                SELECT 1
+                FROM "lesson_topics" t
+                WHERE t."lessonId" = "Lesson"."id" AND t."topicType" = 'VIDEO'
+              )
+              THEN 'VIDEO'
+              ELSE 'NON-VIDEO'
+            END`),
+            'type',
+          ],
         ],
       },
       group: ['Lesson.id', 'subject.id', 'user.id'],
@@ -558,6 +570,18 @@ export class LessonService {
         include: [
           [fn('COUNT', col('topics.id')), 'totalTopics'],
           [fn('SUM', col('topics.duration')), 'totalDuration'],
+          [
+            literal(`CASE
+              WHEN EXISTS (
+                SELECT 1
+                FROM "lesson_topics" t
+                WHERE t."lessonId" = "Lesson"."id" AND t."topicType" = 'VIDEO'
+              )
+              THEN 'VIDEO'
+              ELSE 'NON-VIDEO'
+            END`),
+            'type',
+          ],
         ],
       },
       group: ['Lesson.id', 'subject.id', 'user.id'],
