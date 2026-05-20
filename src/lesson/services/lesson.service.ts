@@ -25,6 +25,7 @@ import { Subject } from 'src/subject/models/subject.model';
 import { User } from 'src/user/models/user.model';
 import { LessonTopic } from '../models/lesson_topic.model';
 import { BunnyService } from 'src/common/services/bunny-all.service';
+import { TopicTypeEnum } from 'src/shared-types/FileTypeEnum';
 
 @Injectable()
 export class LessonService {
@@ -548,7 +549,7 @@ export class LessonService {
   }
 
   async browseLessonById(id: string) {
-    const result = await this.lessonModel.findAndCountAll({
+    const lesson = await this.lessonModel.findOne({
       where: { id },
       include: [
         {
@@ -563,36 +564,24 @@ export class LessonService {
         {
           model: LessonTopic,
           as: 'topics',
-          attributes: [],
         },
       ],
-      attributes: {
-        include: [
-          [fn('COUNT', col('topics.id')), 'totalTopics'],
-          [fn('SUM', col('topics.duration')), 'totalDuration'],
-          [
-            literal(`CASE
-              WHEN EXISTS (
-                SELECT 1
-                FROM "lesson_topics" t
-                WHERE t."lessonId" = "Lesson"."id" AND t."topicType" = 'VIDEO'
-              )
-              THEN 'VIDEO'
-              ELSE 'NON-VIDEO'
-            END`),
-            'type',
-          ],
-        ],
-      },
-      group: ['Lesson.id', 'subject.id', 'user.id'],
-      subQuery: false,
     });
 
-    if (!result.rows.length) {
+    if (!lesson) {
       throw new NotFoundException(`Lesson with id ${id} not found`);
     }
 
-    return result.rows[0];
+    const topics = ((lesson as any).topics || []) as LessonTopic[];
+    const totalTopics = topics.length;
+    const totalDuration = topics.reduce((acc, t) => acc + (t.duration || 0), 0);
+    const hasVideo = topics.some((t) => t.topicType === TopicTypeEnum.VIDEO);
+
+    (lesson as any).setDataValue('totalTopics', totalTopics);
+    (lesson as any).setDataValue('totalDuration', totalDuration);
+    (lesson as any).setDataValue('type', hasVideo ? 'VIDEO' : 'NON-VIDEO');
+
+    return lesson;
   }
 
   async findAll(
