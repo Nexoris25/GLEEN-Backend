@@ -16,13 +16,14 @@ import { CreateClassRecordingDto } from '../dto/create-class-recording.dto';
 import { ClassRecording } from '../models/class-recording.model';
 import { UserService } from '../../user/services/user.service';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { Op } from 'sequelize';
+import { Op, col, fn, literal } from 'sequelize';
 import axios from 'axios';
 import { LessonQueryDto } from 'src/lesson/dto/query.dto';
 
 import { ClassEnrollment } from 'src/classes/models/class-enrollment.model';
 import { Subject } from 'src/subject/models/subject.model';
 import { Room } from 'src/rooms/models/room.model';
+import { UserSubject } from 'src/subject/models/user-subject.model';
 
 interface DailyMeetingTokenProperties {
   room_name?: string;
@@ -66,6 +67,8 @@ export class ClassesService {
     private readonly enrollmentModel: typeof ClassEnrollment,
     @InjectModel(ClassRecording)
     private readonly recordingModel: typeof ClassRecording,
+    @InjectModel(UserSubject)
+    private readonly userSubjectModel: typeof UserSubject,
   ) {}
 
   private readonly MAX_LIMIT = 500;
@@ -257,6 +260,123 @@ export class ClassesService {
       },
       order: [['startTime', 'ASC']],
     });
+  }
+
+  async findLivePaginated(query?: PaginationDto) {
+    const now = new Date();
+    const limit = Math.min(query?.limit ?? 10, this.MAX_LIMIT);
+    const offset = query?.offset ?? 0;
+
+    const result = await this.classModel.findAndCountAll({
+      where: {
+        startTime: { [Op.lte]: now },
+        endTime: { [Op.gte]: now },
+      },
+      include: [
+        {
+          model: User,
+          as: 'tutor',
+          attributes: ['id', 'fullName', 'username', 'avatar'],
+        },
+        { model: Subject, as: 'subject', attributes: ['id', 'title'] },
+        { model: Room, as: 'room', attributes: ['id', 'name'] },
+        {
+          model: ClassEnrollment,
+          as: 'enrollments',
+          attributes: [],
+          required: false,
+        },
+      ],
+      attributes: {
+        include: [[fn('COUNT', col('enrollments.id')), 'totalEnrolled']],
+      },
+      group: ['ClassEntity.id', 'tutor.id', 'subject.id', 'room.id'],
+      order: [['startTime', 'ASC']],
+      limit,
+      offset,
+      subQuery: false,
+    });
+
+    const total = Array.isArray(result.count)
+      ? result.count.reduce((sum, item) => sum + Number(item.count), 0)
+      : result.count;
+
+    return {
+      data: result.rows,
+      meta: {
+        totalItems: total,
+        limit,
+        offset,
+        currentCount: result.rows.length,
+        hasNext: offset + limit < total,
+        hasPrevious: offset > 0,
+      },
+    };
+  }
+
+  async findRecommended(userId: string, query?: PaginationDto) {
+    const now = new Date();
+    const limit = Math.min(query?.limit ?? 10, this.MAX_LIMIT);
+    const offset = query?.offset ?? 0;
+
+    const userSubjects = await this.userSubjectModel.findAll({
+      where: { userId },
+      attributes: ['subjectId'],
+    });
+    const subjectIds = userSubjects.map((s) => s.subjectId);
+
+    const where: any = {
+      endTime: { [Op.gte]: now },
+    };
+    if (subjectIds.length) {
+      where.subjectId = { [Op.in]: subjectIds };
+    }
+
+    const result = await this.classModel.findAndCountAll({
+      where,
+      include: [
+        {
+          model: User,
+          as: 'tutor',
+          attributes: ['id', 'fullName', 'username', 'avatar'],
+        },
+        { model: Subject, as: 'subject', attributes: ['id', 'title'] },
+        { model: Room, as: 'room', attributes: ['id', 'name'] },
+        {
+          model: ClassEnrollment,
+          as: 'enrollments',
+          attributes: [],
+          required: false,
+        },
+      ],
+      attributes: {
+        include: [[fn('COUNT', col('enrollments.id')), 'totalEnrolled']],
+      },
+      group: ['ClassEntity.id', 'tutor.id', 'subject.id', 'room.id'],
+      order: [
+        [literal('"totalEnrolled"'), 'DESC'],
+        ['createdAt', 'DESC'],
+      ],
+      limit,
+      offset,
+      subQuery: false,
+    });
+
+    const total = Array.isArray(result.count)
+      ? result.count.reduce((sum, item) => sum + Number(item.count), 0)
+      : result.count;
+
+    return {
+      data: result.rows,
+      meta: {
+        totalItems: total,
+        limit,
+        offset,
+        currentCount: result.rows.length,
+        hasNext: offset + limit < total,
+        hasPrevious: offset > 0,
+      },
+    };
   }
 
   async findAllWithDetails(query?: LessonQueryDto) {

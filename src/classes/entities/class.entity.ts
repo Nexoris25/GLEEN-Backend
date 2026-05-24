@@ -6,11 +6,13 @@ import {
   DataType,
   ForeignKey,
   BelongsTo,
+  HasMany,
 } from 'sequelize-typescript';
 import { User } from '../../user/models/user.model';
 import { Subject } from 'src/subject/models/subject.model';
 import { Room } from 'src/rooms/models/room.model';
 import { DataTypes } from 'sequelize';
+import { ClassEnrollment } from '../models/class-enrollment.model';
 
 @Table({ tableName: 'classes', timestamps: true })
 export class ClassEntity extends Model<ClassEntity> {
@@ -90,4 +92,7 @@ export class ClassEntity extends Model<ClassEntity> {
 
   @BelongsTo(() => Room, { as: 'room' })
   room?: Room;
+
+  @HasMany(() => ClassEnrollment, { foreignKey: 'classId', as: 'enrollments' })
+  enrollments: ClassEnrollment[];
 }

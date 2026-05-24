@@ -8,6 +8,7 @@ import { ClassEntity } from './entities/class.entity';
 import { UserModule } from '../user/user.module';
 import { Subject } from 'src/subject/models/subject.model';
 import { Room } from 'src/rooms/models/room.model';
+import { UserSubject } from 'src/subject/models/user-subject.model';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { Room } from 'src/rooms/models/room.model';
       ClassRecording,
       Subject,
       Room,
+      UserSubject,
     ]),
     UserModule, // for user/tutor validation
   ],
