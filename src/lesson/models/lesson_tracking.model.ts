@@ -53,6 +53,30 @@ export class LessonTracking extends Model {
   })
   dateCompleted: Date | null;
 
+  @ApiProperty({
+    description: 'Time spent on this lesson in seconds',
+    example: 120,
+    minimum: 0,
+  })
+  @Default(0)
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false,
+  })
+  timeSpent: number;
+
+  @ApiProperty({
+    description: 'XP earned when completing this lesson',
+    example: 50,
+    minimum: 0,
+  })
+  @Default(0)
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false,
+  })
+  xpEarned: number;
+
   @ApiProperty()
   @ForeignKey(() => User)
   @Column({

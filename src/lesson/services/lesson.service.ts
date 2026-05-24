@@ -26,6 +26,8 @@ import { User } from 'src/user/models/user.model';
 import { LessonTopic } from '../models/lesson_topic.model';
 import { BunnyService } from 'src/common/services/bunny-all.service';
 import { TopicTypeEnum } from 'src/shared-types/FileTypeEnum';
+import { XpLogService } from 'src/xp/services/xp-log.service';
+import { CreateXpLogDto } from 'src/xp/dto/xp-log.dto';
 
 @Injectable()
 export class LessonService {
@@ -37,6 +39,7 @@ export class LessonService {
     private lessonCommentModel: typeof LessonComment,
     @InjectModel(LessonTracking)
     private lessonTrackingModel: typeof LessonTracking,
+    private readonly xpLogService: XpLogService,
   ) {}
 
   private readonly MAX_LIMIT = 500;
@@ -209,23 +212,86 @@ export class LessonService {
     }
   }
 
-  async completeLessonTracking(lessonId: string, userId: string) {
-    // Find the tracking record
-    const tracking = await this.lessonTrackingModel.findOne({
+  async completeLessonTracking(
+    lessonId: string,
+    userId: string,
+    timeSpent?: number,
+  ) {
+    const lesson = await this.lessonModel.findByPk(lessonId);
+    if (!lesson) {
+      throw new NotFoundException(`Lesson with id ${lessonId} not found`);
+    }
+
+    const resolvedTimeSpent =
+      typeof timeSpent === 'number'
+        ? timeSpent
+        : ((await LessonTopic.sum('duration', { where: { lessonId } })) ?? 0);
+
+    let tracking = await this.lessonTrackingModel.findOne({
       where: { lessonId, userId },
     });
 
     if (!tracking) {
-      throw new NotFoundException(
-        `Lesson tracking not found for lesson ${lessonId} and user ${userId}`,
+      tracking = await this.lessonTrackingModel.create(
+        {
+          lessonId,
+          userId,
+          dateCompleted: new Date(),
+          timeSpent: resolvedTimeSpent,
+          xpEarned: 0,
+        },
+        { isNewRecord: true, userId },
       );
+    } else {
+      if (!tracking.dateCompleted) {
+        tracking.dateCompleted = new Date();
+      }
+      if (typeof timeSpent === 'number') {
+        tracking.timeSpent = timeSpent;
+      } else if (!tracking.timeSpent || tracking.timeSpent <= 0) {
+        tracking.timeSpent = resolvedTimeSpent;
+      }
     }
 
-    // Update dateCompleted to current timestamp
-    tracking.dateCompleted = new Date();
-    await tracking.save();
+    if (!tracking.xpEarned || tracking.xpEarned <= 0) {
+      const xpValue = 50;
+      const dto: CreateXpLogDto = {
+        userId,
+        xpValue,
+        xpType: 'lesson_completion',
+        detail: `Completed lesson: ${lesson.title}`,
+      };
 
+      await this.xpLogService.create(dto);
+      tracking.xpEarned = xpValue;
+    }
+
+    await tracking.save();
     return tracking;
+  }
+
+  async getCompletedLessonsSummary(userId: string) {
+    const trackings = await this.lessonTrackingModel.findAll({
+      where: {
+        userId,
+        dateCompleted: { [Op.not]: null },
+      },
+      include: [
+        {
+          model: Lesson,
+          attributes: ['id', 'title'],
+        },
+      ],
+      order: [['dateCompleted', 'DESC']],
+    });
+
+    return trackings.map((tracking) => ({
+      lessonId: tracking.lessonId,
+      title: tracking.lesson?.title ?? null,
+      timeSpent: tracking.timeSpent ?? 0,
+      xpEarned: tracking.xpEarned ?? 0,
+      dateCompleted: tracking.dateCompleted,
+    }));
   }
 
   async removeTracking(id: string): Promise<void> {

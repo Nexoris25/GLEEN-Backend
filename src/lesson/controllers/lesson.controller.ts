@@ -11,7 +11,6 @@ import {
   Query,
   UseGuards,
   ValidationPipe,
-  Req,
 } from '@nestjs/common';
 import {
   ApiBody,
@@ -42,6 +41,7 @@ import { RolesGuard } from 'src/auth/GuardsDecorMiddleware/roles.guard';
 import stringify from 'safe-stable-stringify';
 import { Lesson } from '../models/lesson.model';
 import { Roles } from 'src/auth/decorators/roles.decorator';
+import { CompleteLessonDto } from '../dto/complete-lesson.dto';
 
 @ApiTags('Lessons')
 @ApiBearerAuth()
@@ -707,6 +707,7 @@ details: error.response || error,
   @Put('tracking/complete/:lessonId')
   @ApiOperation({ summary: 'Mark lesson as completed for current user' })
   @ApiParam({ name: 'lessonId', description: 'Lesson ID', format: 'uuid' })
+  @ApiBody({ type: CompleteLessonDto })
   @ApiResponse({
     status: 200,
     description: 'Lesson marked as completed',
@@ -716,14 +717,14 @@ details: error.response || error,
   @ApiResponse({ status: 500, description: 'Error updating lesson tracking' })
   async completeLesson(
     @Param('lessonId') lessonId: string,
-    @Req() req: any,
+    @Body() body: CompleteLessonDto,
+    @UserId() userId: string,
   ): Promise<LessonTrackingResponseDto> {
     try {
-      const userId = req.user.id; // from auth guard
-
       const updatedTracking = await this.lessonService.completeLessonTracking(
         lessonId,
         userId,
+        body?.timeSpent,
       );
 
       return {
@@ -735,6 +736,37 @@ details: error.response || error,
       return {
         status: 500,
         message: 'Error updating lesson tracking',
+        error: stringify({
+          message: error.message,
+          stack: error.stack,
+          details: error.response || error,
+        }),
+      };
+    }
+  }
+
+  @Get('tracking/completed')
+  @ApiOperation({
+    summary:
+      'Get completed lessons for current user (timeSpent, title, xpEarned, dateCompleted)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Completed lessons retrieved successfully',
+    type: ResponseDto,
+  })
+  async getCompletedLessons(@UserId() userId: string) {
+    try {
+      const data = await this.lessonService.getCompletedLessonsSummary(userId);
+      return {
+        status: 200,
+        message: 'Completed lessons retrieved successfully',
+        data,
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        message: 'Error retrieving completed lessons',
         error: stringify({
           message: error.message,
           stack: error.stack,
