@@ -344,9 +344,9 @@ details: error.response || error,
 
   // Implement similar controller methods for LessonComment and LessonTracking
 
-  @Post('comments')
+  @Post('comments/:lessonId')
   @ApiOperation({ summary: 'Create a lesson comment' })
-  @ApiParam({ name: 'id', description: 'Lesson ID' })
+  @ApiParam({ name: 'lessonId', description: 'Lesson ID' })
   @ApiBody({ type: CreateLessonCommentDto })
   @ApiResponse({
     status: 201,
@@ -364,12 +364,14 @@ details: error.response || error,
     type: ResponseDto,
   })
   async createComment(
+    @Param('lessonId') lessonId: string,
     @Body() createCommentDto: CreateLessonCommentDto,
     @UserId() userId: string,
   ): Promise<LessonCommentResponseDto> {
     try {
       const comment = await this.lessonService.createComment(
         createCommentDto,
+        lessonId,
         userId,
       );
       return {

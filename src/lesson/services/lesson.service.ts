@@ -312,11 +312,12 @@ export class LessonService {
 
   async createComment(
     createCommentDto: CreateLessonCommentDto,
+    lessonId: string,
     userId: string,
   ): Promise<LessonComment> {
     try {
       const comment = await this.lessonCommentModel.create(
-        { ...createCommentDto, userId },
+        { ...createCommentDto, userId, lessonId },
         { isNewRecord: true, userId },
       );
       return comment;
@@ -643,9 +644,21 @@ export class LessonService {
     const totalDuration = topics.reduce((acc, t) => acc + (t.duration || 0), 0);
     const hasVideo = topics.some((t) => t.topicType === TopicTypeEnum.VIDEO);
 
+    const avgRow = await this.lessonCommentModel.findOne({
+      where: {
+        lessonId: id,
+        rating: { [Op.not]: null },
+      },
+      attributes: [[fn('AVG', col('rating')), 'avgRating']],
+      raw: true,
+    });
+    const avgRatingRaw = avgRow ? Number((avgRow as any).avgRating) : 0;
+    const rating = Math.max(0, Math.min(5, avgRatingRaw || 0));
+
     (lesson as any).setDataValue('totalTopics', totalTopics);
     (lesson as any).setDataValue('totalDuration', totalDuration);
     (lesson as any).setDataValue('type', hasVideo ? 'VIDEO' : 'NON-VIDEO');
+    (lesson as any).setDataValue('rating', rating);
 
     return lesson;
   }

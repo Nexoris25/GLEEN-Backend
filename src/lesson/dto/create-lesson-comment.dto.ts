@@ -1,22 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  IsUUID,
-} from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 export class CreateLessonCommentDto {
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsUUID()
-  lessonId: string;
-
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsUUID()
-  userId: string;
-
   @ApiProperty()
   @IsNotEmpty()
   @IsString()

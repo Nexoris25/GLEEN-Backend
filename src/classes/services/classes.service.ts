@@ -353,10 +353,7 @@ export class ClassesService {
         include: [[fn('COUNT', col('enrollments.id')), 'totalEnrolled']],
       },
       group: ['ClassEntity.id', 'tutor.id', 'subject.id', 'room.id'],
-      order: [
-        [literal('"totalEnrolled"'), 'DESC'],
-        ['createdAt', 'DESC'],
-      ],
+      order: [[literal('"totalEnrolled"'), 'DESC'], ['createdAt', 'DESC']],
       limit,
       offset,
       subQuery: false,
