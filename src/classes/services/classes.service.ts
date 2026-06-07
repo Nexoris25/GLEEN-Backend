@@ -353,7 +353,10 @@ export class ClassesService {
         include: [[fn('COUNT', col('enrollments.id')), 'totalEnrolled']],
       },
       group: ['ClassEntity.id', 'tutor.id', 'subject.id', 'room.id'],
-      order: [[literal('"totalEnrolled"'), 'DESC'], ['createdAt', 'DESC']],
+      order: [
+        [literal('"totalEnrolled"'), 'DESC'],
+        ['createdAt', 'DESC'],
+      ],
       limit,
       offset,
       subQuery: false,
@@ -595,6 +598,84 @@ export class ClassesService {
       success: true,
       message: 'Student enrolled',
       enrolledStudents: cls.enrolledStudents,
+    };
+  }
+
+  async getJoinInfo(userId: string, classId: string) {
+    const cls = await this.classModel.findByPk(classId.trim());
+    if (!cls) {
+      throw new NotFoundException('Class not found');
+    }
+
+    if (!cls.roomName || !cls.roomURL) {
+      throw new BadRequestException('Class room is not configured');
+    }
+
+    if (cls.tutorId === userId) {
+      if (!cls.ownerToken) {
+        const tutorRecord = await this.userModel.findByPk(cls.tutorId, {
+          attributes: ['fullName'],
+        });
+        const tutorFullName = tutorRecord ? `${tutorRecord.fullName}` : 'Tutor';
+        const startUnix = Math.floor(new Date(cls.startTime).getTime() / 1000);
+        const endUnix = Math.floor(new Date(cls.endTime).getTime() / 1000);
+
+        cls.ownerToken = await this.generateMeetingToken({
+          room_name: cls.roomName,
+          is_owner: true,
+          nbf: startUnix,
+          exp: endUnix,
+          eject_at_token_exp: true,
+          user_name: tutorFullName,
+          user_id: cls.tutorId,
+        });
+        await cls.save();
+      }
+
+      return {
+        classId: cls.id,
+        roomUrl: cls.roomURL,
+        dailyRoomName: cls.roomName,
+        token: cls.ownerToken,
+        isOwner: true,
+      };
+    }
+
+    let enrollment = await this.findEnrollment(userId, cls.id);
+    if (!enrollment) {
+      const enrolled = cls.enrolledStudents ?? [];
+
+      const user = await this.userModel.findByPk(userId, {
+        attributes: ['fullName'],
+      });
+      const userName = user ? `${user.fullName}` : 'Student';
+
+      const token = await this.generateMeetingToken({
+        room_name: cls.roomName,
+        is_owner: false,
+        user_name: userName,
+        user_id: userId,
+      });
+
+      if (!enrolled.includes(userId)) {
+        cls.enrolledStudents = [...enrolled, userId];
+        await cls.save();
+      }
+
+      enrollment = await this.createEnrollment({
+        userId,
+        classId: cls.id,
+        dailyRoomName: cls.roomName,
+        dailyToken: token,
+      });
+    }
+
+    return {
+      classId: cls.id,
+      roomUrl: cls.roomURL,
+      dailyRoomName: cls.roomName,
+      token: enrollment.dailyToken,
+      isOwner: false,
     };
   }
 

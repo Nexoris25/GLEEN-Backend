@@ -32,6 +32,8 @@ import { RolesGuard } from 'src/auth/GuardsDecorMiddleware/roles.guard';
 import { LessonQueryDto } from 'src/lesson/dto/query.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { UserId } from 'src/auth/GuardsDecorMiddleware/userIdDecorator.guard';
+import { ResponseDto } from 'src/shared-types/response.dto';
+import stringify from 'safe-stable-stringify';
 
 @ApiTags('Classes')
 @ApiBearerAuth()
@@ -92,6 +94,35 @@ export class ClassesController {
     @Query() query: PaginationDto,
   ) {
     return this.classesService.findRecommended(userId, query);
+  }
+
+  @ApiOperation({
+    summary: 'Get Daily.co join info (roomUrl + token) for current user',
+  })
+  @ApiResponse({ status: 200, type: ResponseDto })
+  @Get('join/:classId')
+  async getJoinInfo(
+    @UserId() userId: string,
+    @Param('classId') classId: string,
+  ) {
+    try {
+      const data = await this.classesService.getJoinInfo(userId, classId);
+      return {
+        status: HttpStatus.OK,
+        message: 'Join info retrieved successfully',
+        data,
+      };
+    } catch (error) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Failed to retrieve join info',
+        error: stringify({
+          message: error?.message || 'Unknown error',
+          stack: error?.stack,
+          details: error?.response || error,
+        }),
+      };
+    }
   }
   /*
   // GET ALL with optional search
