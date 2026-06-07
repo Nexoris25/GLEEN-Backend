@@ -5,6 +5,7 @@ import {
   BadRequestException,
   ConflictException,
   InternalServerErrorException,
+  HttpException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { ClassEntity } from '../entities/class.entity';
@@ -76,6 +77,7 @@ export class ClassesService {
   private readonly DAILY_API_URL = 'https://api.daily.co/v1/rooms';
   private readonly DAILY_API_TOKEN_URL =
     'https://api.daily.co/v1/meeting-tokens';
+  private readonly ROOM_DELETE_GRACE_MS = 60 * 60 * 1000;
 
   async create(dto: CreateClassDto) {
     let ownerToken: string;
@@ -84,26 +86,12 @@ export class ClassesService {
       .replace(/[^a-z0-9 -]/g, '')
       .replace(/\s+/g, '-')
       .slice(0, 40);
-    let roomName =
-      dto.roomName ||
-      `liveclass-${safeTitle}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    const roomName = `liveclass-${safeTitle}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
     let roomURL: string;
     let finalRoomId: string = null;
 
     try {
-      if (dto.roomName) {
-        const existingRoom = await Room.findOne({
-          where: { name: dto.roomName },
-        });
-        if (existingRoom) {
-          roomName = existingRoom.dailyRoomName;
-          roomURL = existingRoom.roomUrl;
-          ownerToken = existingRoom.ownerToken;
-          finalRoomId = existingRoom.id;
-        }
-      }
-
-      if (!roomURL) {
+      {
         const nowMs = Date.now();
         if (dto.startTime.getTime() <= nowMs + 10 * 60 * 1000) {
           throw new BadRequestException(
@@ -111,7 +99,7 @@ export class ClassesService {
           );
         }
 
-        const expireAtMs = dto.endTime.getTime() + 30 * 60 * 1000;
+        const expireAtMs = dto.endTime.getTime() + this.ROOM_DELETE_GRACE_MS;
         const expUnix = Math.floor(expireAtMs / 1000);
 
         const currentUnix = Math.floor(nowMs / 1000);
@@ -154,7 +142,7 @@ export class ClassesService {
           roomURL = dailyRoomData.url;
 
           const newDbRoom = await Room.create({
-            name: dto.roomName || roomName,
+            name: roomName,
             dailyRoomName: dailyRoomData.name,
             roomUrl: dailyRoomData.url,
             ownerToken: '',
@@ -165,7 +153,7 @@ export class ClassesService {
           const axiosError = error;
           const dailyData = axiosError.response?.data || {};
           throw new BadRequestException(
-            `Failed to create room on Daily.co: ${dailyData.error || axiosError.message}`,
+            `Failed to create room on Daily.co: ${dailyData.info || dailyData.error || axiosError.message}`,
           );
         }
       }
@@ -229,13 +217,58 @@ export class ClassesService {
 
       return { success: true, data: createdClass };
     } catch (err) {
+      if (err instanceof HttpException) {
+        throw err;
+      }
       throw new InternalServerErrorException(
         `Failed to create class: ${err.message}`,
       );
     }
   }
 
+  private async cleanupClassRoomIfExpired(cls: ClassEntity) {
+    if (!cls?.roomName) return;
+
+    const endMs = new Date(cls.endTime).getTime();
+    const deleteAfterMs = endMs + this.ROOM_DELETE_GRACE_MS;
+    if (Date.now() < deleteAfterMs) return;
+
+    try {
+      await axios.delete(`${this.DAILY_API_URL}/${cls.roomName}`, {
+        headers: { Authorization: `Bearer ${this.DAILY_API_KEY}` },
+      });
+    } catch (err: any) {
+      if (err.response?.status !== 404) {
+        return;
+      }
+    }
+
+    await cls.update({
+      roomName: null,
+      roomURL: null,
+      ownerToken: null,
+      roomId: null,
+    } as any);
+  }
+
+  private async cleanupExpiredRooms() {
+    const cutoff = new Date(Date.now() - this.ROOM_DELETE_GRACE_MS);
+    const expired = await this.classModel.findAll({
+      where: {
+        endTime: { [Op.lt]: cutoff },
+        roomName: { [Op.not]: null },
+      },
+      limit: 20,
+      order: [['endTime', 'ASC']],
+    });
+
+    await Promise.all(
+      expired.map((cls) => this.cleanupClassRoomIfExpired(cls)),
+    );
+  }
+
   async findPrevious() {
+    await this.cleanupExpiredRooms();
     const now = new Date();
     return this.classModel.findAll({
       where: { endTime: { [Op.lt]: now } },
@@ -244,6 +277,7 @@ export class ClassesService {
   }
 
   async findUpcoming() {
+    await this.cleanupExpiredRooms();
     const now = new Date();
     return this.classModel.findAll({
       where: { startTime: { [Op.gt]: now } },
@@ -252,6 +286,7 @@ export class ClassesService {
   }
 
   async findLive() {
+    await this.cleanupExpiredRooms();
     const now = new Date();
     return this.classModel.findAll({
       where: {
@@ -263,6 +298,7 @@ export class ClassesService {
   }
 
   async findLivePaginated(query?: PaginationDto) {
+    await this.cleanupExpiredRooms();
     const now = new Date();
     const limit = Math.min(query?.limit ?? 10, this.MAX_LIMIT);
     const offset = query?.offset ?? 0;
@@ -315,6 +351,7 @@ export class ClassesService {
   }
 
   async findRecommended(userId: string, query?: PaginationDto) {
+    await this.cleanupExpiredRooms();
     const now = new Date();
     const limit = Math.min(query?.limit ?? 10, this.MAX_LIMIT);
     const offset = query?.offset ?? 0;
@@ -612,8 +649,9 @@ export class ClassesService {
       throw new NotFoundException('Class not found');
     }
 
+    await this.cleanupClassRoomIfExpired(cls);
     if (!cls.roomName || !cls.roomURL) {
-      throw new BadRequestException('Class room is not configured');
+      throw new BadRequestException('Class has ended');
     }
 
     if (cls.tutorId === userId) {
