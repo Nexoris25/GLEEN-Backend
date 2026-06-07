@@ -111,13 +111,13 @@ export class ClassesService {
           );
         }
 
-        const expireAtMs = dto.startTime.getTime() + 2 * 60 * 60 * 1000;
+        const expireAtMs = dto.endTime.getTime() + 30 * 60 * 1000;
         const expUnix = Math.floor(expireAtMs / 1000);
 
         const currentUnix = Math.floor(nowMs / 1000);
         if (expUnix <= currentUnix) {
           throw new BadRequestException(
-            `Calculated exp (${expUnix}) is in the past or now (${currentUnix}) – adjust startTime`,
+            `Calculated exp (${expUnix}) is in the past or now (${currentUnix}) – adjust endTime`,
           );
         }
 
@@ -575,9 +575,14 @@ export class ClassesService {
     });
     const userName = user ? `${user.fullName}` : 'Student';
 
+    const startUnix = Math.floor(new Date(cls.startTime).getTime() / 1000);
+    const endUnix = Math.floor(new Date(cls.endTime).getTime() / 1000);
     const token = await this.generateMeetingToken({
       room_name: cls.roomName,
       is_owner: false,
+      nbf: startUnix,
+      exp: endUnix,
+      eject_at_token_exp: true,
       user_name: userName,
       user_id: userId,
     });
@@ -650,9 +655,14 @@ export class ClassesService {
       });
       const userName = user ? `${user.fullName}` : 'Student';
 
+      const startUnix = Math.floor(new Date(cls.startTime).getTime() / 1000);
+      const endUnix = Math.floor(new Date(cls.endTime).getTime() / 1000);
       const token = await this.generateMeetingToken({
         room_name: cls.roomName,
         is_owner: false,
+        nbf: startUnix,
+        exp: endUnix,
+        eject_at_token_exp: true,
         user_name: userName,
         user_id: userId,
       });
