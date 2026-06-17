@@ -35,6 +35,11 @@ import { UpdateQuizDto } from '../dto/udpdate-quiz.dto';
 import { CreateQuizCommentDto } from '../dto/create-quiz-comment.dto';
 import { UpdateQuizCommentDto } from '../dto/update-quiz-comment.dto';
 import { Roles } from 'src/auth/decorators/roles.decorator';
+import {
+  MostTakenQuizzesQueryDto,
+  QuizSubjectsQueryDto,
+} from '../dto/query.dto';
+import { ValidationPipe } from '@nestjs/common';
 
 @ApiTags('Quizzes')
 @ApiBearerAuth()
@@ -107,6 +112,71 @@ export class QuizController {
       return {
         status: 500,
         message: 'Error fetching quizzes',
+        error: stringify({
+          message: error.message,
+          stack: error.stack,
+          details: error.response || error,
+        }),
+      };
+    }
+  }
+
+  @Get('most-taken')
+  @ApiOperation({
+    summary: 'Get most taken quizzes (based on other users quiz attempts)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Most taken quizzes retrieved successfully',
+    type: ResponseDto,
+  })
+  async getMostTakenQuizzes(
+    @UserId() userId: string,
+    @Query(new ValidationPipe()) query: MostTakenQuizzesQueryDto,
+  ) {
+    try {
+      const data = await this.quizzesService.getMostTakenQuizzes(userId, query);
+      return {
+        status: 200,
+        message: 'Most taken quizzes retrieved successfully',
+        data,
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        message: 'Error retrieving most taken quizzes',
+        error: stringify({
+          message: error.message,
+          stack: error.stack,
+          details: error.response || error,
+        }),
+      };
+    }
+  }
+
+  @Get('subjects')
+  @ApiOperation({
+    summary: 'Get quiz subjects (subjects that have approved quizzes)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Quiz subjects retrieved successfully',
+    type: ResponseDto,
+  })
+  async getQuizSubjects(
+    @Query(new ValidationPipe()) query: QuizSubjectsQueryDto,
+  ) {
+    try {
+      const data = await this.quizzesService.getQuizSubjects(query);
+      return {
+        status: 200,
+        message: 'Quiz subjects retrieved successfully',
+        data,
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        message: 'Error retrieving quiz subjects',
         error: stringify({
           message: error.message,
           stack: error.stack,

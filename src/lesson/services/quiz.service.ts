@@ -13,6 +13,10 @@ import { UpdateQuizDto } from '../dto/udpdate-quiz.dto';
 import { CreateQuizCommentDto } from '../dto/create-quiz-comment.dto';
 import { QuizComment } from '../models/quiz_comment.model';
 import { UpdateQuizCommentDto } from '../dto/update-quiz-comment.dto';
+import type {
+  MostTakenQuizzesQueryDto,
+  QuizSubjectsQueryDto,
+} from '../dto/query.dto';
 
 @Injectable()
 export class QuizzesService {
@@ -114,6 +118,177 @@ export class QuizzesService {
         }),
       });
     }
+  }
+
+  async getMostTakenQuizzes(userId: string, query?: MostTakenQuizzesQueryDto) {
+    const offset = Math.max(query?.offset ?? 0, 0);
+    const limit = Math.min(query?.limit ?? 10, 500);
+    const search = typeof query?.search === 'string' ? query.search.trim() : '';
+
+    const sequelize = this.quizzesModel.sequelize as any;
+
+    const whereSearch = search
+      ? `AND (
+          q.title ILIKE :search
+          OR q.description ILIKE :search
+        )`
+      : '';
+
+    const [countRows] = (await sequelize.query(
+      `
+        SELECT COUNT(DISTINCT q.id)::int AS total
+        FROM "quizzes" q
+        JOIN "subjects" s ON s.id = q."subjectId"
+        LEFT JOIN "quiz_records" qr
+          ON qr."quizId" = q.id
+          AND qr."userId" <> :userId
+        WHERE q.status = 'APPROVED'
+        ${whereSearch};
+      `,
+      {
+        replacements: {
+          userId,
+          search: `%${search}%`,
+        },
+      },
+    )) as unknown as [{ total: number }[], unknown];
+
+    const total = Number(countRows?.[0]?.total) || 0;
+
+    const [rows] = (await sequelize.query(
+      `
+        SELECT
+          q.id::text AS id,
+          q.title AS title,
+          q.description AS description,
+          q.avatar AS image,
+          q.duration AS duration,
+          q."subjectId"::text AS "subjectId",
+          s.title AS "subjectTitle",
+          COALESCE(COUNT(DISTINCT qr."userId"), 0)::int AS "takenCount",
+          (
+            SELECT COUNT(*)::int
+            FROM "quiz_questions" qq
+            WHERE qq."quizId" = q.id
+          ) AS "questionCount"
+        FROM "quizzes" q
+        JOIN "subjects" s ON s.id = q."subjectId"
+        LEFT JOIN "quiz_records" qr
+          ON qr."quizId" = q.id
+          AND qr."userId" <> :userId
+        WHERE q.status = 'APPROVED'
+        ${whereSearch}
+        GROUP BY q.id, s.id
+        ORDER BY "takenCount" DESC, q."createdAt" DESC
+        LIMIT :limit OFFSET :offset;
+      `,
+      {
+        replacements: {
+          userId,
+          search: `%${search}%`,
+          limit,
+          offset,
+        },
+      },
+    )) as unknown as [any[], unknown];
+
+    return {
+      data: rows || [],
+      meta: {
+        totalItems: total,
+        limit,
+        offset,
+        currentCount: (rows || []).length,
+        hasNext: offset + limit < total,
+        hasPrevious: offset > 0,
+      },
+    };
+  }
+
+  async getQuizSubjects(query?: QuizSubjectsQueryDto) {
+    const offset = Math.max(query?.offset ?? 0, 0);
+    const limit = Math.min(query?.limit ?? 10, 500);
+    const search = typeof query?.search === 'string' ? query.search.trim() : '';
+
+    const subjectIds =
+      typeof query?.subjects === 'string'
+        ? query.subjects
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [];
+
+    const sequelize = this.quizzesModel.sequelize as any;
+
+    const whereSearch = search ? `AND s.title ILIKE :search` : '';
+    const whereSubjects =
+      subjectIds.length > 0 ? `AND s.id IN (:subjectIds)` : '';
+
+    const [countRows] = (await sequelize.query(
+      `
+        SELECT COUNT(*)::int AS total
+        FROM (
+          SELECT s.id
+          FROM "subjects" s
+          JOIN "quizzes" q
+            ON q."subjectId" = s.id
+            AND q.status = 'APPROVED'
+          WHERE 1=1
+          ${whereSearch}
+          ${whereSubjects}
+          GROUP BY s.id
+        ) x;
+      `,
+      {
+        replacements: {
+          search: `%${search}%`,
+          subjectIds,
+        },
+      },
+    )) as unknown as [{ total: number }[], unknown];
+
+    const total = Number(countRows?.[0]?.total) || 0;
+
+    const [rows] = (await sequelize.query(
+      `
+        SELECT
+          s.id::text AS id,
+          s.title AS title,
+          s.description AS description,
+          s.avatar AS avatar,
+          COUNT(q.id)::int AS "quizCount"
+        FROM "subjects" s
+        JOIN "quizzes" q
+          ON q."subjectId" = s.id
+          AND q.status = 'APPROVED'
+        WHERE 1=1
+        ${whereSearch}
+        ${whereSubjects}
+        GROUP BY s.id
+        ORDER BY "quizCount" DESC, s."createdAt" DESC
+        LIMIT :limit OFFSET :offset;
+      `,
+      {
+        replacements: {
+          search: `%${search}%`,
+          subjectIds,
+          limit,
+          offset,
+        },
+      },
+    )) as unknown as [any[], unknown];
+
+    return {
+      data: rows || [],
+      meta: {
+        totalItems: total,
+        limit,
+        offset,
+        currentCount: (rows || []).length,
+        hasNext: offset + limit < total,
+        hasPrevious: offset > 0,
+      },
+    };
   }
 
   async findById(id: string): Promise<Quizzes | null> {

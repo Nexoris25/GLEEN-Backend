@@ -79,10 +79,20 @@ export class UserService {
   // ✅ FIND ALL WITH PAGINATION AND FILTERS
   async findAll(searchDto: UserSearchDto) {
     try {
-      const { offset = 0, limit = 10, ...searchParams } = searchDto;
+      const { offset = 0, limit = 10, search, ...searchParams } = searchDto;
 
       // Build WHERE filters
       const where: WhereOptions<User> = {};
+
+      const trimmedSearch = typeof search === 'string' ? search.trim() : '';
+      if (trimmedSearch) {
+        where[Op.or] = [
+          { username: { [Op.iLike]: `%${trimmedSearch}%` } },
+          { email: { [Op.iLike]: `%${trimmedSearch}%` } },
+          { fullName: { [Op.iLike]: `%${trimmedSearch}%` } },
+        ];
+      }
+
       Object.entries(searchParams).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
           switch (key) {

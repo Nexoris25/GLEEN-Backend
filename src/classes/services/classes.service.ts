@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
   ConflictException,
   InternalServerErrorException,
   HttpException,
@@ -14,6 +15,7 @@ import { CreateClassDto } from '../dto/create-class.dto';
 import { UpdateClassDto } from '../dto/update-class.dto';
 import { AttendanceQueryDto } from '../dto/attendance-query.dto';
 import { CreateClassRecordingDto } from '../dto/create-class-recording.dto';
+import { RequestPrivateLessonDto } from '../dto/request-private-lesson.dto';
 import { ClassRecording } from '../models/class-recording.model';
 import { UserService } from '../../user/services/user.service';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
@@ -25,6 +27,7 @@ import { ClassEnrollment } from 'src/classes/models/class-enrollment.model';
 import { Subject } from 'src/subject/models/subject.model';
 import { Room } from 'src/rooms/models/room.model';
 import { UserSubject } from 'src/subject/models/user-subject.model';
+import { RoleEnum } from 'src/shared-types/RoleEnum';
 
 interface DailyMeetingTokenProperties {
   room_name?: string;
@@ -224,6 +227,73 @@ export class ClassesService {
         `Failed to create class: ${err.message}`,
       );
     }
+  }
+
+  private buildUtcScheduledDateTime(date: string, time: string) {
+    const normalizedTime = time.length === 5 ? `${time}:00` : time;
+    const dt = new Date(`${date}T${normalizedTime}Z`);
+    if (Number.isNaN(dt.getTime())) {
+      throw new BadRequestException('Invalid date/time');
+    }
+    return dt;
+  }
+
+  async requestPrivateLesson(
+    requestingUserId: string,
+    dto: RequestPrivateLessonDto,
+  ) {
+    const requester = await this.userModel.findByPk(requestingUserId, {
+      attributes: ['id', 'role', 'fullName'],
+    });
+    if (!requester) {
+      throw new NotFoundException('User not found');
+    }
+    if (requester.role !== RoleEnum.USER) {
+      throw new ForbiddenException(
+        'Only normal users can request a private lesson',
+      );
+    }
+    if (dto.tutorId === requestingUserId) {
+      throw new BadRequestException(
+        'tutorId cannot be the same as the requesting user',
+      );
+    }
+
+    const tutor = await this.userModel.findByPk(dto.tutorId, {
+      attributes: ['id', 'role', 'fullName'],
+    });
+    if (!tutor) {
+      throw new NotFoundException('Tutor not found');
+    }
+    if (tutor.role !== RoleEnum.TUTOR) {
+      throw new BadRequestException(
+        'Provided tutorId does not belong to a tutor',
+      );
+    }
+
+    const startTime = this.buildUtcScheduledDateTime(dto.date, dto.time);
+    const durationMinutes = dto.durationMinutes ?? 60;
+    const endTime = new Date(startTime.getTime() + durationMinutes * 60 * 1000);
+
+    const title = `Private lesson ${requestingUserId.slice(0, 8)} ${Date.now()}`;
+    const description = `Private lesson requested by ${requester.fullName || requester.id}`;
+
+    const created = await this.create({
+      title,
+      description,
+      tutorId: dto.tutorId,
+      startTime,
+      endTime,
+      date: dto.date,
+      time: dto.time,
+    });
+
+    await this.enroll(requestingUserId, created.data.id);
+
+    return {
+      success: true,
+      data: created.data,
+    };
   }
 
   private async cleanupClassRoomIfExpired(cls: ClassEntity) {

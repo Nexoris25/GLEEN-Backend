@@ -392,6 +392,12 @@ export class UserController {
   //@Roles('TUTOR', 'SUPER_ADMIN', 'ADMIN') // Class-level roles
   @ApiOperation({ summary: 'Get all users with optional filters' })
   @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Search across username, fullName, and email',
+  })
+  @ApiQuery({
     name: 'username',
     required: false,
     type: String,

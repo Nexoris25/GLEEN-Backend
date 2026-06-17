@@ -109,6 +109,12 @@ export class LessonController {
     description:
       'Fetch all lessons (video + non-video), with optional subject filters and search. Supports pagination with offset/limit.',
   })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    enum: ['VIDEO', 'NON-VIDEO'],
+    description: 'Filter by lesson type',
+  })
   @ApiResponse({
     status: 200,
     description: 'Lessons retrieved successfully',

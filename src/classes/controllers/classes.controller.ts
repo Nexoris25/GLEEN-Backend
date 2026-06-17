@@ -11,6 +11,7 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
+  ValidationPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -25,6 +26,7 @@ import { UpdateClassDto } from '../dto/update-class.dto';
 import { AttendanceQueryDto } from '../dto/attendance-query.dto';
 import { CreateClassRecordingDto } from '../dto/create-class-recording.dto';
 import { EnrollDto } from '../dto/enroll.dto';
+import { RequestPrivateLessonDto } from '../dto/request-private-lesson.dto';
 import { ClassEntity } from '../entities/class.entity';
 import { ClassResponseDto } from '../dto/class-response.dto';
 import { JwtAuthGuard } from 'src/auth/GuardsDecorMiddleware/jwt-auth.guard';
@@ -34,6 +36,7 @@ import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { UserId } from 'src/auth/GuardsDecorMiddleware/userIdDecorator.guard';
 import { ResponseDto } from 'src/shared-types/response.dto';
 import stringify from 'safe-stable-stringify';
+import { Roles } from 'src/auth/decorators/roles.decorator';
 
 @ApiTags('Classes')
 @ApiBearerAuth()
@@ -50,6 +53,43 @@ export class ClassesController {
   // @Roles('TUTOR', 'ADMIN', 'SUPER_ADMIN')
   async create(@Body() dto: CreateClassDto) {
     return this.classesService.create(dto);
+  }
+
+  @ApiOperation({ summary: 'Request a private lesson (User only)' })
+  @ApiBody({ type: RequestPrivateLessonDto })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Private lesson requested successfully',
+    type: ResponseDto,
+  })
+  @Post('private-lessons/request')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('USER')
+  async requestPrivateLesson(
+    @UserId() userId: string,
+    @Body(new ValidationPipe()) dto: RequestPrivateLessonDto,
+  ) {
+    try {
+      const result = await this.classesService.requestPrivateLesson(
+        userId,
+        dto,
+      );
+      return {
+        status: HttpStatus.CREATED,
+        message: 'Private lesson requested successfully',
+        data: result.data,
+      };
+    } catch (error) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Failed to request private lesson',
+        error: stringify({
+          message: error?.message || 'Unknown error',
+          stack: error?.stack,
+          details: error?.response || error,
+        }),
+      };
+    }
   }
 
   // list all rooms

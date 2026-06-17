@@ -555,6 +555,20 @@ export class LessonService {
       ];
     }
 
+    const type = typeof query?.type === 'string' ? query.type.trim() : '';
+    if (type === 'VIDEO' || type === 'NON-VIDEO') {
+      const existsVideoTopic = `EXISTS (
+        SELECT 1
+        FROM "lesson_topics" t
+        WHERE t."lessonId" = "Lesson"."id" AND t."topicType" = 'VIDEO'
+      )`;
+
+      where[Op.and] = [
+        ...(where[Op.and] ?? []),
+        type === 'VIDEO' ? literal(existsVideoTopic) : literal(`NOT ${existsVideoTopic}`),
+      ];
+    }
+
     const result = await this.lessonModel.findAndCountAll({
       where,
       include: [

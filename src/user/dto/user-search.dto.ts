@@ -6,13 +6,19 @@ import {
   IsBoolean,
   IsNumber,
   Min,
-  IsEnum,
   IsUUID,
 } from 'class-validator';
 import { RoleEnum } from '../../shared-types/RoleEnum';
 import { UserStatusEnum } from '../../shared-types/UserStatusEnum';
 
 export class UserSearchDto {
+  @ApiPropertyOptional({
+    description: 'Search across username, full name, and email',
+  })
+  @IsOptional()
+  @IsString()
+  search?: string;
+
   @ApiPropertyOptional({ description: 'Search by username' })
   @IsOptional()
   @IsString()
