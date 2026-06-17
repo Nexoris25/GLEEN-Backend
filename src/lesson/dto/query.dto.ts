@@ -1,13 +1,6 @@
 // lesson-query.dto.ts
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsOptional,
-  IsUUID,
-  IsString,
-  IsInt,
-  Min,
-  IsIn,
-} from 'class-validator';
+import { IsOptional, IsUUID, IsString, IsInt, Min, IsIn } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
 export class LessonQueryDto {

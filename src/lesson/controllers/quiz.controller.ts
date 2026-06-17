@@ -12,7 +12,6 @@ import {
 import {
   QuizCommentResponseCountDto,
   QuizCommentResponseDto,
-  QuizzesResponseCountDto,
   QuizzesResponseDto,
   ResponseDto,
 } from 'src/shared-types/response.dto';
@@ -88,10 +87,24 @@ export class QuizController {
 
   @Get()
   @ApiOperation({ summary: 'Get all quizzes' })
+  @ApiQuery({
+    name: 'offset',
+    required: false,
+    type: Number,
+    description: 'Number of items to skip',
+    example: 0,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Number of items to return',
+    example: 10,
+  })
   @ApiResponse({
     status: 200,
-    description: 'List of quizzes',
-    type: QuizzesResponseCountDto,
+    description: 'Paginated list of quizzes',
+    type: ResponseDto,
   })
   @ApiResponse({
     status: 500,
@@ -99,13 +112,37 @@ export class QuizController {
     type: ResponseDto<null>,
   })
   async findAll(
-    @Query() searchDto: SearchQuizDto,
-  ): Promise<QuizzesResponseCountDto> {
+    @Query(new ValidationPipe()) searchDto: SearchQuizDto,
+  ): Promise<{
+    status: number;
+    message: string;
+    data?: any[];
+    meta?: {
+      totalItems: number;
+      limit: number;
+      offset: number;
+      currentCount: number;
+      hasNext: boolean;
+      hasPrevious: boolean;
+    };
+    error?: any;
+  }> {
     try {
-      const x = await this.quizzesService.findAll(searchDto);
+      const { rows, count } = await this.quizzesService.findAll(searchDto);
+      const limit = Math.min(searchDto?.limit ?? 10, 500);
+      const offset = Math.max(searchDto?.offset ?? 0, 0);
+
       return {
         status: 200,
-        data: x,
+        data: rows,
+        meta: {
+          totalItems: count,
+          limit,
+          offset,
+          currentCount: rows.length,
+          hasNext: offset + limit < count,
+          hasPrevious: offset > 0,
+        },
         message: 'Quizzes fetched successfully',
       };
     } catch (error) {
