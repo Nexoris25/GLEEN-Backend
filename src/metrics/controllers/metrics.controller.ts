@@ -1,4 +1,10 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  UseGuards,
+  ValidationPipe,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -12,6 +18,8 @@ import { JwtAuthGuard } from 'src/auth/GuardsDecorMiddleware/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/GuardsDecorMiddleware/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { StudentGrowthResponseDto } from '../dto/student-growth.dto';
+import { DashboardQueryDto } from '../dto/dashboard-query.dto';
+import { ResponseDto } from 'src/shared-types/response.dto';
 
 @ApiTags('Metrics')
 @ApiBearerAuth()
@@ -40,5 +48,23 @@ export class MetricsController {
     @Query('endDate') endDate: string,
   ) {
     return this.metricsService.getStudentGrowth({ startDate, endDate });
+  }
+
+  @ApiOperation({ summary: 'Get dashboard data for a date range (admin only)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Dashboard data retrieved successfully',
+    type: ResponseDto,
+  })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Get('dashboard')
+  async getDashboard(@Query(new ValidationPipe()) query: DashboardQueryDto) {
+    const data = await this.metricsService.getDashboard(query);
+    return {
+      status: 200,
+      message: 'Dashboard data retrieved successfully',
+      data,
+    };
   }
 }

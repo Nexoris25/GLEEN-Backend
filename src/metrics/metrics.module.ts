@@ -11,6 +11,10 @@ import { ClassesModule } from '../classes/classes.module';
 import { LessonModule } from '../lesson/lesson.module';
 import { Subject } from 'src/subject/models/subject.model';
 import { Room } from 'src/rooms/models/room.model';
+import { Lesson } from 'src/lesson/models/lesson.model';
+import { Quizzes } from 'src/lesson/models/quiz.model';
+import { MockExams } from 'src/mock-exam/models/mock-exam.model';
+import { MockExamRecord } from 'src/mock-exam/models/mock-exam-record.model';
 
 @Module({
   imports: [
@@ -21,6 +25,10 @@ import { Room } from 'src/rooms/models/room.model';
       StudentsQuizAnswers,
       Subject,
       Room,
+      Lesson,
+      Quizzes,
+      MockExams,
+      MockExamRecord,
     ]),
     forwardRef(() => ClassesModule),
     forwardRef(() => LessonModule),
