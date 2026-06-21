@@ -37,6 +37,26 @@ export class UserService {
     private readonly bunnyService: BunnyService,
   ) {}
 
+  async getLoggedInUserDetails(userId: string) {
+    const user = await this.userModel.findOne({
+      where: { id: userId },
+      attributes: {
+        exclude: [
+          'password',
+          'lastSubscriptionTransactionId',
+        ],
+      },
+      include: [
+        { association: 'goals', attributes: ['id', 'title', 'description'] },
+        { association: 'subjects', attributes: ['id', 'title', 'description', 'avatar'] },
+      ],
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
+  }
+
   async updatePassword(userId: string, newPassword: string): Promise<void> {
     const user = await this.findOneById(userId);
     if (!user) {

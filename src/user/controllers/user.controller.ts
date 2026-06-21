@@ -11,6 +11,7 @@ import {
   Query,
   Post,
   BadRequestException,
+  NotFoundException,
   UploadedFile,
   UseInterceptors,
   Patch,
@@ -52,6 +53,37 @@ import { AdminWebPreferencesDto } from '../dto/admin-web-preferences.dto';
 @Controller('')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @Get('user/me')
+  @ApiOperation({ summary: 'Get details of the currently logged-in user' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User details retrieved successfully',
+    type: ResponseDto,
+  })
+  async getLoggedInUser(@UserId() userId: string) {
+    try {
+      const data = await this.userService.getLoggedInUserDetails(userId);
+      return {
+        status: HttpStatus.OK,
+        message: 'User details retrieved successfully',
+        data,
+      };
+    } catch (error) {
+      return {
+        status:
+          error instanceof NotFoundException
+            ? HttpStatus.NOT_FOUND
+            : HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Error retrieving user details',
+        error: stringify({
+          message: error?.message || 'Unknown error',
+          stack: error?.stack,
+          details: error?.response || error,
+        }),
+      };
+    }
+  }
 
   @Get('user/admin-web-preferences')
   @Roles('ADMIN', 'SUPER_ADMIN')
