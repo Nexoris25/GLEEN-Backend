@@ -247,11 +247,11 @@ export class MetricsService {
           me.title AS name,
           COALESCE(
             ROUND(
-              CASE
+              (CASE
                 WHEN COALESCE(SUM(mer."totalMarks"), 0) > 0
                   THEN (COALESCE(SUM(mer."obtainedMarks"), 0) / SUM(mer."totalMarks")) * 100
                 ELSE 0
-              END
+              END)::numeric
             , 2),
             0
           ) AS "growthPercentage"
