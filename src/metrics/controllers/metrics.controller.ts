@@ -56,6 +56,18 @@ export class MetricsController {
     description: 'Dashboard data retrieved successfully',
     type: ResponseDto,
   })
+  @ApiQuery({
+    name: 'startDate',
+    required: true,
+    type: String,
+    example: '2025-01-01T00:00:00.000Z',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: true,
+    type: String,
+    example: '2025-12-31T23:59:59.999Z',
+  })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @Get('dashboard')
