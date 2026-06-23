@@ -372,11 +372,89 @@ export class ClassesService {
     const now = new Date();
     const limit = Math.min(query?.limit ?? 10, this.MAX_LIMIT);
     const offset = query?.offset ?? 0;
+    const trimmedSearch =
+      typeof query?.search === 'string' ? query.search.trim() : '';
 
     const result = await this.classModel.findAndCountAll({
       where: {
         startTime: { [Op.lte]: now },
         endTime: { [Op.gte]: now },
+        ...(trimmedSearch
+          ? {
+              [Op.or]: [
+                { title: { [Op.iLike]: `%${trimmedSearch}%` } },
+                { description: { [Op.iLike]: `%${trimmedSearch}%` } },
+                { '$tutor.fullName$': { [Op.iLike]: `%${trimmedSearch}%` } },
+                { '$tutor.username$': { [Op.iLike]: `%${trimmedSearch}%` } },
+                { '$subject.title$': { [Op.iLike]: `%${trimmedSearch}%` } },
+              ],
+            }
+          : {}),
+      },
+      include: [
+        {
+          model: User,
+          as: 'tutor',
+          attributes: ['id', 'fullName', 'username', 'avatar'],
+        },
+        { model: Subject, as: 'subject', attributes: ['id', 'title'] },
+        { model: Room, as: 'room', attributes: ['id', 'name'] },
+        {
+          model: ClassEnrollment,
+          as: 'enrollments',
+          attributes: [],
+          required: false,
+        },
+      ],
+      attributes: {
+        include: [[fn('COUNT', col('enrollments.id')), 'totalEnrolled']],
+      },
+      group: ['ClassEntity.id', 'tutor.id', 'subject.id', 'room.id'],
+      order: [['startTime', 'ASC']],
+      limit,
+      offset,
+      subQuery: false,
+    });
+
+    const total = Array.isArray(result.count)
+      ? result.count.reduce((sum, item) => sum + Number(item.count), 0)
+      : result.count;
+
+    return {
+      data: result.rows,
+      meta: {
+        totalItems: total,
+        limit,
+        offset,
+        currentCount: result.rows.length,
+        hasNext: offset + limit < total,
+        hasPrevious: offset > 0,
+      },
+    };
+  }
+
+  async findUpcomingPaginated(query?: PaginationDto) {
+    await this.cleanupExpiredRooms();
+    const now = new Date();
+    const limit = Math.min(query?.limit ?? 10, this.MAX_LIMIT);
+    const offset = query?.offset ?? 0;
+    const trimmedSearch =
+      typeof query?.search === 'string' ? query.search.trim() : '';
+
+    const result = await this.classModel.findAndCountAll({
+      where: {
+        startTime: { [Op.gt]: now },
+        ...(trimmedSearch
+          ? {
+              [Op.or]: [
+                { title: { [Op.iLike]: `%${trimmedSearch}%` } },
+                { description: { [Op.iLike]: `%${trimmedSearch}%` } },
+                { '$tutor.fullName$': { [Op.iLike]: `%${trimmedSearch}%` } },
+                { '$tutor.username$': { [Op.iLike]: `%${trimmedSearch}%` } },
+                { '$subject.title$': { [Op.iLike]: `%${trimmedSearch}%` } },
+              ],
+            }
+          : {}),
       },
       include: [
         {

@@ -113,8 +113,8 @@ export class ClassesController {
   @ApiResponse({ status: 200, type: [ClassResponseDto] })
   @Get('upcoming')
   //@Roles('STUDENT', 'TUTOR', 'ADMIN', 'SUPER_ADMIN')
-  getUpcomingClasses() {
-    return this.classesService.findUpcoming();
+  getUpcomingClasses(@Query() query: PaginationDto) {
+    return this.classesService.findUpcomingPaginated(query);
   }
 
   // ================= LIVE CLASSES =================
