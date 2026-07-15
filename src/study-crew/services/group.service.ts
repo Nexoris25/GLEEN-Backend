@@ -156,9 +156,13 @@ export class GroupsService {
     }
   }
 
-  async linkOne(userId: string, groupId: string) {
+  async linkOne(
+    userId: string,
+    groupId: string,
+    status: 'ACCEPTED' | 'DECLINED' | 'PENDING' = 'PENDING',
+  ) {
     try {
-      return await this.userGroupModel.create({ userId, groupId });
+      return await this.userGroupModel.create({ userId, groupId, status });
     } catch (error) {
       throw new BadRequestException({
         message: 'Error linking user to group',

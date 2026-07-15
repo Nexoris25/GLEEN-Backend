@@ -26,6 +26,10 @@ export class SearchV1BattleDto {
   @IsOptional()
   opponentUserId?: string;
 
+  @ApiPropertyOptional({ enum: ['ACCEPTED', 'REJECTED', 'PENDING'] })
+  @IsOptional()
+  acceptanceStatus?: 'ACCEPTED' | 'REJECTED' | 'PENDING';
+
   @ApiPropertyOptional()
   @IsOptional()
   offset?: number;

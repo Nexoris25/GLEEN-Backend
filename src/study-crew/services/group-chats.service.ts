@@ -32,7 +32,13 @@ export class GroupChatsService {
         },
         { userId } as CreateOptions<GroupChat>,
       );
-      return chat;
+      // Reload with the sender so REST responses and realtime `newMessage`
+      // events carry the author's name/avatar.
+      return (
+        (await this.groupChatModel.findByPk(chat.id, {
+          include: ['user'],
+        })) ?? chat
+      );
     } catch (error) {
       throw new BadRequestException({
         message: 'Error creating group chat',
@@ -56,6 +62,8 @@ export class GroupChatsService {
         where,
         offset,
         limit,
+        include: ['user'],
+        order: [['createdAt', 'ASC']],
       });
     } catch (error) {
       throw new BadRequestException({

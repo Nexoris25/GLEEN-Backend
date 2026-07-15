@@ -92,8 +92,8 @@ export class GroupController {
         avatar,
       );
 
-      // 2️⃣ Add the current user as a member
-      await this.groupService.linkOne(userId, group.id);
+      // 2️⃣ Add the current user (creator) as an ACCEPTED member
+      await this.groupService.linkOne(userId, group.id, 'ACCEPTED');
 
       return {
         status: HttpStatus.CREATED,

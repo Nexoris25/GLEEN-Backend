@@ -51,11 +51,15 @@ export class V1BattleService {
         if (searchDto.winnerUserId) where.winnerUserId = searchDto.winnerUserId;
         if (searchDto.opponentUserId)
           where.opponentUserId = searchDto.opponentUserId;
+        if (searchDto.acceptanceStatus)
+          where.acceptanceStatus = searchDto.acceptanceStatus;
       }
       return await this.v1BattleModel.findAndCountAll({
         where,
         limit: searchDto?.limit,
         offset: searchDto?.offset,
+        include: ['user', 'opponentUser'],
+        order: [['createdAt', 'DESC']],
       });
     } catch (error) {
       throw new BadRequestException({

@@ -9,6 +9,7 @@ import {
   IsUUID,
   PrimaryKey,
   BeforeCreate,
+  BelongsTo,
 } from 'sequelize-typescript';
 import { User } from 'src/user/models/user.model';
 import { Group } from './group.model';
@@ -60,6 +61,10 @@ export class GroupChat extends Model<GroupChat> {
     allowNull: false,
   })
   message: string;
+
+  @ApiProperty({ type: () => User })
+  @BelongsTo(() => User, 'userId')
+  user: User;
 
   @BeforeCreate
   static async setUserId(instance: GroupChat, options: { [key: string]: any }) {
