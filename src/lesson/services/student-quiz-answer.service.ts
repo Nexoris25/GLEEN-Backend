@@ -5,6 +5,7 @@ import { SearchQuizAnswerDto } from '../dto/search-quiz-answer.dto';
 import stringify from 'safe-stable-stringify';
 import { Op } from 'sequelize';
 import { QuizQuestionsService } from './quiz-question.service';
+import { QuizRecord } from '../models/quiz-record.model';
 
 @Injectable()
 export class StudentsQuizAnswersService {
@@ -15,11 +16,15 @@ export class StudentsQuizAnswersService {
   ) {}
 
   async create(
-    answerData: { quizQuestionId: string; answer: string },
+    answerData: {
+      quizQuestionId: string;
+      answer: string;
+      quizRecordId: string;
+    },
     userId: string,
   ): Promise<StudentsQuizAnswers> {
     try {
-      const { quizQuestionId, answer } = answerData;
+      const { quizQuestionId, answer, quizRecordId } = answerData;
 
       const quizQuestion =
         await this.quizQuestionService.findById(quizQuestionId);
@@ -35,7 +40,7 @@ export class StudentsQuizAnswersService {
           : 0;
 
       const newAnswer = await this.studentsQuizAnswersModel.create(
-        { quizQuestionId, answer, score },
+        { quizQuestionId, quizRecordId, answer, score },
         { isNewRecord: true, userId },
       );
 
@@ -227,14 +232,18 @@ export class StudentsQuizAnswersService {
       }
     }
 
-    // Upsert quiz record
+    // Upsert quiz record for the CURRENT week (matches the unique index on
+    // quizId + userId + weekStart). `endedAt` is left untouched — it is only
+    // set on completion so the XP-award guard in updateCompleted works.
+    const weekStart = QuizRecord.getIsoWeekStartDateOnly(new Date());
     const quizRecordModel =
       this.studentsQuizAnswersModel.sequelize.models.QuizRecord;
-    const [record, created] = await quizRecordModel.findOrCreate({
-      where: { quizId, userId },
+    const [record] = await quizRecordModel.findOrCreate({
+      where: { quizId, userId, weekStart },
       defaults: {
         quizId,
         userId,
+        weekStart,
         totalMarks,
         obtainedMarks,
         totalQuestions,
@@ -243,7 +252,6 @@ export class StudentsQuizAnswersService {
         correctAnswers,
         incorrectAnswers,
         startedAt: new Date().toISOString(),
-        endedAt: new Date().toISOString(),
       },
     });
     await record.update({
@@ -254,8 +262,25 @@ export class StudentsQuizAnswersService {
       totalUnansweredQuestions,
       correctAnswers,
       incorrectAnswers,
-      endedAt: new Date().toISOString(),
     });
+  }
+
+  /** Removes every answer belonging to a quiz record (used when restarting). */
+  async deleteByQuizRecord(quizRecordId: string): Promise<number> {
+    try {
+      return await this.studentsQuizAnswersModel.destroy({
+        where: { quizRecordId },
+      });
+    } catch (error) {
+      throw new BadRequestException({
+        message: 'Error clearing answers for quiz record:',
+        details: stringify({
+          message: error.message,
+          stack: error.stack,
+          details: error.response || error,
+        }),
+      });
+    }
   }
 
   async delete(id: string): Promise<boolean> {

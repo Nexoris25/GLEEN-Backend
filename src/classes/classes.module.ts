@@ -9,6 +9,10 @@ import { UserModule } from '../user/user.module';
 import { Subject } from 'src/subject/models/subject.model';
 import { Room } from 'src/rooms/models/room.model';
 import { UserSubject } from 'src/subject/models/user-subject.model';
+import { ClassChat } from './models/class-chat.model';
+import { ClassChatService } from './services/class-chat.service';
+import { ClassChatController } from './controllers/class-chat.controller';
+import { ClassChatGateway } from './gateways/class-chat.gateway';
 
 @Module({
   imports: [
@@ -19,11 +23,12 @@ import { UserSubject } from 'src/subject/models/user-subject.model';
       Subject,
       Room,
       UserSubject,
+      ClassChat,
     ]),
     UserModule, // for user/tutor validation
   ],
-  controllers: [ClassesController],
-  providers: [ClassesService],
+  controllers: [ClassesController, ClassChatController],
+  providers: [ClassesService, ClassChatService, ClassChatGateway],
   exports: [
     ClassesService, // export the service for other modules
   ],

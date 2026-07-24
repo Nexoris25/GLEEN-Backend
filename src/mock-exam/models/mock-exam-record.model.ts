@@ -90,7 +90,7 @@ export class MockExamRecord extends Model {
   @ApiProperty()
   @Column({
     type: DataType.STRING,
-    allowNull: false,
+    allowNull: true,
   })
   endedAt?: string;
 
@@ -159,7 +159,7 @@ export class MockExamRecord extends Model {
   }
 
   // Helper: compute Monday (UTC) of the week and return YYYY-MM-DD
-  private static getIsoWeekStartDateOnly(date: Date): string {
+  static getIsoWeekStartDateOnly(date: Date): string {
     const d = new Date(
       Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
     );

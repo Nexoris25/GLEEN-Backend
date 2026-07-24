@@ -5,6 +5,7 @@ import { StudentsMockAnswers } from '../models/students-mock-answers.model';
 import { SearchMockAnswerDto } from '../dtos/search-mock-answer.dto';
 import { Op } from 'sequelize';
 import { MockQuestionsService } from './mock-questions.service';
+import { MockExamRecord } from '../models/mock-exam-record.model';
 
 @Injectable()
 export class StudentsMockAnswersService {
@@ -238,14 +239,19 @@ export class StudentsMockAnswersService {
       }
     }
 
-    // Upsert exam record
+    // Upsert exam record for the CURRENT week (matches the unique index
+    // on mockExamId + userId + weekStart). `endedAt` is intentionally left
+    // untouched here — it is only set when the attempt is completed, so the
+    // XP-award guard in updateCompleted works.
+    const weekStart = MockExamRecord.getIsoWeekStartDateOnly(new Date());
     const examRecordModel =
       this.studentsMockAnswersModel.sequelize.models.MockExamRecord;
-    const [record, created] = await examRecordModel.findOrCreate({
-      where: { mockExamId, userId },
+    const [record] = await examRecordModel.findOrCreate({
+      where: { mockExamId, userId, weekStart },
       defaults: {
         mockExamId,
         userId,
+        weekStart,
         totalMarks,
         obtainedMarks,
         totalQuestions,
@@ -254,7 +260,6 @@ export class StudentsMockAnswersService {
         correctAnswers,
         incorrectAnswers,
         startedAt: new Date().toISOString(),
-        endedAt: new Date().toISOString(),
       },
     });
     await record.update({
@@ -265,8 +270,25 @@ export class StudentsMockAnswersService {
       totalUnansweredQuestions,
       correctAnswers,
       incorrectAnswers,
-      endedAt: new Date().toISOString(),
     });
+  }
+
+  /** Removes every answer belonging to an exam record (used when restarting). */
+  async deleteByExamRecord(mockExamRecordId: string): Promise<number> {
+    try {
+      return await this.studentsMockAnswersModel.destroy({
+        where: { mockExamRecordId },
+      });
+    } catch (error) {
+      throw new BadRequestException({
+        message: 'Error clearing answers for exam record:',
+        details: stringify({
+          message: error.message,
+          stack: error.stack,
+          details: error.response || error,
+        }),
+      });
+    }
   }
 
   async delete(id: string): Promise<boolean> {

@@ -27,6 +27,31 @@ export class MockExamRecordService {
     userId: string,
   ): Promise<MockExamRecord> {
     try {
+      const weekStart = MockExamRecord.getIsoWeekStartDateOnly(new Date());
+
+      // A student may only have one attempt per exam per week (unique index on
+      // mockExamId + userId + weekStart). If one already exists, restart it in
+      // place — clear the previous answers and stats — instead of erroring.
+      const existing = await this.mockExamRecordModel.findOne({
+        where: { mockExamId: createDto.mockExamId, userId, weekStart },
+      });
+
+      if (existing) {
+        await this.studentsMockAnswersService.deleteByExamRecord(existing.id);
+        await existing.update({
+          startedAt: createDto.startedAt ?? new Date().toISOString(),
+          endedAt: null,
+          totalMarks: null,
+          obtainedMarks: null,
+          totalQuestions: null,
+          totalAnsweredQuestions: null,
+          totalUnansweredQuestions: null,
+          correctAnswers: null,
+          incorrectAnswers: null,
+        });
+        return existing;
+      }
+
       return await this.mockExamRecordModel.create(
         { ...createDto, userId },
         { isNewRecord: true, userId: userId },
@@ -132,60 +157,52 @@ export class MockExamRecordService {
   async updateCompleted(id: string): Promise<MockExamRecord> {
     try {
       const record = await this.findOne(id);
-      if (record.endedAt == null) {
-        const answersWithCount = await this.studentsMockAnswersService.findAll({
-          userId: record.userId,
-          mockExamRecordId: record.id,
-          offset: 0,
-          limit: 1000,
-        });
-        const totalScore = answersWithCount.rows.reduce(
-          (sum, answer) => sum + (answer.score || 0),
-          0,
-        );
 
-        await record.update({ endedAt: new Date(), totalScore });
-        const xpConfig: XpConfiguration = await this.xpLogService.getXpConfig();
-        let xpValue: number;
-        if (totalScore <= 10) {
-          xpValue = xpConfig.xpValueForLessThanOrEqualTo10MockQuestion;
-          xpValue = this.xpLogService.applyXpMultiplier(
-            xpConfig,
-            'MOCK_EXAM_XP',
-            xpValue,
-          );
-        } else if (totalScore > 10 && totalScore <= 20) {
-          xpValue =
-            xpConfig.xpValueForGreaterThan10LessThanOrEqualTo20MockQuestion;
-          xpValue = this.xpLogService.applyXpMultiplier(
-            xpConfig,
-            'MOCK_EXAM_XP',
-            xpValue,
-          );
-        } else if (totalScore > 20 && totalScore <= 30) {
-          xpValue =
-            xpConfig.xpValueForGreaterThan20LessThanOrEqualTo30MockQuestion;
-          xpValue = this.xpLogService.applyXpMultiplier(
-            xpConfig,
-            'MOCK_EXAM_XP',
-            xpValue,
-          );
-        } else if (totalScore > 30) {
-          xpValue = xpConfig.xpValueForGreaterThan30MockQuestion;
-          xpValue = this.xpLogService.applyXpMultiplier(
-            xpConfig,
-            'MOCK_EXAM_XP',
-            xpValue,
-          );
-        }
-        await this.xpLogService.create({
-          userId: record?.userId,
-          xpValue: xpValue,
-          xpType: 'quiz_completion',
-          detail: `xp bonus for mock exam with title ${record.mockExam.title} `,
-        });
+      // Idempotent: once an attempt is completed, don't finalise/award again.
+      if (record.endedAt != null) {
         return record;
       }
+
+      const answersWithCount = await this.studentsMockAnswersService.findAll({
+        userId: record.userId,
+        mockExamRecordId: record.id,
+        offset: 0,
+        limit: 1000,
+      });
+      const totalScore = answersWithCount.rows.reduce(
+        (sum, answer) => sum + (answer.score || 0),
+        0,
+      );
+
+      await record.update({ endedAt: new Date().toISOString() });
+
+      const xpConfig: XpConfiguration = await this.xpLogService.getXpConfig();
+      let xpValue: number;
+      if (totalScore <= 10) {
+        xpValue = xpConfig.xpValueForLessThanOrEqualTo10MockQuestion;
+      } else if (totalScore <= 20) {
+        xpValue =
+          xpConfig.xpValueForGreaterThan10LessThanOrEqualTo20MockQuestion;
+      } else if (totalScore <= 30) {
+        xpValue =
+          xpConfig.xpValueForGreaterThan20LessThanOrEqualTo30MockQuestion;
+      } else {
+        xpValue = xpConfig.xpValueForGreaterThan30MockQuestion;
+      }
+      xpValue = this.xpLogService.applyXpMultiplier(
+        xpConfig,
+        'MOCK_EXAM_XP',
+        xpValue,
+      );
+
+      await this.xpLogService.create({
+        userId: record.userId,
+        xpValue,
+        xpType: 'quiz_completion',
+        detail: `xp bonus for mock exam with title ${record.mockExam?.title ?? ''}`,
+      });
+
+      return record;
     } catch (error) {
       throw new BadRequestException({
         message: 'Error updating mock exam record',

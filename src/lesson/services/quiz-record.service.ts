@@ -27,6 +27,31 @@ export class QuizRecordService {
     userId: string,
   ): Promise<QuizRecord> {
     try {
+      const weekStart = QuizRecord.getIsoWeekStartDateOnly(new Date());
+
+      // A student may only have one attempt per quiz per week (unique index on
+      // quizId + userId + weekStart). If one already exists, restart it in
+      // place — clear the previous answers and stats — instead of erroring.
+      const existing = await this.quizRecordModel.findOne({
+        where: { quizId: createDto.quizId, userId, weekStart },
+      });
+
+      if (existing) {
+        await this.studentQuizAnswerService.deleteByQuizRecord(existing.id);
+        await existing.update({
+          startedAt: createDto.startedAt ?? new Date().toISOString(),
+          endedAt: null,
+          totalMarks: null,
+          obtainedMarks: null,
+          totalQuestions: null,
+          totalAnsweredQuestions: null,
+          totalUnansweredQuestions: null,
+          correctAnswers: null,
+          incorrectAnswers: null,
+        });
+        return existing;
+      }
+
       return await this.quizRecordModel.create(
         { ...createDto, userId },
         { isNewRecord: true, userId: userId },
@@ -128,60 +153,52 @@ export class QuizRecordService {
   async updateCompleted(id: string): Promise<QuizRecord> {
     try {
       const record = await this.findOne(id);
-      if (record.endedAt == null) {
-        const answersWithCount = await this.studentQuizAnswerService.findAll({
-          userId: record.userId,
-          quizRecordId: record.id,
-          offset: 0,
-          limit: 1000,
-        });
-        const totalScore = answersWithCount.rows.reduce(
-          (sum, answer) => sum + (answer.score || 0),
-          0,
-        );
 
-        await record.update({ endedAt: new Date(), totalScore });
-        const xpConfig: XpConfiguration = await this.xpLogService.getXpConfig();
-        let xpValue: number;
-        if (totalScore <= 10) {
-          xpValue = xpConfig.xpValueForLessThanOrEqualTo10QuizQuestion;
-          xpValue = this.xpLogService.applyXpMultiplier(
-            xpConfig,
-            'QUIZ_XP',
-            xpValue,
-          );
-        } else if (totalScore > 10 && totalScore <= 20) {
-          xpValue =
-            xpConfig.xpValueForGreaterThan10LessThanOrEqualTo20QuizQuestion;
-          xpValue = this.xpLogService.applyXpMultiplier(
-            xpConfig,
-            'QUIZ_XP',
-            xpValue,
-          );
-        } else if (totalScore > 20 && totalScore <= 30) {
-          xpValue =
-            xpConfig.xpValueForGreaterThan20LessThanOrEqualTo30QuizQuestion;
-          xpValue = this.xpLogService.applyXpMultiplier(
-            xpConfig,
-            'QUIZ_XP',
-            xpValue,
-          );
-        } else if (totalScore > 30) {
-          xpValue = xpConfig.xpValueForGreaterThan30QuizQuestion;
-          xpValue = this.xpLogService.applyXpMultiplier(
-            xpConfig,
-            'QUIZ_XP',
-            xpValue,
-          );
-        }
-        await this.xpLogService.create({
-          userId: record?.userId,
-          xpValue: xpValue,
-          xpType: 'quiz_completion',
-          detail: `xp bonus for quiz with title ${record.quizzes.title} `,
-        });
+      // Idempotent: once an attempt is completed, don't finalise/award again.
+      if (record.endedAt != null) {
         return record;
       }
+
+      const answersWithCount = await this.studentQuizAnswerService.findAll({
+        userId: record.userId,
+        quizRecordId: record.id,
+        offset: 0,
+        limit: 1000,
+      });
+      const totalScore = answersWithCount.rows.reduce(
+        (sum, answer) => sum + (answer.score || 0),
+        0,
+      );
+
+      await record.update({ endedAt: new Date().toISOString() });
+
+      const xpConfig: XpConfiguration = await this.xpLogService.getXpConfig();
+      let xpValue: number;
+      if (totalScore <= 10) {
+        xpValue = xpConfig.xpValueForLessThanOrEqualTo10QuizQuestion;
+      } else if (totalScore <= 20) {
+        xpValue =
+          xpConfig.xpValueForGreaterThan10LessThanOrEqualTo20QuizQuestion;
+      } else if (totalScore <= 30) {
+        xpValue =
+          xpConfig.xpValueForGreaterThan20LessThanOrEqualTo30QuizQuestion;
+      } else {
+        xpValue = xpConfig.xpValueForGreaterThan30QuizQuestion;
+      }
+      xpValue = this.xpLogService.applyXpMultiplier(
+        xpConfig,
+        'QUIZ_XP',
+        xpValue,
+      );
+
+      await this.xpLogService.create({
+        userId: record.userId,
+        xpValue,
+        xpType: 'quiz_completion',
+        detail: `xp bonus for quiz with title ${record.quizzes?.title ?? ''}`,
+      });
+
+      return record;
     } catch (error) {
       throw new BadRequestException({
         message: 'Error updating quiz record',
