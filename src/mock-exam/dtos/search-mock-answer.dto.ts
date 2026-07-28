@@ -1,5 +1,6 @@
 // write search-mock-answer dto
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class SearchMockAnswerDto {
@@ -24,11 +25,13 @@ export class SearchMockAnswerDto {
   answer?: string;
 
   @ApiPropertyOptional()
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   limit?: number = 100;
 
   @ApiPropertyOptional()
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   offset?: number = 0;

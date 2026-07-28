@@ -30,11 +30,11 @@ export class SearchQuizDto {
 
   @ApiPropertyOptional({
     enum: ['PENDING', 'APPROVED', 'REJECTED'],
-    example: 'PENDING',
+    example: 'APPROVED',
   })
   @IsOptional()
   @IsString()
-  status: string = 'PENDING';
+  status?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

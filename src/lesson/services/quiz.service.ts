@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import stringify from 'safe-stable-stringify';
-import { Op, literal } from 'sequelize';
+import { literal } from 'sequelize';
 import { Quizzes } from '../models/quiz.model';
 import { CreateQuizDto } from '../dto/create-quiz.dto';
 import { SearchQuizDto } from '../dto/search-quiz.dto';
@@ -67,47 +67,110 @@ export class QuizzesService {
 
   async findAll(
     options: SearchQuizDto,
-  ): Promise<{ rows: Quizzes[]; count: number }> {
+  ): Promise<{ rows: any[]; count: number }> {
     try {
-      const { limit, offset, ...where } = options;
-      const whereOptions: any = { ...where };
-      if (options.userId) {
-        whereOptions.userId = options.userId;
+      const limit = Math.min(options?.limit ?? 10, 500);
+      const offset = Math.max(options?.offset ?? 0, 0);
+
+      const sequelize = this.quizzesModel.sequelize as any;
+
+      // Only surface quizzes that actually have questions.
+      const conditions: string[] = [
+        `EXISTS (SELECT 1 FROM "quiz_questions" qq WHERE qq."quizId" = q.id)`,
+      ];
+      const replacements: Record<string, any> = { limit, offset };
+
+      if (options?.userId) {
+        conditions.push(`q."userId" = :userId`);
+        replacements.userId = options.userId;
       }
-      if (options.subjectId) {
-        whereOptions.subjectId = options.subjectId;
+      if (options?.subjectId) {
+        conditions.push(`q."subjectId" = :subjectId`);
+        replacements.subjectId = options.subjectId;
+      }
+      if (options?.status) {
+        conditions.push(`q.status = :status`);
+        replacements.status = options.status;
+      }
+      if (options?.title) {
+        conditions.push(`q.title ILIKE :title`);
+        replacements.title = `%${options.title}%`;
+      }
+      if (options?.description) {
+        conditions.push(`q.description ILIKE :description`);
+        replacements.description = `%${options.description}%`;
       }
 
-      if (options.status) {
-        whereOptions.status = options.status;
-      }
-      if (options.title) {
-        whereOptions.title = { [Op.iLike]: `%${options.title}%` };
-      }
-      if (options.description) {
-        whereOptions.description = { [Op.iLike]: `%${options.description}%` };
-      }
-      if (options.duration) {
-        whereOptions.duration = { [Op.iLike]: `%${options.duration}%` };
-      }
-      if (options.instructions) {
-        whereOptions.instructions = { [Op.iLike]: `%${options.instructions}%` };
-      }
-      return await this.quizzesModel.findAndCountAll({
-        where: whereOptions,
-        attributes: {
-          include: [
-            [
-              literal(
-                '(SELECT COUNT(*) FROM "quiz_questions" AS "qq" WHERE "qq"."quizId" = "Quizzes"."id")',
-              ),
-              'questionCount',
-            ],
-          ],
-        },
-        limit,
-        offset,
-      });
+      const whereClause = `WHERE ${conditions.join('\n          AND ')}`;
+
+      const [countRows] = (await sequelize.query(
+        `
+          SELECT COUNT(*)::int AS total
+          FROM "quizzes" q
+          ${whereClause};
+        `,
+        { replacements },
+      )) as unknown as [{ total: number }[], unknown];
+
+      const count = Number(countRows?.[0]?.total) || 0;
+
+      const [rows] = (await sequelize.query(
+        `
+          SELECT
+            q.id::text AS id,
+            q.title AS title,
+            q.description AS description,
+            q.avatar AS avatar,
+            q.duration AS duration,
+            q.status AS status,
+            q."subjectId"::text AS "subjectId",
+            q."createdAt" AS "createdAt",
+            s.title AS "subjectTitle",
+            (
+              SELECT COUNT(*)::int
+              FROM "quiz_questions" qq
+              WHERE qq."quizId" = q.id
+            ) AS "questionCount",
+            (
+              SELECT COUNT(DISTINCT qr."userId")::int
+              FROM "quiz_records" qr
+              WHERE qr."quizId" = q.id
+            ) AS "totalUsers",
+            (
+              SELECT COALESCE(json_agg(u), '[]'::json)
+              FROM (
+                SELECT usr.id, usr.avatar, MAX(qr."createdAt") AS last_seen
+                FROM "quiz_records" qr
+                JOIN "users" usr ON usr.id = qr."userId"
+                WHERE qr."quizId" = q.id
+                GROUP BY usr.id, usr.avatar
+                ORDER BY last_seen DESC
+                LIMIT 4
+              ) u
+            ) AS "recentUsers",
+            CASE
+              WHEN tu.id IS NULL THEN NULL
+              ELSE json_build_object('id', tu.id, 'fullName', tu."fullName", 'avatar', tu.avatar)
+            END AS "tutor"
+          FROM "quizzes" q
+          LEFT JOIN "subjects" s ON s.id = q."subjectId"
+          LEFT JOIN "users" tu ON tu.id = q."userId"
+          ${whereClause}
+          ORDER BY q."createdAt" DESC
+          LIMIT :limit OFFSET :offset;
+        `,
+        { replacements },
+      )) as unknown as [any[], unknown];
+
+      const normalizedRows = (rows || []).map((r) => ({
+        ...r,
+        duration: Number(r.duration) || 0,
+        questionCount: Number(r.questionCount) || 0,
+        totalUsers: Number(r.totalUsers) || 0,
+        recentUsers: Array.isArray(r.recentUsers) ? r.recentUsers : [],
+      }));
+
+      return { rows: normalizedRows, count };
     } catch (error) {
       throw new BadRequestException({
         message: 'Error fetching quizzes:',

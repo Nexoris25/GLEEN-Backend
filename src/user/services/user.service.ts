@@ -435,6 +435,194 @@ export class UserService {
     };
   }
 
+  /**
+   * Detailed learning-progress metrics for the profile "Learning Progress" screen.
+   *
+   * Overview + time-spent are scoped to `range` (this week / month / all-time);
+   * subject mastery is all-time (completed lessons / total approved lessons in
+   * each subject the user is enrolled in). All durations are returned in seconds.
+   */
+  async getLearningProgress(
+    userId: string,
+    range: 'week' | 'month' | 'all' = 'week',
+    subjectId?: string,
+  ): Promise<{
+    overview: {
+      hoursStudied: number;
+      lessonsTaken: number;
+      quizzesTaken: number;
+      averageQuizScore: number;
+    };
+    timeSpent: {
+      lessons: number;
+      quizzes: number;
+      mock: number;
+      total: number;
+    };
+    subjectMastery: {
+      subjectId: string;
+      title: string;
+      percentage: number;
+    }[];
+  }> {
+    const sequelize = this.userModel.sequelize as any;
+
+    // Lower bound for the selected range. `all` returns null → no time filter.
+    const trunc = range === 'month' ? 'month' : 'week';
+    const rangeStart =
+      range === 'all' ? null : `date_trunc('${trunc}', now())`;
+
+    // Filters woven into each sub-query; kept as SQL fragments so we can reuse
+    // the same :userId / :subjectId replacements everywhere.
+    const lessonTimeFilter = rangeStart
+      ? `AND lt."dateCompleted" >= ${rangeStart}`
+      : '';
+    const lessonSubjectJoin = subjectId
+      ? `JOIN "lessons" l ON l."id" = lt."lessonId" AND l."subjectId" = :subjectId`
+      : '';
+    const quizTimeFilter = rangeStart
+      ? `AND qr."createdAt" >= ${rangeStart}`
+      : '';
+    const quizSubjectJoin = subjectId
+      ? `JOIN "quizzes" q ON q."id" = qr."quizId" AND q."subjectId" = :subjectId`
+      : '';
+    const mockTimeFilter = rangeStart
+      ? `AND mr."createdAt" >= ${rangeStart}`
+      : '';
+
+    type MetricsRow = {
+      lessons_taken: number;
+      quizzes_taken: number;
+      average_quiz_score: number | null;
+      lessons_seconds: number | null;
+      quizzes_seconds: number | null;
+      mock_seconds: number | null;
+    };
+    const [metricsRows] = (await sequelize.query(
+      `
+        SELECT
+          (
+            SELECT COUNT(*)::int
+            FROM "lesson_trackings" lt
+            ${lessonSubjectJoin}
+            WHERE lt."userId" = :userId
+              AND lt."dateCompleted" IS NOT NULL
+              ${lessonTimeFilter}
+          ) AS lessons_taken,
+          (
+            SELECT COALESCE(SUM(lt."timeSpent"), 0)::int
+            FROM "lesson_trackings" lt
+            ${lessonSubjectJoin}
+            WHERE lt."userId" = :userId
+              ${lessonTimeFilter}
+          ) AS lessons_seconds,
+          (
+            SELECT COUNT(*)::int
+            FROM "quiz_records" qr
+            ${quizSubjectJoin}
+            WHERE qr."userId" = :userId
+              ${quizTimeFilter}
+          ) AS quizzes_taken,
+          (
+            SELECT ROUND(AVG(qr."obtainedMarks"::numeric / NULLIF(qr."totalMarks", 0) * 100))
+            FROM "quiz_records" qr
+            ${quizSubjectJoin}
+            WHERE qr."userId" = :userId
+              AND qr."totalMarks" IS NOT NULL
+              AND qr."totalMarks" > 0
+              ${quizTimeFilter}
+          ) AS average_quiz_score,
+          (
+            SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (qr."endedAt"::timestamp - qr."startedAt"::timestamp))), 0)::int
+            FROM "quiz_records" qr
+            ${quizSubjectJoin}
+            WHERE qr."userId" = :userId
+              AND qr."startedAt" IS NOT NULL
+              AND qr."endedAt" IS NOT NULL
+              ${quizTimeFilter}
+          ) AS quizzes_seconds,
+          (
+            SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (mr."endedAt"::timestamp - mr."startedAt"::timestamp))), 0)::int
+            FROM "mock_exam_records" mr
+            WHERE mr."userId" = :userId
+              AND mr."startedAt" IS NOT NULL
+              AND mr."endedAt" IS NOT NULL
+              ${mockTimeFilter}
+          ) AS mock_seconds;
+      `,
+      { replacements: { userId, subjectId: subjectId ?? null } },
+    )) as unknown as [MetricsRow[], unknown];
+
+    const m = metricsRows?.[0];
+    const lessonsSeconds = Number(m?.lessons_seconds) || 0;
+    const quizzesSeconds = Number(m?.quizzes_seconds) || 0;
+    // Mock time is not per-subject; only count it when no subject filter is set.
+    const mockSeconds = subjectId ? 0 : Number(m?.mock_seconds) || 0;
+    const totalSeconds = lessonsSeconds + quizzesSeconds + mockSeconds;
+
+    // Subject mastery: completed lessons / total approved lessons, per enrolled
+    // subject (optionally narrowed to the selected subject).
+    type MasteryRow = {
+      subject_id: string;
+      title: string;
+      completed: number;
+      total: number;
+    };
+    const [masteryRows] = (await sequelize.query(
+      `
+        SELECT
+          s."id" AS subject_id,
+          s."title" AS title,
+          (
+            SELECT COUNT(DISTINCT lt."lessonId")::int
+            FROM "lesson_trackings" lt
+            JOIN "lessons" l ON l."id" = lt."lessonId"
+            WHERE lt."userId" = :userId
+              AND lt."dateCompleted" IS NOT NULL
+              AND l."subjectId" = s."id"
+          ) AS completed,
+          (
+            SELECT COUNT(*)::int
+            FROM "lessons" l
+            WHERE l."subjectId" = s."id"
+              AND l."status" = 'APPROVED'
+          ) AS total
+        FROM "users_subjects" us
+        JOIN "subjects" s ON s."id" = us."subjectId"
+        WHERE us."userId" = :userId
+          ${subjectId ? 'AND s."id" = :subjectId' : ''}
+        ORDER BY s."title" ASC;
+      `,
+      { replacements: { userId, subjectId: subjectId ?? null } },
+    )) as unknown as [MasteryRow[], unknown];
+
+    const subjectMastery = (masteryRows ?? []).map((r) => {
+      const total = Number(r.total) || 0;
+      const completed = Number(r.completed) || 0;
+      return {
+        subjectId: r.subject_id,
+        title: r.title,
+        percentage: total > 0 ? Math.round((completed / total) * 100) : 0,
+      };
+    });
+
+    return {
+      overview: {
+        hoursStudied: totalSeconds,
+        lessonsTaken: Number(m?.lessons_taken) || 0,
+        quizzesTaken: Number(m?.quizzes_taken) || 0,
+        averageQuizScore: Number(m?.average_quiz_score) || 0,
+      },
+      timeSpent: {
+        lessons: lessonsSeconds,
+        quizzes: quizzesSeconds,
+        mock: mockSeconds,
+        total: totalSeconds,
+      },
+      subjectMastery,
+    };
+  }
+
   async getMyReferredPlayers(params?: {
     userId: string;
     offset?: number;

@@ -241,6 +241,62 @@ export class UserController {
     }
   }
 
+  @Get('user/learning-progress')
+  @ApiOperation({
+    summary: 'Get detailed learning-progress metrics',
+    description:
+      'Returns overview metrics (hours studied, lessons/quizzes taken, average quiz score), time spent per activity, and per-subject mastery. Overview/time-spent honour the range; mastery is all-time. Durations are in seconds.',
+  })
+  @ApiQuery({
+    name: 'range',
+    required: false,
+    enum: ['week', 'month', 'all'],
+    example: 'week',
+    description: 'Time window for overview and time-spent metrics',
+  })
+  @ApiQuery({
+    name: 'subjectId',
+    required: false,
+    type: String,
+    description: 'Restrict metrics to a single subject',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Learning progress retrieved successfully',
+    type: ResponseDto,
+  })
+  async getMyLearningProgress(
+    @UserId() userId: string,
+    @Query('range') range?: 'week' | 'month' | 'all',
+    @Query('subjectId') subjectId?: string,
+  ) {
+    try {
+      const validRange =
+        range === 'month' || range === 'all' ? range : 'week';
+      const data = await this.userService.getLearningProgress(
+        userId,
+        validRange,
+        subjectId,
+      );
+
+      return {
+        status: HttpStatus.OK,
+        message: 'Learning progress retrieved successfully',
+        data,
+      };
+    } catch (error) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Failed to retrieve learning progress',
+        error: stringify({
+          message: error?.message || 'Unknown error',
+          stack: error?.stack,
+          details: error?.response || error,
+        }),
+      };
+    }
+  }
+
   @Get('user/popular-features')
   @ApiOperation({
     summary: 'Get popular features',
