@@ -453,6 +453,37 @@ export class XpConfigurationController {
     }
   }
 
+  @Get('conversion-rates')
+  @ApiOperation({
+    summary: 'Get XP conversion rate and limits (user-facing)',
+    description:
+      'Returns the airtime conversion rate (XP per Naira) and the percentage of XP that may be converted. Accessible to any authenticated user.',
+  })
+  async getConversionRates() {
+    try {
+      const config = await this.xpConfigurationService.findOne();
+      return {
+        status: HttpStatus.OK,
+        message: 'XP conversion rates retrieved successfully',
+        data: {
+          airtimeXpValuePerNaira: config.airtimeXpValuePerNaira,
+          xpLimitPerTimePercentage: config.xpLimitPerTimePercentage,
+          xpLimitPerDayPercentage: config.xpLimitPerDayPercentage,
+        },
+      };
+    } catch (error: any) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Error retrieving XP conversion rates',
+        error: stringify({
+          message: (error as Error)?.message || 'Unknown error',
+          stack: (error as Error)?.stack,
+          details: error?.response || error,
+        }),
+      };
+    }
+  }
+
   @Get('conversion-settings')
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiOperation({

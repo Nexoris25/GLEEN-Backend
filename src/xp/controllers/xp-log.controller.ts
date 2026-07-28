@@ -36,6 +36,28 @@ export class XpLogController {
     };
   }
 
+  @Get('user/:userId/summary')
+  @ApiOperation({
+    summary: "Get a user's XP totals grouped by source",
+    description:
+      'Returns [{ xpType, totalXp }] aggregated from the user\'s XP logs (e.g. referral, lesson_completion, quiz_completion, v1_battle). Used by the mobile XP Overview breakdown.',
+  })
+  async getUserXpSummary(@Param('userId') userId: string) {
+    try {
+      const data = await this.xpLogService.getXpSummaryByUserId(userId);
+      return {
+        status: HttpStatus.OK,
+        message: 'XP summary retrieved successfully',
+        data,
+      };
+    } catch (error: any) {
+      return {
+        status: error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+        message: error.message || 'Failed to retrieve XP summary',
+      };
+    }
+  }
+
   @Delete('user/:userId/reset')
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiOperation({

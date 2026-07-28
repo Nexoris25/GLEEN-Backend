@@ -57,6 +57,39 @@ export class NotificationSettings extends Model<NotificationSettings> {
   soundNotification: boolean;
 
   @ApiProperty({
+    description: 'Alerts for new messages from peers',
+    type: Boolean,
+  })
+  @Default(true)
+  @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })
+  newMessages: boolean;
+
+  @ApiProperty({
+    description: 'Updates on crew activities and announcements',
+    type: Boolean,
+  })
+  @Default(true)
+  @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })
+  crewUpdates: boolean;
+
+  @ApiProperty({
+    description: 'New features, updates and improvements to the app',
+    type: Boolean,
+  })
+  @Default(true)
+  @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })
+  appUpdates: boolean;
+
+  @ApiProperty({
+    description:
+      'Weekly email/SMS updates for usage time, quiz scores, and missed streaks',
+    type: Boolean,
+  })
+  @Default(true)
+  @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })
+  parentsReporting: boolean;
+
+  @ApiProperty({
     description: 'Creation timestamp',
     type: String,
     format: 'date-time',
