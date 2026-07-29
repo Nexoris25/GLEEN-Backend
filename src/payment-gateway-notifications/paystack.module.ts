@@ -9,11 +9,12 @@ import { PaystackGateway } from './gateways/paystack.gateway';
 import { PaymentGatewayRegistry } from './gateways/payment-gateway.registry';
 import { SubscriptionTransaction } from '../subscription/models/subscription-transaction.model';
 import { Subscription } from '../subscription/models/Subscription.model';
+import { User } from '../user/models/user.model';
 
 @Module({
   imports: [
     ConfigModule,
-    SequelizeModule.forFeature([SubscriptionTransaction, Subscription]),
+    SequelizeModule.forFeature([SubscriptionTransaction, Subscription, User]),
   ],
   controllers: [PaymentsController, PaystackController],
   providers: [PaystackGateway, PaymentGatewayRegistry, PaymentsService],

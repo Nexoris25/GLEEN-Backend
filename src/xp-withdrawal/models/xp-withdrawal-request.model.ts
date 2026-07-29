@@ -51,6 +51,10 @@ export class XpWithdrawalRequest extends Model {
   @Column(DataType.INTEGER)
   airtimeAmount: number;
 
+  @ApiProperty({ description: "User's XP balance right after the debit" })
+  @Column(DataType.DOUBLE)
+  remainingXpAfter: number;
+
   @ApiProperty({ description: 'XP-per-Naira rate captured at request time' })
   @Column(DataType.DOUBLE)
   xpValuePerNaira: number;

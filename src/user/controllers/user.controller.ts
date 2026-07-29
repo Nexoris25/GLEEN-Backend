@@ -761,6 +761,41 @@ export class UserController {
     }
   }
 
+  // Declared BEFORE `user/:id` so "me" resolves to this self-delete route.
+  @Delete('user/me')
+  @ApiOperation({
+    summary: 'Permanently delete the logged-in user\'s own account',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Account deleted successfully',
+    type: UserResponseDto,
+  })
+  @UseGuards(JwtAuthGuard)
+  async deleteMe(
+    @UserId() userId: string,
+  ): Promise<{ status: number; message: string; data?: User; error?: any }> {
+    try {
+      const deletedUser = await this.userService.delete(userId);
+      return {
+        status: HttpStatus.OK,
+        message: 'Account deleted successfully',
+        data: deletedUser,
+      };
+    } catch (error) {
+      const err: any = error;
+      const status =
+        typeof err?.getStatus === 'function'
+          ? err.getStatus()
+          : err?.status || HttpStatus.INTERNAL_SERVER_ERROR;
+      const message =
+        err?.response?.message ||
+        err?.message ||
+        'Failed to delete account';
+      return { status, message, error: stringify(err?.response || err) };
+    }
+  }
+
   @Delete('user/:id')
   @ApiOperation({ summary: 'Delete user by ID' })
   @ApiParam({ name: 'id', description: 'User ID' })

@@ -7,12 +7,14 @@ import { XpRecords } from 'src/xp/models/xp-record.model';
 import { XpLog } from 'src/xp/models/xp-log.model';
 import { XpWithdrawalService } from './services/xp-withdrawal.service';
 import { XpWithdrawalController } from './controllers/xp-withdrawal.controller';
+import { PushModule } from 'src/push/push.module';
 
 @Module({
   imports: [
     SequelizeModule.forFeature([XpWithdrawalRequest, XpRecords, XpLog]),
     forwardRef(() => AuthModule),
     XpModule,
+    PushModule,
   ],
   providers: [XpWithdrawalService],
   controllers: [XpWithdrawalController],

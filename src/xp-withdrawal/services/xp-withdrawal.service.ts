@@ -16,6 +16,7 @@ import { XpConfigurationService } from 'src/xp/services/xp-configuration.service
 import { CreateXpWithdrawalDto } from '../dto/create-xp-withdrawal.dto';
 import { ProcessXpWithdrawalDto } from '../dto/process-xp-withdrawal.dto';
 import { ListXpWithdrawalQueryDto } from '../dto/list-xp-withdrawal-query.dto';
+import { PushService } from 'src/push/services/push.service';
 
 const XP_TYPE_DEBIT = 'AIRTIME_CONVERSION';
 const XP_TYPE_REFUND = 'AIRTIME_CONVERSION_REFUND';
@@ -31,6 +32,7 @@ export class XpWithdrawalService {
     private readonly xpLogRepository: typeof XpLog,
     private readonly xpConfigurationService: XpConfigurationService,
     private readonly sequelize: Sequelize,
+    private readonly pushService: PushService,
   ) {}
 
   /**
@@ -58,7 +60,7 @@ export class XpWithdrawalService {
       );
     }
 
-    return this.sequelize.transaction(async (t) => {
+    const request = await this.sequelize.transaction(async (t) => {
       const record = await this.xpRecordsRepository.findOne({
         where: { userId },
         transaction: t,
@@ -109,6 +111,7 @@ export class XpWithdrawalService {
           userId,
           xpAmount: dto.xpAmount,
           airtimeAmount,
+          remainingXpAfter: balance - dto.xpAmount,
           xpValuePerNaira: rate,
           phone: dto.phone,
           network: dto.network,
@@ -117,6 +120,15 @@ export class XpWithdrawalService {
         { transaction: t },
       );
     });
+
+    // Notify admins a new request is waiting (best-effort, after commit).
+    await this.pushService.sendToAdmins({
+      title: 'New withdrawal request',
+      body: `A student requested ₦${request.airtimeAmount} airtime (${request.network} · ${request.phone}).`,
+      data: { type: 'WITHDRAWAL_REQUEST', requestId: request.id },
+    });
+
+    return request;
   }
 
   /** A user's own withdrawal history, newest first. */
@@ -161,6 +173,14 @@ export class XpWithdrawalService {
         processedByUserId: adminUserId,
         processedAt: new Date(),
       });
+
+      // Tell the student their airtime is on the way.
+      await this.pushService.sendToUser(request.userId, {
+        title: 'Withdrawal approved',
+        body: `Your ₦${request.airtimeAmount} airtime to ${request.phone} is on its way.`,
+        data: { type: 'WITHDRAWAL_SENT', requestId: request.id },
+      });
+
       return request;
     }
 
@@ -176,6 +196,15 @@ export class XpWithdrawalService {
         },
         { transaction: t },
       );
+    });
+
+    // Tell the student it was declined (and their XP refunded).
+    await this.pushService.sendToUser(request.userId, {
+      title: 'Withdrawal declined',
+      body: request.declineReason
+        ? `Your withdrawal was declined: ${request.declineReason}. Your XP has been refunded.`
+        : 'Your withdrawal was declined and your XP has been refunded.',
+      data: { type: 'WITHDRAWAL_DECLINED', requestId: request.id },
     });
 
     return request;

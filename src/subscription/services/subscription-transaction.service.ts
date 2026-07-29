@@ -194,7 +194,16 @@ export class SubscriptionTransactionService {
 
     const { rows, count } = await this.txnModel.findAndCountAll({
       where,
-      include: this.baseInclude,
+      include: [
+        {
+          model: User,
+          attributes: ['id', 'fullName', 'email', 'avatar', 'gender'],
+        },
+        {
+          model: Subscription,
+          attributes: ['id', 'name', 'range', 'amount', 'description'],
+        },
+      ],
       limit: safeLimit,
       offset: safeOffset,
       order: [['createdAt', 'DESC']],

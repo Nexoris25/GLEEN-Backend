@@ -24,6 +24,11 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: false,
       },
+      remainingXpAfter: {
+        type: Sequelize.DOUBLE,
+        allowNull: false,
+        defaultValue: 0,
+      },
       xpValuePerNaira: {
         type: Sequelize.DOUBLE,
         allowNull: false,

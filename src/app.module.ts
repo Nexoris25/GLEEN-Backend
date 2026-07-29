@@ -106,6 +106,7 @@ import { XpConfiguration } from './xp/models/xp-configuration.model';
 import { XpLog } from './xp/models/xp-log.model';
 import { XpRecords } from './xp/models/xp-record.model';
 import { XpWithdrawalModule } from './xp-withdrawal/xp-withdrawal.module';
+import { PushModule } from './push/push.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { UploadModule } from './upload/upload.module';
 import { CountriesModule } from './countries/countries.module';
@@ -212,6 +213,7 @@ import { CountriesModule } from './countries/countries.module';
     SupportModule,
     XpModule,
     XpWithdrawalModule,
+    PushModule,
     MetricsModule,
     CountriesModule,
     NotificationTrackingModule,

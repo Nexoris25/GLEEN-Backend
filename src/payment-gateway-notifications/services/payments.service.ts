@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { UniqueConstraintError } from 'sequelize';
 import { SubscriptionTransaction } from '../../subscription/models/subscription-transaction.model';
 import { Subscription } from '../../subscription/models/Subscription.model';
+import { User } from '../../user/models/user.model';
 import { SubscriptionPlanEnum } from '../../shared-types/subscription-plan.enum';
 import { PaymentProvider } from '../../shared-types/payment-provider.enum';
 import { PaymentMethod } from '../../shared-types/payment-method.enum';
@@ -38,6 +39,8 @@ export class PaymentsService {
     private readonly txnModel: typeof SubscriptionTransaction,
     @InjectModel(Subscription)
     private readonly subscriptionModel: typeof Subscription,
+    @InjectModel(User)
+    private readonly userModel: typeof User,
     private readonly gateways: PaymentGatewayRegistry,
   ) {}
 
@@ -94,17 +97,30 @@ export class PaymentsService {
       plan,
     );
 
-    // 3️⃣ Ask the chosen gateway to create the transaction.
+    // 3️⃣ Resolve the payer email. The JWT doesn't always carry it, so fall
+    //     back to the user record — gateways (Paystack) require an email.
+    let payerEmail = email;
+    if (!payerEmail) {
+      const user = await this.userModel.findByPk(userId, {
+        attributes: ['id', 'email'],
+      });
+      payerEmail = user?.email ?? '';
+    }
+    if (!payerEmail) {
+      throw new BadRequestException('User email is required to start a payment');
+    }
+
+    // 4️⃣ Ask the chosen gateway to create the transaction.
     const provider = input.provider ?? PaymentProvider.PAYSTACK;
     const gateway = this.gateways.get(provider);
     const init = await gateway.initialize({
-      email,
+      email: payerEmail,
       amountKobo: Math.round(amount * 100),
       method: input.method,
       metadata: { subscriptionId, userId, plan, ...(input.metadata ?? {}) },
     });
 
-    // 4️⃣ Persist PENDING. A concurrent request with the same key hits the
+    // 5️⃣ Persist PENDING. A concurrent request with the same key hits the
     //     unique index; we swallow it and return the row that won the race.
     try {
       const txn = await this.txnModel.create({
