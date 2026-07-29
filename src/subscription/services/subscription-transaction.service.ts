@@ -218,6 +218,12 @@ export class SubscriptionTransactionService {
   async findAllByUser(userId: string) {
     return this.txnModel.findAll({
       where: { userId },
+      include: [
+        {
+          association: 'subscription',
+          attributes: ['id', 'name'],
+        },
+      ],
       order: [['createdAt', 'DESC']],
     });
   }

@@ -14,6 +14,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { Subscription } from './Subscription.model';
 import { User } from 'src/user/models/user.model';
 import { SubscriptionPlanEnum } from 'src/shared-types/subscription-plan.enum';
+import { PaymentProvider } from 'src/shared-types/payment-provider.enum';
+import { PaymentMethod } from 'src/shared-types/payment-method.enum';
 
 @Table({
   tableName: 'subscription_transactions',
@@ -96,6 +98,64 @@ export class SubscriptionTransaction extends Model<SubscriptionTransaction> {
     allowNull: false,
   })
   subscriptionId: string;
+
+  @ApiProperty({
+    description: 'Payment processor that settles the charge',
+    enum: PaymentProvider,
+    example: PaymentProvider.PAYSTACK,
+  })
+  @Default(PaymentProvider.PAYSTACK)
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+  })
+  provider: PaymentProvider;
+
+  @ApiProperty({
+    description: 'Wallet / instrument the user paid with',
+    enum: PaymentMethod,
+    required: false,
+    nullable: true,
+  })
+  @Column({
+    type: DataType.STRING,
+    allowNull: true,
+  })
+  paymentMethod: PaymentMethod | null;
+
+  @ApiProperty({
+    description:
+      'Client-supplied idempotency key; unique per (user, key) to dedupe retries',
+    required: false,
+    nullable: true,
+  })
+  @Column({
+    type: DataType.STRING,
+    allowNull: true,
+  })
+  idempotencyKey: string | null;
+
+  @ApiProperty({
+    description: 'Gateway checkout URL, kept so an idempotent re-init can return it',
+    required: false,
+    nullable: true,
+  })
+  @Column({
+    type: DataType.TEXT,
+    allowNull: true,
+  })
+  authorizationUrl: string | null;
+
+  @ApiProperty({
+    description: 'Raw gateway payload / extra context',
+    required: false,
+    nullable: true,
+  })
+  @Column({
+    type: DataType.JSONB,
+    allowNull: true,
+  })
+  metadata: Record<string, any> | null;
 
   // -------------------
   // Associations
