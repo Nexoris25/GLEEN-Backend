@@ -1,15 +1,29 @@
 // src/notifications/services/notification-aggregator.service.ts
 import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/sequelize';
 import { NotificationReadService } from './notification-read.service';
 import { NotificationEntityType } from 'src/shared-types/FileTypeEnum';
 import { AggregatedNotificationDto } from '../dto/aggregated-notification.dto';
 import { V1Battle } from 'src/v1-battle/models/v1-battle.model';
 import { TutorMessage } from 'src/messages/models/tutor-message.model';
+import {
+  XpWithdrawalRequest,
+  WithdrawalStatus,
+} from 'src/xp-withdrawal/models/xp-withdrawal-request.model';
+import { User } from 'src/user/models/user.model';
 import { Op } from 'sequelize';
+
+const ADMIN_ROLES = ['ADMIN', 'SUPER_ADMIN'];
 
 @Injectable()
 export class NotificationAggregatorService {
-  constructor(private readonly readService: NotificationReadService) {}
+  constructor(
+    private readonly readService: NotificationReadService,
+    @InjectModel(XpWithdrawalRequest)
+    private readonly withdrawalModel: typeof XpWithdrawalRequest,
+    @InjectModel(User)
+    private readonly userModel: typeof User,
+  ) {}
 
   async getUserNotifications(
     userId: string,
@@ -87,6 +101,92 @@ export class NotificationAggregatorService {
         createdAt: msg.createdAt,
         read,
       });
+    }
+
+    /**
+     * ----------------------------
+     * XP WITHDRAWALS — the user's own approved/declined requests.
+     * Tracked under SYSTEM (the recipient table's enum has no withdrawal
+     * value); the specific kind lives in title/message/data.
+     * ----------------------------
+     */
+    const myWithdrawals = await this.withdrawalModel.findAll({
+      where: {
+        userId,
+        status: {
+          [Op.in]: [WithdrawalStatus.SENT, WithdrawalStatus.DECLINED],
+        },
+      },
+      order: [['createdAt', 'DESC']],
+      limit: 50,
+    });
+
+    for (const w of myWithdrawals) {
+      const sent = w.status === WithdrawalStatus.SENT;
+      const read = await this.readService.hasRead(
+        userId,
+        NotificationEntityType.SYSTEM,
+        w.id,
+      );
+
+      notifications.push({
+        id: w.id,
+        type: NotificationEntityType.SYSTEM,
+        title: sent ? 'Withdrawal approved' : 'Withdrawal declined',
+        message: sent
+          ? `Your ₦${w.airtimeAmount} airtime to ${w.phone} is on its way.`
+          : w.declineReason
+            ? `Your withdrawal was declined: ${w.declineReason}. Your XP has been refunded.`
+            : 'Your withdrawal was declined and your XP has been refunded.',
+        createdAt: w.processedAt ?? w.createdAt,
+        read,
+        data: {
+          kind: sent ? 'WITHDRAWAL_SENT' : 'WITHDRAWAL_DECLINED',
+          requestId: w.id,
+          amount: w.airtimeAmount,
+          status: w.status,
+        },
+      });
+    }
+
+    /**
+     * ----------------------------
+     * XP WITHDRAWALS — admins get notified of incoming (pending) requests.
+     * ----------------------------
+     */
+    const viewer = await this.userModel.findByPk(userId, {
+      attributes: ['id', 'role'],
+    });
+    if (viewer && ADMIN_ROLES.includes(viewer.role)) {
+      const pending = await this.withdrawalModel.findAll({
+        where: { status: WithdrawalStatus.PENDING },
+        include: ['user'],
+        order: [['createdAt', 'DESC']],
+        limit: 50,
+      });
+
+      for (const w of pending) {
+        const read = await this.readService.hasRead(
+          userId,
+          NotificationEntityType.SYSTEM,
+          w.id,
+        );
+
+        notifications.push({
+          id: w.id,
+          type: NotificationEntityType.SYSTEM,
+          title: 'New withdrawal request',
+          message: `${(w as any).user?.fullName ?? 'A student'} requested ₦${w.airtimeAmount} airtime (${w.network} · ${w.phone}).`,
+          createdAt: w.createdAt,
+          read,
+          data: {
+            kind: 'WITHDRAWAL_REQUEST',
+            requestId: w.id,
+            amount: w.airtimeAmount,
+            requesterId: w.userId,
+          },
+        });
+      }
     }
 
     /**

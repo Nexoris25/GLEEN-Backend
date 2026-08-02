@@ -91,6 +91,10 @@ export class QuizzesService {
       if (options?.status) {
         conditions.push(`q.status = :status`);
         replacements.status = options.status;
+      } else {
+        // No explicit status → surface everything except rejected quizzes.
+        // (New quizzes default to PENDING, and that gate isn't actively used.)
+        conditions.push(`q.status <> 'REJECTED'`);
       }
       if (options?.title) {
         conditions.push(`q.title ILIKE :title`);
@@ -205,7 +209,7 @@ export class QuizzesService {
         LEFT JOIN "quiz_records" qr
           ON qr."quizId" = q.id
           AND qr."userId" <> :userId
-        WHERE q.status = 'APPROVED'
+        WHERE q.status <> 'REJECTED'
         ${whereSearch};
       `,
       {
@@ -239,7 +243,7 @@ export class QuizzesService {
         LEFT JOIN "quiz_records" qr
           ON qr."quizId" = q.id
           AND qr."userId" <> :userId
-        WHERE q.status = 'APPROVED'
+        WHERE q.status <> 'REJECTED'
         ${whereSearch}
         GROUP BY q.id, s.id
         ORDER BY "takenCount" DESC, q."createdAt" DESC
@@ -295,7 +299,7 @@ export class QuizzesService {
           FROM "subjects" s
           JOIN "quizzes" q
             ON q."subjectId" = s.id
-            AND q.status = 'APPROVED'
+            AND q.status <> 'REJECTED'
           WHERE 1=1
           ${whereSearch}
           ${whereSubjects}
@@ -323,7 +327,7 @@ export class QuizzesService {
         FROM "subjects" s
         JOIN "quizzes" q
           ON q."subjectId" = s.id
-          AND q.status = 'APPROVED'
+          AND q.status <> 'REJECTED'
         WHERE 1=1
         ${whereSearch}
         ${whereSubjects}

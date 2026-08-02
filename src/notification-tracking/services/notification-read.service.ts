@@ -44,19 +44,22 @@ export class NotificationReadService {
     entityType: NotificationEntityType,
     entityId: string,
   ): Promise<void> {
-    await this.recipientModel.update(
-      {
+    // Notifications are derived from domain rows, so a recipient row may not
+    // exist yet — upsert so marking-read persists the first time too.
+    const [record, created] = await this.recipientModel.findOrCreate({
+      where: { userId, entityType, entityId },
+      defaults: {
+        userId,
+        entityType,
+        entityId,
         read: true,
         readAt: new Date(),
-      },
-      {
-        where: {
-          userId,
-          entityType,
-          entityId,
-        },
-      },
-    );
+      } as any,
+    });
+
+    if (!created && !record.read) {
+      await record.update({ read: true, readAt: new Date() });
+    }
   }
 
   /**

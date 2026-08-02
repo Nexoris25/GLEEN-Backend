@@ -1,36 +1,62 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsOptional, IsUUID } from 'class-validator';
 
+/**
+ * All fields are optional so the client can persist a single toggle at a time.
+ * Decorators are REQUIRED here: the global ValidationPipe uses `whitelist` +
+ * `forbidNonWhitelisted`, which rejects any property that lacks a validator.
+ */
 export class CreateNotificationSettingsDto {
-  @ApiProperty({ type: Boolean })
-  userNotification: boolean;
+  @ApiPropertyOptional({ type: Boolean })
+  @IsOptional()
+  @IsBoolean()
+  userNotification?: boolean;
 
-  @ApiProperty({ type: Boolean })
-  emailNotification: boolean;
+  @ApiPropertyOptional({ type: Boolean })
+  @IsOptional()
+  @IsBoolean()
+  emailNotification?: boolean;
 
-  @ApiProperty({ type: Boolean })
-  appNotification: boolean;
+  @ApiPropertyOptional({ type: Boolean })
+  @IsOptional()
+  @IsBoolean()
+  appNotification?: boolean;
 
-  @ApiProperty({ type: Boolean })
-  pushNotification: boolean;
+  @ApiPropertyOptional({ type: Boolean })
+  @IsOptional()
+  @IsBoolean()
+  pushNotification?: boolean;
 
-  @ApiProperty({ type: Boolean })
-  soundNotification: boolean;
+  @ApiPropertyOptional({ type: Boolean })
+  @IsOptional()
+  @IsBoolean()
+  soundNotification?: boolean;
 
-  @ApiProperty({ type: Boolean, description: 'Alerts for new peer messages' })
-  newMessages: boolean;
+  @ApiPropertyOptional({ type: Boolean, description: 'Alerts for new peer messages' })
+  @IsOptional()
+  @IsBoolean()
+  newMessages?: boolean;
 
-  @ApiProperty({ type: Boolean, description: 'Crew activity updates' })
-  crewUpdates: boolean;
+  @ApiPropertyOptional({ type: Boolean, description: 'Crew activity updates' })
+  @IsOptional()
+  @IsBoolean()
+  crewUpdates?: boolean;
 
-  @ApiProperty({ type: Boolean, description: 'App feature/update news' })
-  appUpdates: boolean;
+  @ApiPropertyOptional({ type: Boolean, description: 'App feature/update news' })
+  @IsOptional()
+  @IsBoolean()
+  appUpdates?: boolean;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: Boolean,
     description: 'Weekly parent email/SMS reporting',
   })
-  parentsReporting: boolean;
+  @IsOptional()
+  @IsBoolean()
+  parentsReporting?: boolean;
 
-  @ApiProperty({ type: String, format: 'uuid' })
-  userId: string;
+  @ApiPropertyOptional({ type: String, format: 'uuid' })
+  @IsOptional()
+  @IsUUID()
+  userId?: string;
 }
