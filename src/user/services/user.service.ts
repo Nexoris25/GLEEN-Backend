@@ -135,6 +135,13 @@ export class UserService {
         }
       });
 
+      // Only return users who have completed their profile (name + gender)
+      const isProvided = [{ [Op.ne]: null }, { [Op.ne]: '' }];
+      where.fullName = where.fullName
+        ? { [Op.and]: [where.fullName, ...isProvided] }
+        : { [Op.and]: isProvided };
+      where.gender = { [Op.and]: isProvided };
+
       // Safe pagination
       const safeLimit = Math.min(limit, this.MAX_LIMIT);
       const safeOffset = Math.max(offset, 0);

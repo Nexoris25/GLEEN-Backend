@@ -104,8 +104,8 @@ export class ClassesController {
   @ApiResponse({ status: 200, type: [ClassResponseDto] })
   @Get('previous')
   //@Roles('STUDENT', 'TUTOR', 'ADMIN', 'SUPER_ADMIN')
-  getPreviousClasses() {
-    return this.classesService.findPrevious();
+  getPreviousClasses(@UserId() userId: string) {
+    return this.classesService.findPrevious(userId);
   }
 
   // ================= UPCOMING CLASSES =================
@@ -113,8 +113,8 @@ export class ClassesController {
   @ApiResponse({ status: 200, type: [ClassResponseDto] })
   @Get('upcoming')
   //@Roles('STUDENT', 'TUTOR', 'ADMIN', 'SUPER_ADMIN')
-  getUpcomingClasses(@Query() query: PaginationDto) {
-    return this.classesService.findUpcomingPaginated(query);
+  getUpcomingClasses(@UserId() userId: string, @Query() query: PaginationDto) {
+    return this.classesService.findUpcomingPaginated(userId, query);
   }
 
   // ================= LIVE CLASSES =================
@@ -122,8 +122,8 @@ export class ClassesController {
   @ApiResponse({ status: 200, type: ClassResponseDto })
   @Get('live')
   //@Roles('STUDENT', 'TUTOR', 'ADMIN', 'SUPER_ADMIN')
-  getLiveClasses(@Query() query: PaginationDto) {
-    return this.classesService.findLivePaginated(query);
+  getLiveClasses(@UserId() userId: string, @Query() query: PaginationDto) {
+    return this.classesService.findLivePaginated(userId, query);
   }
 
   @ApiOperation({ summary: 'Get recommended classes for current user' })
@@ -209,8 +209,8 @@ export class ClassesController {
     description: 'List of classes or a single class',
     type: ClassEntity,
   })
-  async getAllLessons(@Query() query: LessonQueryDto) {
-    return this.classesService.findAllWithDetails(query);
+  async getAllLessons(@Query() query: LessonQueryDto, @UserId() userId: string) {
+    return this.classesService.findAllWithDetails(query, userId);
   }
 
   // GET ONE

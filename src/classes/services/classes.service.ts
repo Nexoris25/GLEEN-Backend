@@ -82,7 +82,22 @@ export class ClassesService {
     'https://api.daily.co/v1/meeting-tokens';
   private readonly ROOM_DELETE_GRACE_MS = 60 * 60 * 1000;
 
-  async create(dto: CreateClassDto) {
+  // Where-fragment that hides private lessons from everyone except the tutor
+  // and the enrolled student. `Op.not: true` also covers legacy NULL rows.
+  private visibilityWhere(userId?: string) {
+    if (!userId) {
+      return { isPrivate: { [Op.not]: true } };
+    }
+    return {
+      [Op.or]: [
+        { isPrivate: { [Op.not]: true } },
+        { tutorId: userId },
+        { enrolledStudents: { [Op.contains]: [userId] } },
+      ],
+    };
+  }
+
+  async create(dto: CreateClassDto, options?: { isPrivate?: boolean }) {
     let ownerToken: string;
     const safeTitle = dto.title
       .toLowerCase()
@@ -209,6 +224,7 @@ export class ClassesService {
         ownerToken: ownerToken,
         enrolledStudents: [],
         attendance: [],
+        isPrivate: options?.isPrivate ?? false,
       });
 
       await this.createEnrollment({
@@ -278,15 +294,18 @@ export class ClassesService {
     const title = `Private lesson ${requestingUserId.slice(0, 8)} ${Date.now()}`;
     const description = `Private lesson requested by ${requester.fullName || requester.id}`;
 
-    const created = await this.create({
-      title,
-      description,
-      tutorId: dto.tutorId,
-      startTime,
-      endTime,
-      date: dto.date,
-      time: dto.time,
-    });
+    const created = await this.create(
+      {
+        title,
+        description,
+        tutorId: dto.tutorId,
+        startTime,
+        endTime,
+        date: dto.date,
+        time: dto.time,
+      },
+      { isPrivate: true },
+    );
 
     await this.enroll(requestingUserId, created.data.id);
 
@@ -337,37 +356,49 @@ export class ClassesService {
     );
   }
 
-  async findPrevious() {
-    await this.cleanupExpiredRooms();
-    const now = new Date();
-    return this.classModel.findAll({
-      where: { endTime: { [Op.lt]: now } },
-      order: [['endTime', 'DESC']],
-    });
-  }
-
-  async findUpcoming() {
-    await this.cleanupExpiredRooms();
-    const now = new Date();
-    return this.classModel.findAll({
-      where: { startTime: { [Op.gt]: now } },
-      order: [['startTime', 'ASC']],
-    });
-  }
-
-  async findLive() {
+  async findPrevious(userId?: string) {
     await this.cleanupExpiredRooms();
     const now = new Date();
     return this.classModel.findAll({
       where: {
-        startTime: { [Op.lte]: now },
-        endTime: { [Op.gte]: now },
+        [Op.and]: [
+          { endTime: { [Op.lt]: now } },
+          this.visibilityWhere(userId),
+        ],
+      },
+      order: [['endTime', 'DESC']],
+    });
+  }
+
+  async findUpcoming(userId?: string) {
+    await this.cleanupExpiredRooms();
+    const now = new Date();
+    return this.classModel.findAll({
+      where: {
+        [Op.and]: [
+          { startTime: { [Op.gt]: now } },
+          this.visibilityWhere(userId),
+        ],
       },
       order: [['startTime', 'ASC']],
     });
   }
 
-  async findLivePaginated(query?: PaginationDto) {
+  async findLive(userId?: string) {
+    await this.cleanupExpiredRooms();
+    const now = new Date();
+    return this.classModel.findAll({
+      where: {
+        [Op.and]: [
+          { startTime: { [Op.lte]: now }, endTime: { [Op.gte]: now } },
+          this.visibilityWhere(userId),
+        ],
+      },
+      order: [['startTime', 'ASC']],
+    });
+  }
+
+  async findLivePaginated(userId?: string, query?: PaginationDto) {
     await this.cleanupExpiredRooms();
     const now = new Date();
     const limit = Math.min(query?.limit ?? 10, this.MAX_LIMIT);
@@ -377,19 +408,23 @@ export class ClassesService {
 
     const result = await this.classModel.findAndCountAll({
       where: {
-        startTime: { [Op.lte]: now },
-        endTime: { [Op.gte]: now },
-        ...(trimmedSearch
-          ? {
-              [Op.or]: [
-                { title: { [Op.iLike]: `%${trimmedSearch}%` } },
-                { description: { [Op.iLike]: `%${trimmedSearch}%` } },
-                { '$tutor.fullName$': { [Op.iLike]: `%${trimmedSearch}%` } },
-                { '$tutor.username$': { [Op.iLike]: `%${trimmedSearch}%` } },
-                { '$subject.title$': { [Op.iLike]: `%${trimmedSearch}%` } },
-              ],
-            }
-          : {}),
+        [Op.and]: [
+          { startTime: { [Op.lte]: now }, endTime: { [Op.gte]: now } },
+          this.visibilityWhere(userId),
+          ...(trimmedSearch
+            ? [
+                {
+                  [Op.or]: [
+                    { title: { [Op.iLike]: `%${trimmedSearch}%` } },
+                    { description: { [Op.iLike]: `%${trimmedSearch}%` } },
+                    { '$tutor.fullName$': { [Op.iLike]: `%${trimmedSearch}%` } },
+                    { '$tutor.username$': { [Op.iLike]: `%${trimmedSearch}%` } },
+                    { '$subject.title$': { [Op.iLike]: `%${trimmedSearch}%` } },
+                  ],
+                },
+              ]
+            : []),
+        ],
       },
       include: [
         {
@@ -433,7 +468,7 @@ export class ClassesService {
     };
   }
 
-  async findUpcomingPaginated(query?: PaginationDto) {
+  async findUpcomingPaginated(userId?: string, query?: PaginationDto) {
     await this.cleanupExpiredRooms();
     const now = new Date();
     const limit = Math.min(query?.limit ?? 10, this.MAX_LIMIT);
@@ -443,18 +478,23 @@ export class ClassesService {
 
     const result = await this.classModel.findAndCountAll({
       where: {
-        startTime: { [Op.gt]: now },
-        ...(trimmedSearch
-          ? {
-              [Op.or]: [
-                { title: { [Op.iLike]: `%${trimmedSearch}%` } },
-                { description: { [Op.iLike]: `%${trimmedSearch}%` } },
-                { '$tutor.fullName$': { [Op.iLike]: `%${trimmedSearch}%` } },
-                { '$tutor.username$': { [Op.iLike]: `%${trimmedSearch}%` } },
-                { '$subject.title$': { [Op.iLike]: `%${trimmedSearch}%` } },
-              ],
-            }
-          : {}),
+        [Op.and]: [
+          { startTime: { [Op.gt]: now } },
+          this.visibilityWhere(userId),
+          ...(trimmedSearch
+            ? [
+                {
+                  [Op.or]: [
+                    { title: { [Op.iLike]: `%${trimmedSearch}%` } },
+                    { description: { [Op.iLike]: `%${trimmedSearch}%` } },
+                    { '$tutor.fullName$': { [Op.iLike]: `%${trimmedSearch}%` } },
+                    { '$tutor.username$': { [Op.iLike]: `%${trimmedSearch}%` } },
+                    { '$subject.title$': { [Op.iLike]: `%${trimmedSearch}%` } },
+                  ],
+                },
+              ]
+            : []),
+        ],
       },
       include: [
         {
@@ -512,6 +552,7 @@ export class ClassesService {
 
     const where: any = {
       endTime: { [Op.gte]: now },
+      isPrivate: { [Op.not]: true },
     };
     if (subjectIds.length) {
       where.subjectId = { [Op.in]: subjectIds };
@@ -564,12 +605,17 @@ export class ClassesService {
     };
   }
 
-  async findAllWithDetails(query?: LessonQueryDto) {
+  async findAllWithDetails(query?: LessonQueryDto, userId?: string) {
     const limit = Math.min(query?.limit ?? 10, this.MAX_LIMIT);
     const offset = query?.offset ?? 0;
     const where: any = {};
-    if (query?.id) where.id = query.id;
-    if (query?.title) where.title = { [Op.iLike]: `%${query.title}%` };
+    if (query?.id) {
+      // Direct fetch by id (mirrors findOne) — no visibility filter.
+      where.id = query.id;
+    } else {
+      Object.assign(where, this.visibilityWhere(userId));
+      if (query?.title) where.title = { [Op.iLike]: `%${query.title}%` };
+    }
 
     const result = await this.classModel.findAndCountAll({
       where,
@@ -683,7 +729,7 @@ export class ClassesService {
 
   async findAll(search?: string, tutorId?: string, pagination?: PaginationDto) {
     try {
-      const where: any = {};
+      const where: any = { isPrivate: { [Op.not]: true } };
       if (search?.trim()) {
         where[Op.or] = [
           { title: { [Op.iLike]: `%${search.trim()}%` } },
@@ -833,6 +879,17 @@ export class ClassesService {
     }
 
     let enrollment = await this.findEnrollment(userId, cls.id);
+
+    // Private lessons must not auto-enrol strangers: only the tutor (handled
+    // above) or an already-enrolled student may join.
+    if (cls.isPrivate) {
+      const alreadyParticipant =
+        !!enrollment || (cls.enrolledStudents ?? []).includes(userId);
+      if (!alreadyParticipant) {
+        throw new ForbiddenException('This is a private lesson');
+      }
+    }
+
     if (!enrollment) {
       const enrolled = cls.enrolledStudents ?? [];
 
@@ -970,7 +1027,7 @@ export class ClassesService {
     try {
       const { search, page = 1, limit = 10 } = query;
       const offset = (page - 1) * limit;
-      const where: any = {};
+      const where: any = { isPrivate: { [Op.not]: true } };
       if (search) {
         where[Op.or] = [
           { title: { [Op.iLike]: `%${search}%` } },

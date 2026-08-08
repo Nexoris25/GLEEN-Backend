@@ -83,6 +83,11 @@ export class ClassEntity extends Model<ClassEntity> {
   @Column({ type: DataType.JSONB, allowNull: true, defaultValue: [] })
   attendance: string[];
 
+  // Marks 1-on-1 private lessons so they are excluded from public class
+  // listings and only visible to the tutor and the requesting student.
+  @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: false })
+  isPrivate: boolean;
+
   // ✅ ASSOCIATION
   @BelongsTo(() => User, { as: 'tutor' })
   tutor: User;
