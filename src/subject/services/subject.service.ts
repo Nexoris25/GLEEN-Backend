@@ -12,7 +12,7 @@ import { Subject } from '../models/subject.model';
 import { CreateSubjectDto } from '../dto/create-subject.dto';
 import { UpdateSubjectDto } from '../dto/update-subject.dto';
 import { User } from 'src/user/models/user.model';
-import { BunnyService } from 'src/common/services/bunny-all.service';
+import { CloudinaryService } from 'src/common/services/cloudinary.service';
 import stringify from 'safe-stable-stringify';
 import { UserSubject } from '../models/user-subject.model';
 import { validate as isUUID } from 'uuid';
@@ -25,7 +25,7 @@ export class SubjectService {
     @InjectModel(Subject)
     private readonly subjectModel: typeof Subject,
     private readonly sequelize: Sequelize,
-    private readonly bunnyService: BunnyService,
+    private readonly cloudinaryService: CloudinaryService,
     @InjectModel(User)
     private readonly userModel: typeof User,
     @InjectModel(UserSubject)
@@ -35,7 +35,7 @@ export class SubjectService {
   private readonly MAX_LIMIT = 500;
 
   generateAvatarUploadTarget(mimeType?: string) {
-    return this.bunnyService.generateUploadTarget({
+    return this.cloudinaryService.generateUploadTarget({
       directory: 'subjects',
       mimeType,
     });
@@ -127,7 +127,7 @@ export class SubjectService {
 
     if (dto.avatar !== undefined && dto.avatar !== subject.avatar) {
       if (subject.avatar) {
-        await this.bunnyService.deleteByUrl(subject.avatar);
+        await this.cloudinaryService.deleteByUrl(subject.avatar);
       }
     }
     try {
@@ -300,7 +300,7 @@ export class SubjectService {
       });
 
       if (avatarUrl) {
-        await this.bunnyService.deleteByUrl(avatarUrl);
+        await this.cloudinaryService.deleteByUrl(avatarUrl);
       }
     } catch (error) {
       console.log(error);

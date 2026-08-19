@@ -82,9 +82,13 @@ export class ClassesService {
     'https://api.daily.co/v1/meeting-tokens';
   private readonly ROOM_DELETE_GRACE_MS = 60 * 60 * 1000;
 
-  // Where-fragment that hides private lessons from everyone except the tutor
-  // and the enrolled student. `Op.not: true` also covers legacy NULL rows.
-  private visibilityWhere(userId?: string) {
+  // Where-fragment that hides private lessons from everyone except the tutor,
+  // the enrolled student, and admins (who get full oversight on the dashboard).
+  // `Op.not: true` also covers legacy NULL rows.
+  private visibilityWhere(userId?: string, role?: string) {
+    if (role === RoleEnum.ADMIN || role === RoleEnum.SUPER_ADMIN) {
+      return {}; // no restriction — admins see every class
+    }
     if (!userId) {
       return { isPrivate: { [Op.not]: true } };
     }
@@ -356,49 +360,53 @@ export class ClassesService {
     );
   }
 
-  async findPrevious(userId?: string) {
+  async findPrevious(userId?: string, role?: string) {
     await this.cleanupExpiredRooms();
     const now = new Date();
     return this.classModel.findAll({
       where: {
         [Op.and]: [
           { endTime: { [Op.lt]: now } },
-          this.visibilityWhere(userId),
+          this.visibilityWhere(userId, role),
         ],
       },
       order: [['endTime', 'DESC']],
     });
   }
 
-  async findUpcoming(userId?: string) {
+  async findUpcoming(userId?: string, role?: string) {
     await this.cleanupExpiredRooms();
     const now = new Date();
     return this.classModel.findAll({
       where: {
         [Op.and]: [
           { startTime: { [Op.gt]: now } },
-          this.visibilityWhere(userId),
+          this.visibilityWhere(userId, role),
         ],
       },
       order: [['startTime', 'ASC']],
     });
   }
 
-  async findLive(userId?: string) {
+  async findLive(userId?: string, role?: string) {
     await this.cleanupExpiredRooms();
     const now = new Date();
     return this.classModel.findAll({
       where: {
         [Op.and]: [
           { startTime: { [Op.lte]: now }, endTime: { [Op.gte]: now } },
-          this.visibilityWhere(userId),
+          this.visibilityWhere(userId, role),
         ],
       },
       order: [['startTime', 'ASC']],
     });
   }
 
-  async findLivePaginated(userId?: string, query?: PaginationDto) {
+  async findLivePaginated(
+    userId?: string,
+    query?: PaginationDto,
+    role?: string,
+  ) {
     await this.cleanupExpiredRooms();
     const now = new Date();
     const limit = Math.min(query?.limit ?? 10, this.MAX_LIMIT);
@@ -410,7 +418,7 @@ export class ClassesService {
       where: {
         [Op.and]: [
           { startTime: { [Op.lte]: now }, endTime: { [Op.gte]: now } },
-          this.visibilityWhere(userId),
+          this.visibilityWhere(userId, role),
           ...(trimmedSearch
             ? [
                 {
@@ -468,7 +476,11 @@ export class ClassesService {
     };
   }
 
-  async findUpcomingPaginated(userId?: string, query?: PaginationDto) {
+  async findUpcomingPaginated(
+    userId?: string,
+    query?: PaginationDto,
+    role?: string,
+  ) {
     await this.cleanupExpiredRooms();
     const now = new Date();
     const limit = Math.min(query?.limit ?? 10, this.MAX_LIMIT);
@@ -480,7 +492,7 @@ export class ClassesService {
       where: {
         [Op.and]: [
           { startTime: { [Op.gt]: now } },
-          this.visibilityWhere(userId),
+          this.visibilityWhere(userId, role),
           ...(trimmedSearch
             ? [
                 {
@@ -605,7 +617,11 @@ export class ClassesService {
     };
   }
 
-  async findAllWithDetails(query?: LessonQueryDto, userId?: string) {
+  async findAllWithDetails(
+    query?: LessonQueryDto,
+    userId?: string,
+    role?: string,
+  ) {
     const limit = Math.min(query?.limit ?? 10, this.MAX_LIMIT);
     const offset = query?.offset ?? 0;
     const where: any = {};
@@ -613,7 +629,7 @@ export class ClassesService {
       // Direct fetch by id (mirrors findOne) — no visibility filter.
       where.id = query.id;
     } else {
-      Object.assign(where, this.visibilityWhere(userId));
+      Object.assign(where, this.visibilityWhere(userId, role));
       if (query?.title) where.title = { [Op.iLike]: `%${query.title}%` };
     }
 

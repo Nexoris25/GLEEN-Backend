@@ -1,13 +1,5 @@
 // src/messages/controllers/tutor-message.controller.ts
-import {
-  Controller,
-  Post,
-  Body,
-  UseGuards,
-  Get,
-  Patch,
-  Param,
-} from '@nestjs/common';
+import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { TutorMessageService } from '../services/tutor-message.service';
 import { CreateTutorMessageDto } from '../dto/create-tutor-message.dto';
@@ -24,26 +16,12 @@ export class TutorMessageController {
   constructor(private readonly service: TutorMessageService) {}
 
   @Post()
-  @Roles('TUTOR')
+  @Roles('TUTOR', 'ADMIN', 'SUPER_ADMIN')
   @ApiOperation({
     summary:
-      'Tutor sends message to students. only one option used (studentId / sendToAll / stateId /subjectId / classIds',
+      'Send a message to students. Targets combine as a union: sendToAll, stateIds, subjectIds, classIds and/or studentIds. Recipients read it via GET /notification-tracking.',
   })
-  create(@Body() dto: CreateTutorMessageDto, @UserId() tutorId: string) {
-    return this.service.create(dto, tutorId);
+  create(@Body() dto: CreateTutorMessageDto, @UserId() senderId: string) {
+    return this.service.create(dto, senderId);
   }
-
-  /*
-  @Get('student')
-  @Roles('STUDENT')
-  getStudentMessages(@UserId() studentId: string) {
-    return this.service.getStudentMessages(studentId);
-  }
-
-  @Patch(':id/read')
-  @Roles('STUDENT')
-  markRead(@Param('id') id: string, @UserId() studentId: string) {
-    return this.service.markAsRead(id, studentId);
-  }
-  */
 }

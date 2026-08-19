@@ -1,15 +1,16 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { BunnyService } from 'src/common/services/bunny-all.service';
+import { CloudinaryService } from 'src/common/services/cloudinary.service';
 
 @ApiTags('Uploads')
 @Controller('uploads')
 export class UploadController {
-  constructor(private readonly bunnyService: BunnyService) {}
+  constructor(private readonly cloudinaryService: CloudinaryService) {}
 
   @Post('presign')
   @ApiOperation({
-    summary: 'Generate Bunny upload target for arbitrary file (e.g. avatars)',
+    summary:
+      'Generate a signed Cloudinary upload target for arbitrary files (e.g. avatars)',
   })
   @ApiBody({
     schema: {
@@ -27,7 +28,7 @@ export class UploadController {
     @Body('mimeType') mimeType?: string,
     @Body('originalName') originalName?: string,
   ) {
-    return this.bunnyService.generateUploadTarget({
+    return this.cloudinaryService.generateUploadTarget({
       directory,
       mimeType,
       originalName,

@@ -6,7 +6,7 @@ import { SubjectService } from './services/subject.service';
 import { UserSubject } from './models/user-subject.model';
 import { JwtModule } from '@nestjs/jwt';
 import { User } from 'src/user/models/user.model';
-import { BunnyService } from 'src/common/services/bunny-all.service';
+import { CloudinaryService } from 'src/common/services/cloudinary.service';
 
 @Module({
   imports: [
@@ -16,7 +16,7 @@ import { BunnyService } from 'src/common/services/bunny-all.service';
     }),
     SequelizeModule.forFeature([Subject, UserSubject, User]),
   ],
-  providers: [SubjectService, BunnyService],
+  providers: [SubjectService, CloudinaryService],
   controllers: [SubjectController],
   exports: [SubjectService],
 })

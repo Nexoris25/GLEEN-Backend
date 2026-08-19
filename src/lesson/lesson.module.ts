@@ -10,7 +10,7 @@ import { QuizQuestionsService } from './services/quiz-question.service';
 import { StudentsQuizAnswersService } from './services/student-quiz-answer.service';
 import { QuizQuestionController } from './controllers/quiz-question.controller';
 import { StudentQuizAnswerController } from './controllers/student-quiz-answer.controller';
-import { BunnyService } from 'src/common/services/bunny-all.service';
+import { CloudinaryService } from 'src/common/services/cloudinary.service';
 import { Quizzes } from './models/quiz.model';
 import { QuizzesService } from './services/quiz.service';
 import { QuizController } from './controllers/quiz.controller';
@@ -50,7 +50,7 @@ import { XpModule } from 'src/xp/xp.module';
     StudentsQuizAnswersService,
     QuizzesService,
     LessonTopicService,
-    BunnyService,
+    CloudinaryService,
     QuizRecordService,
   ],
   controllers: [

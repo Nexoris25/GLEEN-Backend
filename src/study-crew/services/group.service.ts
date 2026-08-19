@@ -9,7 +9,7 @@ import { CreateGroupDto } from '../dto/create-group.dto';
 import { UpdateGroupDto } from '../dto/update-group.dto';
 import { Group } from '../models/group.model';
 import { UserGroup } from '../models/user-group.model';
-import { BunnyService } from 'src/common/services/bunny-all.service';
+import { CloudinaryService } from 'src/common/services/cloudinary.service';
 import stringify from 'safe-stable-stringify';
 
 @Injectable()
@@ -17,7 +17,7 @@ export class GroupsService {
   constructor(
     @InjectModel(Group)
     private groupModel: typeof Group,
-    private readonly bunnyService: BunnyService,
+    private readonly cloudinaryService: CloudinaryService,
     @InjectModel(UserGroup)
     private readonly userGroupModel: typeof UserGroup,
   ) {}
@@ -30,7 +30,7 @@ export class GroupsService {
     let avatarUrl: string | null = null;
     const updatedData: any = { ...createGroupDto };
     if (avatar) {
-      avatarUrl = await this.bunnyService.upload({
+      avatarUrl = await this.cloudinaryService.upload({
         buffer: avatar.buffer,
         mimeType: avatar.mimetype,
         originalName: avatar.originalname,
@@ -113,7 +113,7 @@ export class GroupsService {
       const group = await this.findOne(id);
 
       if (avatar) {
-        avatarUrl = await this.bunnyService.upload({
+        avatarUrl = await this.cloudinaryService.upload({
           buffer: avatar.buffer,
           mimeType: avatar.mimetype,
           originalName: avatar.originalname,

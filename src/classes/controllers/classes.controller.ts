@@ -34,6 +34,7 @@ import { RolesGuard } from 'src/auth/GuardsDecorMiddleware/roles.guard';
 import { LessonQueryDto } from 'src/lesson/dto/query.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { UserId } from 'src/auth/GuardsDecorMiddleware/userIdDecorator.guard';
+import { GetUser } from 'src/shared-types/user.decorator';
 import { ResponseDto } from 'src/shared-types/response.dto';
 import stringify from 'safe-stable-stringify';
 import { Roles } from 'src/auth/decorators/roles.decorator';
@@ -104,8 +105,11 @@ export class ClassesController {
   @ApiResponse({ status: 200, type: [ClassResponseDto] })
   @Get('previous')
   //@Roles('STUDENT', 'TUTOR', 'ADMIN', 'SUPER_ADMIN')
-  getPreviousClasses(@UserId() userId: string) {
-    return this.classesService.findPrevious(userId);
+  getPreviousClasses(
+    @UserId() userId: string,
+    @GetUser('role') role: string,
+  ) {
+    return this.classesService.findPrevious(userId, role);
   }
 
   // ================= UPCOMING CLASSES =================
@@ -113,8 +117,12 @@ export class ClassesController {
   @ApiResponse({ status: 200, type: [ClassResponseDto] })
   @Get('upcoming')
   //@Roles('STUDENT', 'TUTOR', 'ADMIN', 'SUPER_ADMIN')
-  getUpcomingClasses(@UserId() userId: string, @Query() query: PaginationDto) {
-    return this.classesService.findUpcomingPaginated(userId, query);
+  getUpcomingClasses(
+    @UserId() userId: string,
+    @Query() query: PaginationDto,
+    @GetUser('role') role: string,
+  ) {
+    return this.classesService.findUpcomingPaginated(userId, query, role);
   }
 
   // ================= LIVE CLASSES =================
@@ -122,8 +130,12 @@ export class ClassesController {
   @ApiResponse({ status: 200, type: ClassResponseDto })
   @Get('live')
   //@Roles('STUDENT', 'TUTOR', 'ADMIN', 'SUPER_ADMIN')
-  getLiveClasses(@UserId() userId: string, @Query() query: PaginationDto) {
-    return this.classesService.findLivePaginated(userId, query);
+  getLiveClasses(
+    @UserId() userId: string,
+    @Query() query: PaginationDto,
+    @GetUser('role') role: string,
+  ) {
+    return this.classesService.findLivePaginated(userId, query, role);
   }
 
   @ApiOperation({ summary: 'Get recommended classes for current user' })
@@ -209,8 +221,12 @@ export class ClassesController {
     description: 'List of classes or a single class',
     type: ClassEntity,
   })
-  async getAllLessons(@Query() query: LessonQueryDto, @UserId() userId: string) {
-    return this.classesService.findAllWithDetails(query, userId);
+  async getAllLessons(
+    @Query() query: LessonQueryDto,
+    @UserId() userId: string,
+    @GetUser('role') role: string,
+  ) {
+    return this.classesService.findAllWithDetails(query, userId, role);
   }
 
   // GET ONE

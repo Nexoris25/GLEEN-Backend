@@ -7,42 +7,37 @@ import {
   IsString,
   IsUUID,
   IsArray,
-  ArrayNotEmpty,
-  ValidateIf,
   Validate,
-} from 'class-validator';
-import { Type } from 'class-transformer';
-import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
   ValidationArguments,
 } from 'class-validator';
 
 // ----------------------------
-// Custom Validator: Ensure at least one recipient field exists
+// Custom Validator: ensure at least one recipient target is provided.
 // ----------------------------
 @ValidatorConstraint({ name: 'HasRecipient', async: false })
 export class HasRecipientConstraint implements ValidatorConstraintInterface {
-  validate(_: any, args: ValidationArguments) {
+  validate(_: unknown, args: ValidationArguments) {
     const obj = args.object as CreateTutorMessageDto;
     return !!(
       obj.sendToAll ||
-      obj.studentId ||
-      obj.stateId ||
-      obj.subjectId ||
-      (obj.classIds && obj.classIds.length > 0)
+      obj.stateIds?.length ||
+      obj.subjectIds?.length ||
+      obj.classIds?.length ||
+      obj.studentIds?.length
     );
   }
 
-  defaultMessage(args: ValidationArguments) {
-    return 'You must provide at least one recipient: studentId, sendToAll, stateId, subjectId, or classIds';
+  defaultMessage() {
+    return 'You must provide at least one recipient: sendToAll, stateIds, subjectIds, classIds, or studentIds';
   }
 }
 
 export class CreateTutorMessageDto {
   @ApiProperty({
     example: 'Upcoming Mathematics Class',
-    description: 'Message title',
+    description: 'Message subject/title',
   })
   @IsString()
   title: string;
@@ -54,63 +49,62 @@ export class CreateTutorMessageDto {
   @IsString()
   message: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: false,
     default: false,
-    description: 'If true, message is sent to all students',
+    description: 'If true, message is sent to all students (ignores filters)',
   })
+  @IsOptional()
   @IsBoolean()
-  @IsOptional()
-  sendToAll: boolean;
+  sendToAll?: boolean;
 
-  /* -------------------- STATE -------------------- */
+  /* -------------------- STATES -------------------- */
   @ApiPropertyOptional({
-    example: 'a3b1c7d2-9b0f-4e92-8a2c-0f4a2b8c7d11',
-    format: 'uuid',
-    description: 'State ID (references state.id)',
-  })
-  @IsOptional()
-  @IsUUID()
-  stateId?: string;
-
-  /* -------------------- SUBJECT -------------------- */
-  @ApiPropertyOptional({
-    example: 'a3b1c7d2-9b0f-4e92-8a2c-0f4a2b8c7d11',
-    format: 'uuid',
-    description: 'Subject ID (references subjects.id)',
-  })
-  @IsOptional()
-  @IsUUID()
-  subjectId?: string;
-
-  /* -------------------- STUDENT -------------------- */
-  @ApiPropertyOptional({
-    example: 'f2e7c9a1-1a45-4f9d-8b30-92c9f84f0e99',
-    format: 'uuid',
-    description: 'Student ID (references users.id)',
-  })
-  @IsOptional()
-  @IsUUID()
-  studentId?: string;
-
-  /* -------------------- CLASSES -------------------- */
-  @ApiPropertyOptional({
-    example: [
-      'c91f5c84-3e90-4a5c-8a3a-8c1b7a44b7aa',
-      'a12b9e3f-74b1-4f8a-b49d-6c32d1a7f992',
-    ],
     type: [String],
-    description: 'Class IDs (references classes.id)',
+    format: 'uuid',
+    description: 'Send to every student in these states (references state.id)',
   })
   @IsOptional()
   @IsArray()
-  @ArrayNotEmpty()
+  @IsUUID('4', { each: true })
+  stateIds?: string[];
+
+  /* -------------------- SUBJECTS -------------------- */
+  @ApiPropertyOptional({
+    type: [String],
+    format: 'uuid',
+    description: 'Send to every student taking these subjects (subjects.id)',
+  })
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  subjectIds?: string[];
+
+  /* -------------------- CLASSES -------------------- */
+  @ApiPropertyOptional({
+    type: [String],
+    format: 'uuid',
+    description: 'Send to every student enrolled in these classes (classes.id)',
+  })
+  @IsOptional()
+  @IsArray()
   @IsUUID('4', { each: true })
   classIds?: string[];
 
+  /* -------------------- INDIVIDUAL STUDENTS -------------------- */
+  @ApiPropertyOptional({
+    type: [String],
+    format: 'uuid',
+    description: 'Send to these specific students (users.id)',
+  })
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  studentIds?: string[];
+
   // ----------------------------
-  // Apply custom validator
+  // Apply custom validator (must appear after the target fields).
   // ----------------------------
   @Validate(HasRecipientConstraint)
-  dummyField?: any;
+  dummyField?: unknown;
 }

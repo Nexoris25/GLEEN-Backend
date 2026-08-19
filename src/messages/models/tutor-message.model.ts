@@ -51,17 +51,23 @@ export class TutorMessage extends Model {
   @Column(DataType.BOOLEAN)
   mailSent: boolean;
 
-  @ApiProperty({ required: false })
-  @Column(DataType.UUID)
-  stateId?: string;
+  // Targeting is stored as arrays so a single message can fan out across
+  // multiple states / subjects / classes / individual students at once.
+  @ApiProperty({ required: false, type: [String] })
+  @Column(DataType.ARRAY(DataType.UUID))
+  stateIds?: string[];
 
-  @ApiProperty({ required: false })
-  @Column(DataType.UUID)
-  subjectId?: string;
+  @ApiProperty({ required: false, type: [String] })
+  @Column(DataType.ARRAY(DataType.UUID))
+  subjectIds?: string[];
 
   @ApiProperty({ required: false, type: [String] })
   @Column(DataType.ARRAY(DataType.UUID))
   classIds?: string[];
+
+  @ApiProperty({ required: false, type: [String] })
+  @Column(DataType.ARRAY(DataType.UUID))
+  studentIds?: string[];
 
   @BelongsTo(() => User, 'tutorId')
   tutor: User;

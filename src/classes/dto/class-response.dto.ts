@@ -34,7 +34,10 @@ export class ClassResponseDto {
   @ApiProperty({ example: 'uuid-of-subject' })
   subjectId: string;
 
-  @ApiProperty({ example: 'https://bunny.net/j/12345', required: false })
+  @ApiProperty({
+    example: 'https://res.cloudinary.com/demo/video/upload/v1/sample.mp4',
+    required: false,
+  })
   videoURL?: string;
 
   @ApiProperty({ example: true })

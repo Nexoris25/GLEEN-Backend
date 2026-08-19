@@ -18,7 +18,7 @@ import { RoleEnum } from '../../shared-types/RoleEnum';
 import stringify from 'safe-stable-stringify';
 import { XpLogService } from 'src/xp/services/xp-log.service';
 import { Express } from 'express';
-import { BunnyService } from 'src/common/services/bunny.service';
+import { CloudinaryService } from 'src/common/services/cloudinary.service';
 import { Subject } from 'src/subject/models/subject.model';
 import { Goal } from 'src/goal/models/goal.model';
 import { XpRecords } from 'src/xp/models/xp-record.model';
@@ -34,7 +34,7 @@ export class UserService {
     private readonly xpRecordsModel: typeof XpRecords,
     private readonly emailService: MailService,
     private readonly xpLogService: XpLogService,
-    private readonly bunnyService: BunnyService,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   async getLoggedInUserDetails(userId: string) {
@@ -817,10 +817,10 @@ export class UserService {
     let avatarUrl: string | null = null;
 
     if (avatar) {
-      avatarUrl = await this.bunnyService.upload(
-        avatar.buffer,
-        avatar.originalname,
-      );
+      avatarUrl = await this.cloudinaryService.uploadBuffer(avatar.buffer, {
+        folder: 'avatars',
+        mimeType: avatar.mimetype,
+      });
     }
 
     // Create and save the user
@@ -933,10 +933,10 @@ detail: `xp bonus for referring ${newUser.username}`,
 
     // HANDLE AVATAR
     if (avatar) {
-      const avatarUrl = await this.bunnyService.upload(
-        avatar.buffer,
-        avatar.originalname,
-      );
+      const avatarUrl = await this.cloudinaryService.uploadBuffer(avatar.buffer, {
+        folder: 'avatars',
+        mimeType: avatar.mimetype,
+      });
 
       updatedUserData.avatar = avatarUrl;
     }

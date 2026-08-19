@@ -227,6 +227,10 @@ export class MetricsService {
             createdAt: {
               [Op.between]: [start, end],
             },
+            // Only students who have completed their profile (name + gender),
+            // matching how users are fetched in UserService.findAll.
+            fullName: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] },
+            gender: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] },
           },
           attributes: [
             'id',

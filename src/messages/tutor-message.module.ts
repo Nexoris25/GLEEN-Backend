@@ -6,10 +6,16 @@ import { NotificationTracking } from 'src/notification-tracking/models/notificat
 import { TutorMessageService } from './services/tutor-message.service';
 import { TutorMessageController } from './controllers/tutor-message.controller';
 import { User } from 'src/user/models/user.model';
+import { ClassEnrollment } from 'src/classes/models/class-enrollment.model';
 
 @Module({
   imports: [
-    SequelizeModule.forFeature([TutorMessage, NotificationTracking, User]),
+    SequelizeModule.forFeature([
+      TutorMessage,
+      NotificationTracking,
+      User,
+      ClassEnrollment,
+    ]),
   ],
   controllers: [TutorMessageController],
   providers: [TutorMessageService],

@@ -10,7 +10,7 @@ import { UpdateLessonTopicDto } from '../dto/update-lesson-topic.dto';
 import { SearchLessonTopicDto } from '../dto/search-lesson-topic.dto';
 import stringify from 'safe-stable-stringify';
 import { Op } from 'sequelize';
-import { BunnyService } from 'src/common/services/bunny-all.service';
+import { CloudinaryService } from 'src/common/services/cloudinary.service';
 
 import { BulkCreateLessonTopicDto } from '../dto/bulk-create-lesson-topic.dto';
 import { BulkUpdateLessonTopicDto } from '../dto/bulk-update-lesson-topic.dto';
@@ -20,7 +20,7 @@ export class LessonTopicService {
   constructor(
     @InjectModel(LessonTopic)
     private readonly lessonTopicModel: typeof LessonTopic,
-    private readonly bunnyService: BunnyService,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   async bulkCreate(
@@ -115,7 +115,7 @@ export class LessonTopicService {
 
       // Upload avatar / cover
       if (avatarOrCover) {
-        avatarUrl = await this.bunnyService.upload({
+        avatarUrl = await this.cloudinaryService.upload({
           buffer: avatarOrCover.buffer,
           mimeType: avatarOrCover.mimetype,
           originalName: avatarOrCover.originalname,
@@ -125,7 +125,7 @@ export class LessonTopicService {
 
       // Upload video or file
       if (videoOrFileUrl) {
-        videoUrl = await this.bunnyService.upload({
+        videoUrl = await this.cloudinaryService.upload({
           buffer: videoOrFileUrl.buffer,
           mimeType: videoOrFileUrl.mimetype,
           originalName: videoOrFileUrl.originalname,
@@ -135,7 +135,7 @@ export class LessonTopicService {
 
       // Upload caption file
       if (videoCaptionUrl) {
-        captionUrl = await this.bunnyService.upload({
+        captionUrl = await this.cloudinaryService.upload({
           buffer: videoCaptionUrl.buffer,
           mimeType: videoCaptionUrl.mimetype,
           originalName: videoCaptionUrl.originalname,
@@ -268,7 +268,7 @@ export class LessonTopicService {
 
       // 🔼 Replace avatar / cover if provided
       if (avatarOrCover) {
-        payload.avatarOrCover = await this.bunnyService.upload({
+        payload.avatarOrCover = await this.cloudinaryService.upload({
           buffer: avatarOrCover.buffer,
           mimeType: avatarOrCover.mimetype,
           originalName: avatarOrCover.originalname,
@@ -278,7 +278,7 @@ export class LessonTopicService {
 
       // 🔼 Replace video or file if provided
       if (videoOrFileUrl) {
-        payload.videoOrFileUrl = await this.bunnyService.upload({
+        payload.videoOrFileUrl = await this.cloudinaryService.upload({
           buffer: videoOrFileUrl.buffer,
           mimeType: videoOrFileUrl.mimetype,
           originalName: videoOrFileUrl.originalname,
@@ -288,7 +288,7 @@ export class LessonTopicService {
 
       // 🔼 Replace caption if provided
       if (videoCaptionUrl) {
-        payload.videoCaptionUrl = await this.bunnyService.upload({
+        payload.videoCaptionUrl = await this.cloudinaryService.upload({
           buffer: videoCaptionUrl.buffer,
           mimeType: videoCaptionUrl.mimetype,
           originalName: videoCaptionUrl.originalname,

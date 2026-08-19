@@ -24,7 +24,7 @@ import { Lesson } from '../models/lesson.model';
 import { Subject } from 'src/subject/models/subject.model';
 import { User } from 'src/user/models/user.model';
 import { LessonTopic } from '../models/lesson_topic.model';
-import { BunnyService } from 'src/common/services/bunny-all.service';
+import { CloudinaryService } from 'src/common/services/cloudinary.service';
 import { TopicTypeEnum } from 'src/shared-types/FileTypeEnum';
 import { XpLogService } from 'src/xp/services/xp-log.service';
 import { CreateXpLogDto } from 'src/xp/dto/xp-log.dto';
@@ -34,7 +34,7 @@ export class LessonService {
   constructor(
     @InjectModel(Lesson)
     private lessonModel: typeof Lesson,
-    private readonly bunnyService: BunnyService,
+    private readonly cloudinaryService: CloudinaryService,
     @InjectModel(LessonComment)
     private lessonCommentModel: typeof LessonComment,
     @InjectModel(LessonTracking)

@@ -9,7 +9,7 @@ import { GroupChatsController } from './controllers/group-chats.controller';
 import { GroupChat } from './models/group-chats.model';
 import { GroupChatGateway } from './gateways/group-chat.gateway';
 import { JwtModule } from '@nestjs/jwt';
-import { BunnyService } from 'src/common/services/bunny-all.service';
+import { CloudinaryService } from 'src/common/services/cloudinary.service';
 
 @Module({
   imports: [
@@ -19,7 +19,7 @@ import { BunnyService } from 'src/common/services/bunny-all.service';
     }),
     SequelizeModule.forFeature([Group, UserGroup, GroupChat]),
   ],
-  providers: [GroupsService, BunnyService, GroupChatsService, GroupChatGateway],
+  providers: [GroupsService, CloudinaryService, GroupChatsService, GroupChatGateway],
   controllers: [GroupController, GroupChatsController],
   exports: [GroupsService, GroupChatsService, GroupChatGateway],
 })

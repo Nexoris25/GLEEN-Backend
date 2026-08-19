@@ -11,7 +11,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { AdminGuard } from './GuardsDecorMiddleware/admin.guard';
 import { DailyUserActivitiesInterceptor } from './GuardsDecorMiddleware/daily-user-activities.interceptor';
 import { UserModule } from '../user/user.module';
-import { BunnyModule } from 'src/common/modules/bunny.module';
+import { CloudinaryModule } from 'src/common/modules/cloudinary.module';
 import { MailModule } from '../email/email.module';
 import { PasswordResetOtp } from './models/password-reset-otp.model';
 import { EmailVerificationOtp } from './models/email-verification-otp.model';
@@ -44,7 +44,7 @@ dotenv.config();
       User, // ✅ add User
       State, // ✅ add State
     ]),
-    BunnyModule,
+    CloudinaryModule,
     MailModule,
   ],
   controllers: [AuthController, DailyLoginRecordController],

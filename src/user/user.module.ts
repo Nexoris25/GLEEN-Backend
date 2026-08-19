@@ -7,7 +7,7 @@ import { AuthModule } from 'src/auth/auth.module';
 import { MailModule } from '../email/email.module';
 import { JwtModule } from '@nestjs/jwt';
 import { XpModule } from 'src/xp/xp.module';
-import { BunnyService } from 'src/common/services/bunny.service';
+import { CloudinaryService } from 'src/common/services/cloudinary.service';
 import { XpRecords } from 'src/xp/models/xp-record.model';
 
 import { State } from 'src/states/models/state.model';
@@ -28,7 +28,7 @@ import { LgaExistsConstraint } from 'src/common/validators/is-lga-exists.validat
   ],
   providers: [
     UserService,
-    BunnyService,
+    CloudinaryService,
     StateExistsConstraint,
     LgaExistsConstraint,
   ],

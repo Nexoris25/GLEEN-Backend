@@ -6,6 +6,7 @@ import { NotificationEntityType } from 'src/shared-types/FileTypeEnum';
 import { AggregatedNotificationDto } from '../dto/aggregated-notification.dto';
 import { V1Battle } from 'src/v1-battle/models/v1-battle.model';
 import { TutorMessage } from 'src/messages/models/tutor-message.model';
+import { NotificationTracking } from '../models/notification-recipient.model';
 import {
   XpWithdrawalRequest,
   WithdrawalStatus,
@@ -23,6 +24,8 @@ export class NotificationAggregatorService {
     private readonly withdrawalModel: typeof XpWithdrawalRequest,
     @InjectModel(User)
     private readonly userModel: typeof User,
+    @InjectModel(NotificationTracking)
+    private readonly recipientModel: typeof NotificationTracking,
   ) {}
 
   async getUserNotifications(
@@ -67,40 +70,42 @@ export class NotificationAggregatorService {
     /**
      * ----------------------------
      * TUTOR MESSAGES
+     * Every recipient (all / by state / subject / class / individual) gets a
+     * notification_tracking row when the message is created, so we surface the
+     * messages this user was actually targeted with — carrying the read flag.
      * ----------------------------
      */
-    const tutorMessages = await TutorMessage.findAll({
+    const tutorRecipientRows = await this.recipientModel.findAll({
       where: {
-        [Op.or]: [
-          { sendToAll: true }, // messages sent to all students
-        ],
+        userId,
+        entityType: NotificationEntityType.TUTOR_MESSAGE,
       },
-      include: [
-        {
-          association: 'recipients',
-          where: { userId },
-          required: false, // include even if no recipient row exists
-        },
-      ],
       order: [['createdAt', 'DESC']],
       limit: 50,
     });
 
-    for (const msg of tutorMessages) {
-      const read = await this.readService.hasRead(
-        userId,
-        NotificationEntityType.TUTOR_MESSAGE,
-        msg.id,
+    if (tutorRecipientRows.length) {
+      const messageIds = tutorRecipientRows.map((row) => row.entityId);
+      const tutorMessages = await TutorMessage.findAll({
+        where: { id: { [Op.in]: messageIds } },
+      });
+      const messagesById = new Map(
+        tutorMessages.map((msg) => [msg.id, msg]),
       );
 
-      notifications.push({
-        id: msg.id,
-        type: NotificationEntityType.TUTOR_MESSAGE,
-        title: 'Message from Tutor',
-        message: msg.title ?? 'New tutor message',
-        createdAt: msg.createdAt,
-        read,
-      });
+      for (const row of tutorRecipientRows) {
+        const msg = messagesById.get(row.entityId);
+        if (!msg) continue;
+
+        notifications.push({
+          id: msg.id,
+          type: NotificationEntityType.TUTOR_MESSAGE,
+          title: msg.title ?? 'Message from Tutor',
+          message: msg.message ?? '',
+          createdAt: msg.createdAt,
+          read: row.read,
+        });
+      }
     }
 
     /**

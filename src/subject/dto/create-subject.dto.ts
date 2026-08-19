@@ -13,7 +13,7 @@ export class CreateSubjectDto {
   description?: string;
 
   @ApiPropertyOptional({
-    description: 'Avatar image URL (already uploaded to Bunny or elsewhere)',
+    description: 'Avatar image URL (already uploaded to Cloudinary or elsewhere)',
   })
   @IsOptional()
   @IsString()

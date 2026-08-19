@@ -16,7 +16,7 @@ import { MailService } from '../../email/email.service';
 import { OAuth2Client } from 'google-auth-library';
 //import * as jwksClient from 'jwks-rsa';
 import jwksClient from 'jwks-rsa';
-import { BunnyService } from 'src/common/services/bunny.service';
+import { CloudinaryService } from 'src/common/services/cloudinary.service';
 
 import sharp from 'sharp';
 import { Op } from 'sequelize';
@@ -33,7 +33,7 @@ export class AuthService {
   constructor(
     private readonly userService: UserService,
     private readonly emailService: MailService,
-    private readonly bunnyService: BunnyService,
+    private readonly cloudinaryService: CloudinaryService,
     @InjectModel(EmailVerificationOtp)
     private readonly emailVerificationOtpModel: typeof EmailVerificationOtp,
     @InjectModel(PasswordResetOtp)
@@ -142,8 +142,10 @@ export class AuthService {
           .png()
           .toBuffer();
 
-        const safeFileName = `avatar_${Date.now()}.png`;
-        avatarUrl = await this.bunnyService.upload(resizedBuffer, safeFileName);
+        avatarUrl = await this.cloudinaryService.uploadBuffer(resizedBuffer, {
+          folder: 'avatars',
+          mimeType: 'image/png',
+        });
 
         if (!avatarUrl) {
           throw new Error('Avatar upload returned empty URL');

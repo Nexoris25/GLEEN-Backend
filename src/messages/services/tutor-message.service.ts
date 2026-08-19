@@ -5,8 +5,10 @@ import { TutorMessage } from '../models/tutor-message.model';
 import { NotificationTracking } from 'src/notification-tracking/models/notification-recipient.model';
 import { CreateTutorMessageDto } from '../dto/create-tutor-message.dto';
 import { User } from 'src/user/models/user.model';
+import { ClassEnrollment } from 'src/classes/models/class-enrollment.model';
+import { NotificationEntityType } from 'src/shared-types/FileTypeEnum';
+import { RoleEnum } from 'src/shared-types/RoleEnum';
 import { Op } from 'sequelize';
-import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class TutorMessageService {
@@ -15,91 +17,118 @@ export class TutorMessageService {
     @InjectModel(NotificationTracking)
     private recipientModel: typeof NotificationTracking,
     @InjectModel(User) private userModel: typeof User,
+    @InjectModel(ClassEnrollment)
+    private enrollmentModel: typeof ClassEnrollment,
   ) {}
 
-  async create(dto: CreateTutorMessageDto, tutorId: string) {
-    // ----------------------------
-    // 1. Validate that at least one target exists
-    // ----------------------------
-    const hasTarget =
-      dto.studentId ||
-      dto.sendToAll ||
-      dto.stateId ||
-      (dto.classIds && dto.classIds.length > 0) ||
-      dto.subjectId;
+  async create(dto: CreateTutorMessageDto, senderId: string) {
+    // 1. Resolve the recipient students first so we never persist a message
+    //    that reaches nobody.
+    const recipientIds = await this.resolveRecipientIds(dto);
 
-    if (!hasTarget) {
+    if (!recipientIds.length) {
       throw new BadRequestException(
-        'You must provide at least one target: studentId, sendToAll, stateId, subjectId, or classIds',
+        'No students match the specified recipients/criteria',
       );
     }
 
-    // ----------------------------
-    // 2. Create the message
-    // ----------------------------
+    // 2. Store the message (with its targeting, for record/audit).
     const message = await this.messageModel.create({
-      ...dto,
-      tutorId,
+      tutorId: senderId,
+      title: dto.title,
+      message: dto.message,
+      sendToAll: !!dto.sendToAll,
+      stateIds: dto.stateIds ?? null,
+      subjectIds: dto.subjectIds ?? null,
+      classIds: dto.classIds ?? null,
+      studentIds: dto.studentIds ?? null,
     });
 
-    // ----------------------------
-    // 3. Resolve recipients
-    // ----------------------------
-    const students = await this.resolveRecipients(dto);
-
-    if (!students.length) {
-      throw new BadRequestException(
-        'No students match the specified filters/criteria',
-      );
-    }
-
-    // ----------------------------
-    // 4. Create notification / recipient rows
-    // ----------------------------
-    const recipientRows = students.map((student) => ({
-      id: uuidv4(),
-      entityType: 'TUTOR_MESSAGE', // Required column in notification_tracking
-      entityId: message.id, // Link to the message
-      userId: student.id, // Student receiving
+    // 3. Fan out to per-recipient notification rows (dedup on the unique
+    //    entityType+entityId+userId index).
+    const recipientRows = recipientIds.map((userId) => ({
+      entityType: NotificationEntityType.TUTOR_MESSAGE,
+      entityId: message.id,
+      userId,
       read: false,
-      readAt: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     }));
 
-    await this.recipientModel.bulkCreate(recipientRows);
+    await this.recipientModel.bulkCreate(recipientRows, {
+      ignoreDuplicates: true,
+    });
 
-    return message;
+    return { ...message.toJSON(), recipientCount: recipientIds.length };
   }
 
-  private async resolveRecipients(dto: CreateTutorMessageDto) {
-    // Start with all students
-    const where: any = { role: 'USER' };
-
-    if (!dto.sendToAll) {
-      if (dto.stateId) where.stateId = dto.stateId;
-      if (dto.subjectId) where.subjectId = dto.subjectId;
-      if (dto.classIds?.length) {
-        where.classId = { [Op.in]: dto.classIds };
-      }
-      if (dto.studentId) where.id = dto.studentId;
+  /**
+   * Resolve the UNION of students matched by any of the provided targets.
+   * `sendToAll` short-circuits to every student. All category lookups are
+   * constrained to role=USER so tutors/admins are never messaged.
+   */
+  private async resolveRecipientIds(
+    dto: CreateTutorMessageDto,
+  ): Promise<string[]> {
+    if (dto.sendToAll) {
+      const all = await this.userModel.findAll({
+        where: { role: RoleEnum.USER },
+        attributes: ['id'],
+      });
+      return all.map((u) => u.id);
     }
 
-    return this.userModel.findAll({ where });
-  }
+    const ids = new Set<string>();
 
-  async getStudentMessages(studentId: string) {
-    return this.recipientModel.findAll({
-      where: { studentId },
-      include: [TutorMessage],
-      order: [['createdAt', 'DESC']],
-    });
-  }
+    // By state (User.stateId)
+    if (dto.stateIds?.length) {
+      const rows = await this.userModel.findAll({
+        where: { role: RoleEnum.USER, stateId: { [Op.in]: dto.stateIds } },
+        attributes: ['id'],
+      });
+      rows.forEach((r) => ids.add(r.id));
+    }
 
-  async markAsRead(messageId: string, studentId: string) {
-    return this.recipientModel.update(
-      { read: true },
-      { where: { messageId, studentId } },
-    );
+    // By subject (users_subjects join via the `subjects` association)
+    if (dto.subjectIds?.length) {
+      const rows = await this.userModel.findAll({
+        where: { role: RoleEnum.USER },
+        attributes: ['id'],
+        include: [
+          {
+            association: 'subjects',
+            attributes: [],
+            through: { attributes: [] },
+            where: { id: { [Op.in]: dto.subjectIds } },
+          },
+        ],
+      });
+      rows.forEach((r) => ids.add(r.id));
+    }
+
+    // By class enrolled (class_enrollments), keeping only student accounts.
+    if (dto.classIds?.length) {
+      const enrollments = await this.enrollmentModel.findAll({
+        where: { classId: { [Op.in]: dto.classIds } },
+        attributes: ['userId'],
+      });
+      const enrolledIds = [...new Set(enrollments.map((e) => e.userId))];
+      if (enrolledIds.length) {
+        const rows = await this.userModel.findAll({
+          where: { role: RoleEnum.USER, id: { [Op.in]: enrolledIds } },
+          attributes: ['id'],
+        });
+        rows.forEach((r) => ids.add(r.id));
+      }
+    }
+
+    // Individual students (User.id)
+    if (dto.studentIds?.length) {
+      const rows = await this.userModel.findAll({
+        where: { role: RoleEnum.USER, id: { [Op.in]: dto.studentIds } },
+        attributes: ['id'],
+      });
+      rows.forEach((r) => ids.add(r.id));
+    }
+
+    return [...ids];
   }
 }
