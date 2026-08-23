@@ -138,7 +138,6 @@ export class ClassesService {
             enable_chat: true,
             exp: expUnix,
             enable_hand_raising: true,
-            owner_only_broadcast: true,
             enable_screenshare: true,
             enable_emoji_reactions: true,
             enable_shared_chat_history: true,
