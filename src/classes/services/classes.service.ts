@@ -8,6 +8,7 @@ import {
   InternalServerErrorException,
   HttpException,
 } from '@nestjs/common';
+import { createHmac, timingSafeEqual } from 'crypto';
 import { InjectModel } from '@nestjs/sequelize';
 import { ClassEntity } from '../entities/class.entity';
 import { User } from 'src/user/models/user.model';
@@ -144,6 +145,7 @@ export class ClassesService {
             enable_people_ui: true,
             start_video_off: true,
             start_audio_off: true,
+            enable_recording: 'cloud',
             meeting_join_hook: 'https://dev.nexoristech.com/daily-join-hook',
           },
         };
@@ -1155,6 +1157,50 @@ export class ClassesService {
       throw new InternalServerErrorException(
         `Failed to fetch recordings: ${error.message}`,
       );
+    }
+  }
+
+  // DAILY.CO WEBHOOK — auto-save recordings when a class ends
+  async handleDailyWebhook(
+    rawBody: Buffer,
+    timestamp: string,
+    signature: string,
+    body: any,
+  ): Promise<void> {
+    // Verify HMAC-SHA256 signature if DAILY_WEBHOOK_SECRET is set.
+    // To verify: sign `{timestamp}.{rawBody}` with the secret and compare.
+    const secret = process.env.DAILY_WEBHOOK_SECRET;
+    if (secret && timestamp && signature) {
+      const toSign = `${timestamp}.${rawBody.toString()}`;
+      const expected = createHmac('sha256', secret).update(toSign).digest('hex');
+      try {
+        if (!timingSafeEqual(Buffer.from(expected), Buffer.from(signature))) {
+          throw new BadRequestException('Invalid Daily.co webhook signature');
+        }
+      } catch {
+        throw new BadRequestException('Invalid Daily.co webhook signature');
+      }
+    }
+
+    const { type, payload } = body ?? {};
+    if (type !== 'recording.ready-to-download') return;
+
+    const { room_name, download_link } = payload ?? {};
+    if (!room_name || !download_link) return;
+
+    const cls = await this.classModel.findOne({ where: { roomName: room_name } });
+    if (!cls) return;
+
+    try {
+      await this.recordingModel.create({
+        title: cls.title,
+        description: cls.description ?? null,
+        videoUrl: download_link,
+        subjectId: cls.subjectId ?? null,
+      } as any);
+    } catch (err: any) {
+      // Log but don't throw — webhook must always return 200.
+      console.error(`Failed to auto-save recording for class ${cls.id}:`, err.message);
     }
   }
 }

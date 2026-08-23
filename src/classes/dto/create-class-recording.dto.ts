@@ -16,10 +16,10 @@ export class CreateClassRecordingDto {
   @IsNotEmpty()
   videoUrl: string;
 
-  @ApiProperty({ example: 'uuid-of-subject', description: 'ID of the subject' })
+  @ApiPropertyOptional({ example: 'uuid-of-subject', description: 'ID of the subject' })
   @IsUUID()
-  @IsNotEmpty()
-  subjectId: string;
+  @IsOptional()
+  subjectId?: string;
 
   @ApiProperty({
     example: 'Mathematics Week 1 Recording',

@@ -35,8 +35,8 @@ export class ClassRecording extends Model {
 
   @ApiProperty({ description: 'Foreign key to the Subject' })
   @ForeignKey(() => Subject)
-  @Column({ type: DataType.UUID, allowNull: false })
-  subjectId: string;
+  @Column({ type: DataType.UUID, allowNull: true })
+  subjectId: string | null;
 
   @BelongsTo(() => Subject)
   subject: Subject;

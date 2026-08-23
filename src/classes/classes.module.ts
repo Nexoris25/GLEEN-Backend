@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { ClassesService } from './services/classes.service';
 import { ClassesController } from './controllers/classes.controller';
+import { DailyWebhookController } from './controllers/daily-webhook.controller';
 import { ClassEnrollment } from 'src/classes/models/class-enrollment.model';
 import { ClassRecording } from './models/class-recording.model';
 import { ClassEntity } from './entities/class.entity';
@@ -27,7 +28,7 @@ import { ClassChatGateway } from './gateways/class-chat.gateway';
     ]),
     UserModule, // for user/tutor validation
   ],
-  controllers: [ClassesController, ClassChatController],
+  controllers: [ClassesController, ClassChatController, DailyWebhookController],
   providers: [ClassesService, ClassChatService, ClassChatGateway],
   exports: [
     ClassesService, // export the service for other modules
