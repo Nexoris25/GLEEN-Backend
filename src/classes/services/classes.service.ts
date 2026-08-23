@@ -201,7 +201,7 @@ export class ClassesService {
         ownerToken = await this.generateMeetingToken({
           room_name: roomName,
           is_owner: true,
-          nbf: startUnix,
+          // No nbf on owner token — hosts must be able to join early to set up.
           exp: endUnix,
           eject_at_token_exp: true,
           user_name: tutorFullName,
@@ -853,7 +853,7 @@ export class ClassesService {
     };
   }
 
-  async getJoinInfo(userId: string, classId: string) {
+  async getJoinInfo(userId: string, classId: string, role?: string) {
     const cls = await this.classModel.findByPk(classId.trim());
     if (!cls) {
       throw new NotFoundException('Class not found');
@@ -864,19 +864,24 @@ export class ClassesService {
       throw new BadRequestException('Class has ended');
     }
 
-    if (cls.tutorId === userId) {
-      if (!cls.ownerToken) {
+    const isAdmin =
+      role === RoleEnum.ADMIN || role === RoleEnum.SUPER_ADMIN;
+    const isTutor = cls.tutorId === userId;
+
+    if (isTutor || isAdmin) {
+      // Tutor: reuse the persisted owner token (generate once on first join).
+      // Admin: always generate a fresh token so we don't overwrite the tutor's.
+      if (isTutor && !cls.ownerToken) {
         const tutorRecord = await this.userModel.findByPk(cls.tutorId, {
           attributes: ['fullName'],
         });
         const tutorFullName = tutorRecord ? `${tutorRecord.fullName}` : 'Tutor';
-        const startUnix = Math.floor(new Date(cls.startTime).getTime() / 1000);
         const endUnix = Math.floor(new Date(cls.endTime).getTime() / 1000);
 
         cls.ownerToken = await this.generateMeetingToken({
           room_name: cls.roomName,
           is_owner: true,
-          nbf: startUnix,
+          // No nbf — host can join early to set up.
           exp: endUnix,
           eject_at_token_exp: true,
           user_name: tutorFullName,
@@ -885,11 +890,31 @@ export class ClassesService {
         await cls.save();
       }
 
+      let token = isTutor ? cls.ownerToken : null;
+
+      if (isAdmin && !isTutor) {
+        const adminRecord = await this.userModel.findByPk(userId, {
+          attributes: ['fullName'],
+        });
+        const adminName = adminRecord ? `${adminRecord.fullName}` : 'Admin';
+        const endUnix = Math.floor(new Date(cls.endTime).getTime() / 1000);
+
+        token = await this.generateMeetingToken({
+          room_name: cls.roomName,
+          is_owner: true,
+          // No nbf — admins can observe at any time.
+          exp: endUnix,
+          eject_at_token_exp: true,
+          user_name: adminName,
+          user_id: userId,
+        });
+      }
+
       return {
         classId: cls.id,
         roomUrl: cls.roomURL,
         dailyRoomName: cls.roomName,
-        token: cls.ownerToken,
+        token,
         isOwner: true,
       };
     }

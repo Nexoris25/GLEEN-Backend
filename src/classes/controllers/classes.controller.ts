@@ -155,10 +155,11 @@ export class ClassesController {
   @Get('join/:classId')
   async getJoinInfo(
     @UserId() userId: string,
+    @GetUser('role') role: string,
     @Param('classId') classId: string,
   ) {
     try {
-      const data = await this.classesService.getJoinInfo(userId, classId);
+      const data = await this.classesService.getJoinInfo(userId, classId, role);
       return {
         status: HttpStatus.OK,
         message: 'Join info retrieved successfully',
