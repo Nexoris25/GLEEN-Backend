@@ -88,7 +88,7 @@ export class FaqController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get FAQ by id' })
+  @ApiOperation({ summary: 'Get FAQs by id' })
   @ApiParam({ name: 'id', description: 'FAQ ID' })
   @ApiResponse({
     status: 200,
