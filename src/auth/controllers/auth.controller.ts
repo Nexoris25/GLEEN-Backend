@@ -325,9 +325,6 @@ export class AuthController {
     @Body(new ValidationPipe()) body: ChangePasswordDto,
   ): Promise<{ status: number; message: string; data?: any; error?: any }> {
     try {
-      console.log(
-        `'userId', ${user.id} OLD ${body.oldPassword} NEW ${body.newPassword}`,
-      );
       await this.authService.changePassword(
         user.id,
         body.oldPassword,

@@ -37,6 +37,11 @@ export class QuizRecordService {
       });
 
       if (existing) {
+        // If the attempt is still in progress, return it so the student can continue.
+        if (existing.endedAt === null) {
+          return existing;
+        }
+        // Completed attempt: restart it by clearing previous answers and stats.
         await this.studentQuizAnswerService.deleteByQuizRecord(existing.id);
         await existing.update({
           startedAt: createDto.startedAt ?? new Date().toISOString(),

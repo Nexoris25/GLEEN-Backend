@@ -61,6 +61,16 @@ export class XpWithdrawalService {
     }
 
     const request = await this.sequelize.transaction(async (t) => {
+      const pendingExists = await this.withdrawalRepository.findOne({
+        where: { userId, status: WithdrawalStatus.PENDING },
+        transaction: t,
+      });
+      if (pendingExists) {
+        throw new BadRequestException(
+          'You already have a pending withdrawal request. Please wait for it to be processed before submitting another.',
+        );
+      }
+
       const record = await this.xpRecordsRepository.findOne({
         where: { userId },
         transaction: t,

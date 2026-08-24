@@ -155,14 +155,8 @@ export class GroupChatsService {
       });
     }
   }
-  // Dummy implementation, replace with actual logic to fetch group members
   private async getTotalUsersInGroup(groupId: string): Promise<number> {
-    // TODO: Replace with actual query to count users in the group
     const users = await this.userGroupModel.findAll({ where: { groupId } });
-    if (users && users.length) {
-      return users.length;
-    }
-    // Default to 10 if no users found for safety
-    return 1;
+    return users.length || 1;
   }
 }
