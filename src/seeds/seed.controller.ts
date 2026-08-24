@@ -1,6 +1,7 @@
 import { Controller, Post, HttpStatus } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { InjectModel } from '@nestjs/sequelize';
+import { Op } from 'sequelize';
 import { User } from '../user/models/user.model';
 import { SeedService } from './seed.service';
 
@@ -23,6 +24,7 @@ export class SeedController {
     try {
       const users = await this.userModel.findAll({
         attributes: ['id', 'email'],
+        where: { email: { [Op.ne]: 'admin@local.local' } },
       });
 
       const changes: { id: string; previousEmail: string; newEmail: string }[] = [];
