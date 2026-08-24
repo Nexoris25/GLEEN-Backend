@@ -8,6 +8,7 @@ import { AggregatedNotificationDto } from '../dto/aggregated-notification.dto';
 import { V1Battle } from 'src/v1-battle/models/v1-battle.model';
 import { TutorMessage } from 'src/messages/models/tutor-message.model';
 import { Op } from 'sequelize';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class NotificationReadService {
@@ -44,21 +45,38 @@ export class NotificationReadService {
     entityType: NotificationEntityType,
     entityId: string,
   ): Promise<void> {
-    // Notifications are derived from domain rows, so a recipient row may not
-    // exist yet — upsert so marking-read persists the first time too.
-    const [record, created] = await this.recipientModel.findOrCreate({
+    const existing = await this.recipientModel.findOne({
       where: { userId, entityType, entityId },
-      defaults: {
+    });
+
+    if (existing) {
+      if (!existing.read) {
+        await existing.update({ read: true, readAt: new Date() });
+      }
+      return;
+    }
+
+    try {
+      await this.recipientModel.create({
+        id: uuidv4(),
         userId,
         entityType,
         entityId,
         read: true,
         readAt: new Date(),
-      } as any,
-    });
-
-    if (!created && !record.read) {
-      await record.update({ read: true, readAt: new Date() });
+      } as any);
+    } catch (err: any) {
+      // Concurrent request already created the row — find it and update.
+      if (err.name === 'SequelizeUniqueConstraintError') {
+        const race = await this.recipientModel.findOne({
+          where: { userId, entityType, entityId },
+        });
+        if (race && !race.read) {
+          await race.update({ read: true, readAt: new Date() });
+        }
+        return;
+      }
+      throw err;
     }
   }
 

@@ -1,5 +1,5 @@
 // src/notifications/controllers/notification-read.controller.ts
-import { Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Patch, UseGuards, HttpStatus } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiTags,
@@ -40,8 +40,13 @@ export class NotificationTrackingController {
     @Param('entityId') entityId: string,
     @UserId() userId: string,
   ) {
-    await this.service.markAsRead(userId, entityType, entityId);
-    return { success: true };
+    try {
+      await this.service.markAsRead(userId, entityType, entityId);
+      return { success: true };
+    } catch (err: any) {
+      console.error('markAsRead failed:', err.message, { userId, entityType, entityId });
+      return { success: false, status: HttpStatus.INTERNAL_SERVER_ERROR, message: err.message };
+    }
   }
 
   @ApiOkResponse({ type: AggregatedNotificationDto, isArray: true })
