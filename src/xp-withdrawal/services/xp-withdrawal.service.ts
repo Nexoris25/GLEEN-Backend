@@ -45,7 +45,6 @@ export class XpWithdrawalService {
   ): Promise<XpWithdrawalRequest> {
     const config = await this.xpConfigurationService.findOne();
     const rate = Number(config?.airtimeXpValuePerNaira) || 0;
-    const limitPct = Number(config?.xpLimitPerTimePercentage) || 0;
 
     if (rate <= 0) {
       throw new BadRequestException(
@@ -78,16 +77,9 @@ export class XpWithdrawalService {
       });
 
       const balance = record ? record.currentXpValue : 0;
-      const maxConvertible =
-        limitPct > 0 ? Math.floor((limitPct / 100) * balance) : balance;
 
       if (dto.xpAmount > balance) {
         throw new BadRequestException('Insufficient XP balance.');
-      }
-      if (limitPct > 0 && dto.xpAmount > maxConvertible) {
-        throw new BadRequestException(
-          `You can withdraw at most ${limitPct}% of your XP (${maxConvertible} XP).`,
-        );
       }
       if (!record) {
         // No record means a zero balance — guarded above, but stay safe.
